@@ -3,14 +3,18 @@ mod common;
 
 #[cfg(test)]
 mod tests {
+    use crate::test_cache::init_cache;
+
     use bitview_transforms::RatioU64;
-    use bitview_vecs::{CumulativeCountVec, LazyIndexedVec, LazyRollingRatioVec};
-    use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
+    use bitview_vecs::{LazyIndexedVec, LazyRollingRatioVec};
+    use brk_types::{Height, PartsPerMillion32, StoredU64};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, BinaryTransform, Budgeted, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, ReadableCloneableVec, ReadableVec, ReverseOperands, Version, WritableVec,
+        AnyStoredVec, BinaryTransform, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
+        ReverseOperands, Version, WritableVec,
     };
+    #[cfg(feature = "diagnostics")]
+    use vecdb::{Budgeted, ReadableCloneableVec};
 
     #[cfg(feature = "diagnostics")]
     use vecdb::diagnostics;
@@ -19,12 +23,13 @@ mod tests {
     use super::common;
 
     #[test]
-    fn derives_cumulative_and_rolling_ratios_from_compact_counts() {
+    fn derives_cumulative_and_rolling_ratios_from_stored_counts() {
+        init_cache();
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut numerator: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "numerator", Version::ONE).unwrap();
-        let mut denominator: EagerVec<PcoVec<Height, StoredU16>> =
+        let mut denominator: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "denominator", Version::ONE).unwrap();
         let mut starts: EagerVec<PcoVec<Height, Height>> =
             EagerVec::forced_import(&db, "starts", Version::ONE).unwrap();
@@ -32,8 +37,8 @@ mod tests {
         for value in [10_u64, 30, 60, 100] {
             numerator.push(StoredU64::from(value));
         }
-        for value in [20_u16, 30, 40, 50] {
-            denominator.push(StoredU16::new(value));
+        for value in [20_u64, 50, 90, 140] {
+            denominator.push(StoredU64::new(value));
         }
         for value in [0, 0, 1, 2] {
             starts.push(Height::new(value));
@@ -42,7 +47,6 @@ mod tests {
         denominator.write().unwrap();
         starts.write().unwrap();
 
-        let denominator = CumulativeCountVec::new(&denominator);
         let cumulative = LazyIndexedVec::new(
             "cumulative",
             Version::ONE,
@@ -79,26 +83,27 @@ mod tests {
         );
         #[cfg(feature = "diagnostics")]
         {
-            use crate::common::CACHE_BUDGET;
             const N: usize = 32_768;
-            let mut numerator =
-                EagerVec::<PcoVec<Height, StoredU64, Budgeted>>::forced_import_with(
-                    ImportOptions::new(&db, "cold_numerator", Version::ONE)
-                        .with_cache_budget(&CACHE_BUDGET),
-                )
-                .unwrap();
+            let mut numerator = EagerVec::<PcoVec<Height, StoredU64, Budgeted>>::forced_import(
+                &db,
+                "cold_numerator",
+                Version::ONE,
+            )
+            .unwrap();
             for i in 0..N {
                 numerator.push(StoredU64::from((i as u64 + 1) * 3));
             }
             numerator.write().unwrap();
-            let block_counts =
-                common::stored::<Height, _>(&db, "cold_counts", (0..N).map(|_| StoredU16::new(1)));
+            let counts = common::stored::<Height, _>(
+                &db,
+                "cold_counts",
+                (1..=N).map(|i| StoredU64::from(i as u64)),
+            );
             let starts = common::stored::<Height, _>(
                 &db,
                 "cold_starts",
                 (0..N).map(|i| Height::from(i.saturating_sub(N / 2))),
             );
-            let counts = CumulativeCountVec::new(&block_counts);
             counts.collect_one_at(N - 1).unwrap();
             let cumulative = LazyIndexedVec::new(
                 "cold_cumulative",
@@ -119,10 +124,10 @@ mod tests {
                 rolling.read_only_boxed_clone(),
             ] {
                 for sorted in [false, true] {
-                    CACHE_BUDGET.clear();
+                    init_cache().clear();
                     // Eviction also clears metadata now; warm it before counting
                     // only the cold numerator's selective reads.
-                    block_counts.collect();
+                    counts.collect();
                     starts.collect();
                     diagnostics::take();
                     let values = if sorted {
@@ -144,3 +149,7 @@ mod tests {
         }
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

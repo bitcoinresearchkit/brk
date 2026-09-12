@@ -87,11 +87,8 @@ mod tests {
     use bitview_plugin::{PluginId, Publication};
     use brk_exit::Exit;
     use tempfile::tempdir;
-    use vecdb::CacheBudget;
 
     use super::*;
-
-    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
     #[derive(crate::PluginSet)]
     struct TestPlugins {
@@ -128,7 +125,7 @@ mod tests {
         let directory = tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
-        let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
+        let import_context = ImportContext::new(directory.path());
         let exit = Exit::new();
         let plugins = bootstrap(
             import_context,
@@ -154,7 +151,7 @@ mod tests {
         let directory = tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
-        let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
+        let import_context = ImportContext::new(directory.path());
         let exit = Exit::new();
         let plugins = bootstrap(
             import_context,
@@ -178,7 +175,7 @@ mod tests {
     #[test]
     fn cleanup_retains_only_claimed_plugin_data() -> Result<()> {
         let directory = tempdir()?;
-        let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
+        let context = ImportContext::new(directory.path());
         let plugins = PluginStorage::plugins_path(context);
         let blocks = plugins.join("blocks");
         let stale = plugins.join("stale");
@@ -203,7 +200,7 @@ mod tests {
     #[test]
     fn duplicate_plugin_ids_are_rejected_before_sync() -> Result<()> {
         let directory = tempdir()?;
-        let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
+        let context = ImportContext::new(directory.path());
         let plugins = PluginStorage::plugins_path(context);
         let blocks = PluginId::new("blocks");
 

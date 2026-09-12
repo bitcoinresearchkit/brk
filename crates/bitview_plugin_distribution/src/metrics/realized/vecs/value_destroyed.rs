@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyFiatPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{Cents, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOCoreSources;
 
@@ -19,7 +19,6 @@ pub struct CumulativeValueDestroyedByCohort<M: StorageMode = Rw> {
 
 impl CumulativeValueDestroyedByCohort {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -27,7 +26,6 @@ impl CumulativeValueDestroyedByCohort {
     ) -> Result<Self> {
         let metric = "value_destroyed";
         let stored = CumulativeUTXOCoreSources::forced_import(
-            cache,
             db,
             "value_destroyed_cumulative_cents",
             version,

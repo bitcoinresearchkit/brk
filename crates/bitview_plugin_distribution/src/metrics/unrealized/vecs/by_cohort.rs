@@ -6,7 +6,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{FiatType, LazyFiatPerBlock};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{Database, PcoVecValue, Rw, StorageMode};
 
 use crate::metrics::UTXOTypedSources;
 
@@ -26,14 +26,12 @@ where
     C: FiatType + PcoVecValue + AddAssign,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
     ) -> Result<Self> {
-        let stored =
-            UTXOTypedSources::forced_import(cache, db, &format!("{metric}_cents"), version)?;
+        let stored = UTXOTypedSources::forced_import(db, &format!("{metric}_cents"), version)?;
         let cohorts = UTXOGroupsWithoutAmount::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, metric);
             let source = stored.get(cohort_id).expect("supported unrealized cohort");

@@ -3,14 +3,13 @@ use bitview_transforms::{DaysToYears, RatioDiffCents};
 use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazyPercentPerBlock, PerBlock, Price};
 use brk_error::Result;
 use brk_types::{Cents, Height, PartsPerMillionSigned32, Version};
-use vecdb::{BinaryTransform, CacheBudget, Database, ReadableCloneableVec};
+use vecdb::{BinaryTransform, Database, ReadableCloneableVec};
 
 use super::Vecs;
 
 const VERSION: Version = Version::ONE;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -18,10 +17,9 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     let v = version + VERSION;
 
-    let high = Price::forced_import(cache, db, "price_ath", v, mappings)?;
+    let high = Price::forced_import(db, "price_ath", v, mappings)?;
 
-    let max_days_between =
-        PerBlock::forced_import(cache, db, "max_days_between_price_ath", v, mappings)?;
+    let max_days_between = PerBlock::forced_import(db, "max_days_between_price_ath", v, mappings)?;
 
     let max_years_between = LazyPerBlock::from_resolutions::<DaysToYears>(
         "max_years_between_price_ath",
@@ -29,7 +27,7 @@ pub fn forced_import(
         &max_days_between,
     );
 
-    let days_since = PerBlock::forced_import(cache, db, "days_since_price_ath", v, mappings)?;
+    let days_since = PerBlock::forced_import(db, "days_since_price_ath", v, mappings)?;
 
     let years_since =
         LazyPerBlock::from_resolutions::<DaysToYears>("years_since_price_ath", v, &days_since);

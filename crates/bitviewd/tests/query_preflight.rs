@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::{
     mem::discriminant,
     thread,
@@ -13,7 +14,6 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::{Addr, BlockHash, NextBlockHash, Txid};
 use tempfile::tempdir;
-use vecdb::CacheBudget;
 
 #[test]
 fn query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
@@ -26,12 +26,11 @@ fn query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() 
 }
 
 fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
+    init_cache();
     let directory = tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-    let plugins =
-        DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader)
-            .unwrap();
+    let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
 
     let gate = plugins.publication().clone();
     let query = Query::build(&plugins, None);
@@ -157,4 +156,6 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
     assert!(matches!(query.addr(addr), Err(Error::UnknownAddr)));
 }
 
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

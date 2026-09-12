@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::{Error, Result};
 use brk_types::{Bytes, Height, OpReturnKind, OpReturnPolicyId, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, Rw, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableCloneableVec, Rw, VecIndex};
 
 use super::{BlockMetrics, DataBytesSeries, FeesSeries};
 use crate::{by_kind::ByKind, policy::Policy};
@@ -34,7 +34,6 @@ macro_rules! impl_breakdown {
         impl $name {
             #[allow(clippy::too_many_arguments)]
             pub fn forced_import(
-                cache: &'static CacheBudget,
                 db: &Database,
                 series_prefix: &str,
                 version: Version,
@@ -47,7 +46,6 @@ macro_rules! impl_breakdown {
                 let version = version + Version::ONE;
                 let output_count = $group::try_new(|_, name| {
                     PerBlockCumulativeRolling::forced_import(
-                        cache,
                         db,
                         &format!("{series_prefix}_{name}_output_count"),
                         version,
@@ -58,7 +56,6 @@ macro_rules! impl_breakdown {
                 let data_bytes = $group::try_new(|_, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let source = PerBlockCumulativeRolling::forced_import(
-                        cache,
                         db,
                         &format!("{prefix}_data_bytes"),
                         version,
@@ -71,7 +68,6 @@ macro_rules! impl_breakdown {
                 })?;
                 let tx_count = $group::try_new(|_, name| {
                     PerBlockCumulativeRolling::forced_import(
-                        cache,
                         db,
                         &format!("{series_prefix}_{name}_tx_count"),
                         version,
@@ -81,7 +77,6 @@ macro_rules! impl_breakdown {
                 })?;
                 let tx_vsize = $group::try_new(|_, name| {
                     PerBlockCumulativeRolling::forced_import(
-                        cache,
                         db,
                         &format!("{series_prefix}_{name}_tx_vsize"),
                         version,
@@ -92,7 +87,6 @@ macro_rules! impl_breakdown {
                 let fees = $group::try_new(|_, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let source = PerBlockCumulativeRolling::forced_import(
-                        cache,
                         db,
                         &format!("{prefix}_fees"),
                         version,

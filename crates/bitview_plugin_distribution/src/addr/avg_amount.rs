@@ -1,14 +1,14 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazySpotValuePerBlock, import_cached};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, WritableVec,
+    AnyStoredVec, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use crate::AllChainSources;
@@ -22,15 +22,14 @@ pub struct AvgAmountVecs<M: StorageMode = Rw> {
     /// address count.
     pub addr: WithAddrTypes<LazySpotValuePerBlock>,
     #[traversable(hidden)]
-    utxo_source: ByAddrType<StoredSeries<Height, Sats, M>>,
+    utxo_source: ByAddrType<CachedSeries<Height, Sats, M>>,
     #[traversable(hidden)]
-    addr_source: ByAddrType<StoredSeries<Height, Sats, M>>,
+    addr_source: ByAddrType<CachedSeries<Height, Sats, M>>,
 }
 
 impl AvgAmountVecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -52,16 +51,14 @@ impl AvgAmountVecs {
             |_, count, supply| supply / count,
         );
         let utxo_source = ByAddrType::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{}_avg_utxo_amount_sats", id.name()),
                 version + Version::ONE,
             )
         })?;
         let addr_source = ByAddrType::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{}_avg_addr_amount_sats", id.name()),
                 version + Version::ONE,

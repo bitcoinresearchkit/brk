@@ -46,7 +46,7 @@ pub struct DefaultPlugins<M: StorageMode = Rw> {
     constants: Box<Constants>,
     mappings: Box<Mappings<M>>,
     indicators: Box<Indicators<M>>,
-    investing: Box<Investing>,
+    investing: Box<Investing<M>>,
     market: Box<Market<M>>,
     pools: Box<Pools<M>>,
     price: Box<Price<M>>,

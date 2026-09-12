@@ -395,13 +395,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+    use crate::test_cache::init_cache;
+
     use bitview_transforms::RatioSats;
     use brk_types::{Height, PartsPerMillion32, Sats};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, ReadableVec, WritableVec,
+        AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
     };
 
     use super::*;
@@ -412,21 +412,15 @@ mod tests {
 
     #[test]
     fn derives_rolling_ratios_from_one_source_and_cached_denominator() {
+        init_cache();
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut source: EagerVec<PcoVec<Height, Sats, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+        let mut source: EagerVec<PcoVec<Height, Sats, Budgeted>> =
+            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
         let mut denominator: EagerVec<PcoVec<Height, Sats, Budgeted>> =
-            EagerVec::forced_import_with(
-                ImportOptions::new(&db, "denominator", Version::ONE).with_cache_budget(&TEST_CACHE),
-            )
-            .unwrap();
-        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "starts", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+            EagerVec::forced_import(&db, "denominator", Version::ONE).unwrap();
+        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> =
+            EagerVec::forced_import(&db, "starts", Version::ONE).unwrap();
 
         for value in [10, 30, 60, 100] {
             source.push(Sats::new(value));

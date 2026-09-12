@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::collections::BTreeMap;
 
 use bitview_transforms::RatioDollars;
@@ -10,12 +11,11 @@ use vecdb::{
     AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, Database, ReadableVec, WritableVec,
 };
 
-use crate::common::CACHE_BUDGET;
-
 mod common;
 
 #[test]
 fn stored_and_lazy_views_publish_bps_not_ppm() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
@@ -28,14 +28,8 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
         BasisPoints32::MAX,
         BasisPoints32::from(74_641.0),
     ];
-    let mut stored = BasisPointsPerBlock::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "puell_multiple",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut stored =
+        BasisPointsPerBlock::forced_import(&db, "puell_multiple", Version::ONE, &indexes).unwrap();
     for value in values {
         stored.bps.height.push(value);
     }
@@ -91,14 +85,8 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
     assert_eq!(stored.bps.day1.collect(), lazy.bps.day1.collect());
     drop(lazy);
     drop(stored);
-    let reopened = BasisPointsPerBlock::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "puell_multiple",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let reopened =
+        BasisPointsPerBlock::forced_import(&db, "puell_multiple", Version::ONE, &indexes).unwrap();
     assert_eq!(reopened.bps.height.collect_range_at(0, 6), values);
 }
 
@@ -118,3 +106,7 @@ fn puell_transform_floors_and_preserves_nonfinite_zero_behavior() {
         );
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

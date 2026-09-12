@@ -9,7 +9,7 @@ use std::{
     thread,
 };
 
-use super::{Cache, CacheBudget, CachePolicy, NoCache, Request, Table, Value};
+use super::{Account, Cache, CacheBudget, CachePolicy, NoCache, Request, Table, Value};
 use crate::{Error, READ_CHUNK_SIZE};
 
 fn load(ranges: &[Range<usize>]) -> Vec<(usize, Vec<u64>)> {
@@ -28,6 +28,27 @@ fn inline_values_and_no_cache_stay_small() {
     assert_eq!(size_of::<Value<u64>>(), 16);
     assert_eq!(size_of::<<NoCache as CachePolicy>::State<u64>>(), 0);
     assert!(NoCache::cache::<u64>(&NoCache).is_none());
+}
+
+#[test]
+fn batched_older_gaps_reuse_spare_directory_capacity_at_the_budget_limit() {
+    let budget = Box::leak(Box::new(CacheBudget::new(Table::<u64>::charge_for(16))));
+    let cache = Cache::new(budget);
+    let initial: Vec<_> = (0..9).map(|i| i * 10).collect();
+    cache.read_scope(|| cache.read(Request::Sorted(&initial), &mut Vec::new(), load));
+    let pointer = cache.table.read().entries.as_ptr();
+    assert_eq!(budget.used(), budget.limit());
+
+    let mut out = Vec::new();
+    cache.read_scope(|| cache.read(Request::Sorted(&[5, 15]), &mut out, load));
+    assert_eq!(out, [5, 15]);
+    for index in initial.into_iter().chain([5, 15]) {
+        assert!(cache.try_read_range(index, index + 1, || 100, &mut Vec::new()));
+    }
+    assert_eq!(cache.table.read().entries.as_ptr(), pointer);
+    assert_eq!(budget.used(), budget.limit());
+    drop(cache);
+    assert_eq!(budget.used(), 0);
 }
 
 #[test]
@@ -70,6 +91,107 @@ impl Clone for CountedValue {
             index: self.index,
             clones: self.clones.clone(),
         }
+    }
+}
+
+#[test]
+fn decoder_overread_retains_only_requested_points_and_ranges() {
+    let budget = test_budget();
+    let cache = Cache::new(budget);
+    let clones = Arc::new(AtomicUsize::new(0));
+    let indices = [11, 11, 14, 15, 19];
+    cache.read_scope(|| {
+        let mut out = Vec::new();
+        cache.read(Request::Sorted(&indices), &mut out, |ranges| {
+            assert_eq!(ranges, &[11..12, 14..16, 19..20]);
+            [10..17, 18..21]
+                .into_iter()
+                .map(|range| {
+                    let start = range.start;
+                    let values = range
+                        .map(|index| CountedValue {
+                            index,
+                            clones: clones.clone(),
+                        })
+                        .collect();
+                    (start, values)
+                })
+                .collect()
+        });
+        assert_eq!(
+            out.iter().map(|value| value.index).collect::<Vec<_>>(),
+            indices
+        );
+        // Five output values (including the duplicate) and four retained values.
+        assert_eq!(clones.load(Ordering::Relaxed), 9);
+        assert_eq!(Arc::strong_count(&clones), 10);
+        {
+            let table = cache.table.read();
+            assert_eq!(table.len(), 3);
+            assert!(matches!(&table[0], (11, Value::One(_))));
+            assert!(matches!(&table[1], (14, Value::Many(_, 2))));
+            assert!(matches!(&table[2], (19, Value::One(_))));
+        }
+        for index in [10, 12, 13, 16, 17, 18, 20] {
+            assert!(!cache.try_read_range(index, index + 1, || 21, &mut Vec::new()));
+        }
+        out.clear();
+        cache.read(Request::Sorted(&indices), &mut out, |_| {
+            panic!("warm read decoded")
+        });
+        assert_eq!(
+            out.iter().map(|value| value.index).collect::<Vec<_>>(),
+            indices
+        );
+    });
+    drop(cache);
+    assert_eq!(Arc::strong_count(&clones), 1);
+    assert_eq!(budget.used(), 0);
+}
+
+#[test]
+fn batch_merges_move_non_copy_values_without_cloning_or_losing_ownership() {
+    for (old, incoming) in [
+        (vec![], vec![1, 3, 5]),
+        (vec![0, 4, 8], vec![2, 6]),
+        (vec![4, 8], vec![0, 1, 2]),
+        (vec![0, 2, 4], vec![5, 6]),
+        (vec![1, 3, 5, 7], vec![0, 2, 4, 6, 8]),
+    ] {
+        let budget = test_budget();
+        let account = Account::new(budget);
+        let clones = Arc::new(AtomicUsize::new(0));
+        let mut expected: Vec<_> = old.iter().chain(&incoming).copied().collect();
+        expected.sort_unstable();
+        let entries = |indices: Vec<usize>| {
+            indices
+                .into_iter()
+                .map(|index| {
+                    (
+                        index,
+                        Value::One(CountedValue {
+                            index,
+                            clones: clones.clone(),
+                        }),
+                    )
+                })
+                .collect()
+        };
+        let mut table = Table::new();
+        table.insert(entries(old), &account);
+        table.insert(entries(incoming), &account);
+        assert_eq!(
+            table
+                .iter()
+                .map(|(_, value)| value.slice()[0].index)
+                .collect::<Vec<_>>(),
+            expected
+        );
+        assert_eq!(clones.load(Ordering::Relaxed), 0);
+        assert_eq!(Arc::strong_count(&clones), expected.len() + 1);
+        drop(table);
+        assert_eq!(Arc::strong_count(&clones), 1);
+        assert_eq!(budget.used(), 0);
     }
 }
 
@@ -135,7 +257,7 @@ fn complete_hits_span_adjacent_ranges_and_sorted_gaps() {
                 load,
             );
         }
-        assert_eq!(cache.shared.table.read().len(), 3);
+        assert_eq!(cache.table.read().len(), 3);
         let mut out = vec![99];
         assert!(cache.try_read_range(17, 19_999, || 40_000, &mut out));
         assert_eq!(&out[1..], &(17..19_999).collect::<Vec<_>>());
@@ -160,7 +282,7 @@ fn generic_fills_and_source_rewrites_match_a_model() {
         let to = (from + 1 + (seed >> 32) as usize % 180).min(model.len());
         if turn % 17 == 0 {
             cache
-                .update(from, true, || {
+                .update(from, || {
                     for (at, value) in model.iter_mut().enumerate().take(to).skip(from) {
                         *value = [turn, at as u64, seed];
                     }
@@ -178,12 +300,12 @@ fn generic_fills_and_source_rewrites_match_a_model() {
             })
         });
         assert_eq!(out, model[from..to], "turn {turn}");
-        let table = cache.shared.table.read();
+        let table = cache.table.read();
         let mut previous_end = 0;
-        for (&at, value) in table.iter() {
-            assert!(at >= previous_end);
+        for (at, value) in table.iter() {
+            assert!(*at >= previous_end);
             previous_end = at + value.len();
-            assert_eq!(value.slice(), &model[at..previous_end], "turn {turn}");
+            assert_eq!(value.slice(), &model[*at..previous_end], "turn {turn}");
         }
     }
 }
@@ -223,7 +345,7 @@ fn active_reads_exclude_publication_and_callbacks_can_reenter() {
             start.wait();
             started_tx.send(()).unwrap();
             writer
-                .update(0, true, || {
+                .update(0, || {
                     done_tx.send(()).unwrap();
                     Ok(())
                 })
@@ -278,7 +400,8 @@ fn copied_prefix_does_not_make_an_oversized_request_admissible() {
         let before = budget.used();
         let mut out = Vec::new();
         cache.read(Request::Range(0, 2 * N), &mut out, |ranges| {
-            assert_eq!(ranges, &[N..2 * N]);
+            assert_eq!(ranges.len(), 1);
+            assert_eq!(ranges[0], N..2 * N);
             load(ranges)
         });
         assert_eq!(out, (0..2 * N as u64).collect::<Vec<_>>());
@@ -369,16 +492,14 @@ fn failed_updates_fail_closed_until_a_successful_update() {
     cache.read_scope(|| cache.read(Request::Range(0, 4), &mut Vec::new(), load));
     assert!(
         cache
-            .update(2, true, || Err::<(), _>(Error::InvalidArgument(
-                "failed write"
-            )))
+            .update(2, || Err::<(), _>(Error::InvalidArgument("failed write")))
             .is_err()
     );
     let mut out = vec![99];
     assert!(!cache.try_read_range(0, 2, || 4, &mut out));
     assert_eq!(out, [99]);
     assert!(catch_unwind(AssertUnwindSafe(|| cache.read_scope(|| ()))).is_err());
-    cache.update(2, true, || Ok(())).unwrap();
+    cache.update(2, || Ok(())).unwrap();
     assert!(cache.try_read_range(0, 2, || 4, &mut out));
     assert_eq!(out, [99, 0, 1]);
     assert!(!cache.try_read_range(2, 4, || 4, &mut out));
@@ -406,22 +527,22 @@ fn mixed_source_pressure_never_exceeds_the_shared_limit() {
 
 #[test]
 fn pressure_reclaims_a_fragmented_source_despite_many_idle_owners() {
-    let budget = Box::leak(Box::new(CacheBudget::new(512 * 1024)));
+    let budget = Box::leak(Box::new(CacheBudget::new(
+        Table::<u64>::charge_for(16_384) + 65_536,
+    )));
     let hot = Cache::new(budget);
     let incoming = Cache::new(budget);
     let idle: Vec<_> = (0..126).map(|_| Cache::<u64>::new(budget)).collect();
-    let count = (budget.limit() - Table::<u64>::root_bytes()) / Table::<u64>::entry_bytes();
+    let count = 16_384;
     let indices: Vec<_> = (0..count).map(|index| index * 2).collect();
     hot.read_scope(|| hot.read(Request::Sorted(&indices), &mut Vec::new(), load));
-    assert!(budget.used() > budget.limit() * 3 / 4);
-    let revision = hot.revision();
+    assert!(budget.used() >= budget.limit() * 3 / 4);
 
     let mut out = Vec::new();
     incoming.read_scope(|| incoming.read(Request::Range(0, 16_384), &mut out, load));
     assert_eq!(out, (0..16_384).collect::<Vec<_>>());
     assert!(incoming.try_read_range(0, 16_384, || 16_384, &mut Vec::new()));
-    assert!(hot.shared.table.read().is_empty());
-    assert_eq!(hot.revision(), revision);
+    assert!(hot.table.read().is_empty());
     assert!(budget.used() <= budget.limit());
     drop((hot, incoming, idle));
     assert_eq!(budget.used(), 0);
@@ -438,14 +559,14 @@ fn pressure_rotates_whole_source_victims() {
         fill(cache);
     }
     let bytes = budget.limit() - budget.used() + 1;
-    let charge = budget.reserve(bytes).unwrap();
-    assert!(caches[0].shared.table.read().is_empty());
-    assert_eq!(caches[1].shared.table.read().len(), 3);
+    let charge = Account::new(budget).reserve(bytes).unwrap();
+    assert!(caches[0].table.read().is_empty());
+    assert_eq!(caches[1].table.read().len(), 3);
     drop(charge);
     fill(&caches[0]);
-    let charge = budget.reserve(bytes).unwrap();
-    assert_eq!(caches[0].shared.table.read().len(), 3);
-    assert!(caches[1].shared.table.read().is_empty());
+    let charge = Account::new(budget).reserve(bytes).unwrap();
+    assert_eq!(caches[0].table.read().len(), 3);
+    assert!(caches[1].table.read().is_empty());
     drop((charge, caches));
     assert_eq!(budget.used(), 0);
 }
@@ -455,16 +576,16 @@ fn pressure_skips_busy_sources_and_keeps_borrowed_buffers_charged() {
     let budget = test_budget();
     let cache = Cache::new(budget);
     cache.read_scope(|| cache.read(Request::Range(0, 4096), &mut Vec::new(), load));
-    let table = cache.shared.table.read();
-    assert!(budget.reserve(budget.limit()).is_none());
+    let table = cache.table.read();
+    assert!(Account::new(budget).reserve(budget.limit()).is_none());
     assert!(!table.is_empty());
     drop(table);
 
     cache.read_scope(|| {
         cache
             .try_for_each_chunk(0, 4096, load, |_, values| {
-                assert!(budget.reserve(budget.limit()).is_none());
-                assert!(cache.shared.table.read().is_empty());
+                assert!(Account::new(budget).reserve(budget.limit()).is_none());
+                assert!(cache.table.read().is_empty());
                 assert!(budget.used() >= 4096 * size_of::<u64>());
                 assert!(budget.used() <= budget.limit());
                 assert_eq!(values, (0..4096).collect::<Vec<_>>());
@@ -473,7 +594,7 @@ fn pressure_skips_busy_sources_and_keeps_borrowed_buffers_charged() {
             .unwrap();
     });
     assert_eq!(budget.used(), 0);
-    let charge = budget.reserve(budget.limit()).unwrap();
+    let charge = Account::new(budget).reserve(budget.limit()).unwrap();
     assert_eq!(budget.used(), budget.limit());
     drop(charge);
     assert_eq!(budget.used(), 0);
@@ -485,16 +606,16 @@ fn pressure_handles_dropped_sources_and_outliving_borrows() {
     let expired = Cache::new(budget);
     let live = Cache::new(budget);
     expired.read_scope(|| expired.read(Request::Range(0, 4096), &mut Vec::new(), load));
-    let borrowed = expired.shared.borrowed(Request::Range(0, 4096));
+    let borrowed = expired.borrowed(Request::Range(0, 4096));
     drop(expired);
 
     live.read_scope(|| live.read(Request::Sorted(&[1, 3, 5]), &mut Vec::new(), load));
-    assert!(budget.reserve(budget.limit()).is_none());
-    assert!(live.shared.table.read().is_empty());
+    assert!(Account::new(budget).reserve(budget.limit()).is_none());
+    assert!(live.table.read().is_empty());
     drop(live);
     // Sweep the last dead owner, then retry with an empty registry.
     for _ in 0..2 {
-        assert!(budget.reserve(budget.limit()).is_none());
+        assert!(Account::new(budget).reserve(budget.limit()).is_none());
         assert!(budget.used() >= 4096 * size_of::<u64>());
         assert_eq!(borrowed[0].1.slice(), (0..4096).collect::<Vec<_>>());
     }
@@ -503,9 +624,54 @@ fn pressure_handles_dropped_sources_and_outliving_borrows() {
 
     let replacement = Cache::new(budget);
     replacement.read_scope(|| replacement.read(Request::Sorted(&[1, 3, 5]), &mut Vec::new(), load));
-    let charge = budget.reserve(budget.limit()).unwrap();
-    assert!(replacement.shared.table.read().is_empty());
+    let charge = Account::new(budget).reserve(budget.limit()).unwrap();
+    assert!(replacement.table.read().is_empty());
     assert_eq!(budget.used(), budget.limit());
     drop((charge, replacement));
     assert_eq!(budget.used(), 0);
+}
+
+#[test]
+fn truncation_preserves_the_allocation_and_does_not_copy_a_borrowed_prefix() {
+    let budget = test_budget();
+    let cache = Cache::new(budget);
+    cache.read_scope(|| cache.read(Request::Range(0, 1024), &mut Vec::new(), load));
+    let borrowed = cache.borrowed(Request::Range(0, 1024));
+    let pointer = borrowed[0].1.slice().as_ptr();
+    let charged = cache.used();
+    assert_eq!(charged, budget.used());
+
+    cache.update(1023, || Ok(())).unwrap();
+    cache.extend_tail(1023, &[9999]); // Shared buffers are not copied to extend a tail.
+    assert_eq!(cache.used(), charged);
+    assert!(cache.try_read_range(0, 1023, || 1024, &mut Vec::new()));
+    assert!(!cache.try_read_range(1023, 1024, || 1024, &mut Vec::new()));
+    assert_eq!(cache.table.read()[0].1.slice().as_ptr(), pointer);
+    assert_eq!(borrowed[0].1.slice()[1023], 1023);
+
+    drop(borrowed);
+    cache.extend_tail(1023, &[9999]);
+    assert_eq!(cache.used(), charged);
+    let mut out = Vec::new();
+    assert!(cache.try_read_range(1022, 1024, || 1024, &mut out));
+    assert_eq!(out, [1022, 9999]);
+
+    let account = cache.account.clone();
+    let borrowed = cache.borrowed(Request::Range(0, 1024));
+    drop(cache);
+    assert!(account.used() > 0);
+    assert_eq!(account.used(), budget.used());
+    drop(borrowed);
+    assert_eq!(account.used(), 0);
+    assert_eq!(budget.used(), 0);
+}
+
+#[test]
+fn cached_probe_does_not_wait_for_a_busy_directory() {
+    let cache = Cache::new(test_budget());
+    cache.read_scope(|| cache.read(Request::Range(0, 16), &mut Vec::new(), load));
+    let _busy = cache.table.write();
+    let mut out = vec![99];
+    assert!(!cache.try_read_range(0, 16, || 16, &mut out));
+    assert_eq!(out, [99]);
 }

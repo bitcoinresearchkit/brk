@@ -5,10 +5,10 @@ use std::sync::{
 
 use bitview_transforms::RatioU64;
 use bitview_vecs::{
-    CumulativeCountVec, LazyIndexCountVec, LazyIndexedVec, LazyLookbackVec, LazyPreviousDeltaVec,
-    LazyRollingRatioVec, LazySinceDayVec, LazyWindowVec,
+    LazyIndexCountVec, LazyIndexedVec, LazyLookbackVec, LazyPreviousDeltaVec, LazyRollingRatioVec,
+    LazySinceDayVec, LazyWindowVec,
 };
-use brk_types::{Day1, Height, PartsPerMillion32, StoredU16, StoredU64, Version};
+use brk_types::{Day1, Height, PartsPerMillion32, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, BinaryTransform, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
@@ -87,8 +87,6 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
     );
     let starts = stored(&db, "starts", (0_usize..64).map(|i| Height::from(i / 3)));
     let days = common::first_heights("days", (0..8usize).map(|i| Height::from(i * 8)));
-    let denominator = stored(&db, "denominator", (0..64).map(|_| StoredU16::new(10)));
-    let denominator = CumulativeCountVec::new(&denominator);
     let cumulative = stored(
         &db,
         "cumulative",
@@ -125,7 +123,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
     let ratio = LazyIndexedVec::new(
         "ratio",
         Version::ONE,
-        &denominator,
+        &cumulative,
         &source,
         |_, count, numerator| RatioU64::<PartsPerMillion32>::apply(numerator, count),
     );
@@ -134,7 +132,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         StoredU64,
         PartsPerMillion32,
         ReverseOperands<RatioU64<PartsPerMillion32>>,
-    >::new("rolling", Version::ONE, &denominator, &source, &starts);
+    >::new("rolling", Version::ONE, &cumulative, &source, &starts);
     let cached_rolling = LazyRollingRatioVec::<
         StoredU64,
         StoredU64,
@@ -194,3 +192,7 @@ fn fallible_fold_stops_transforming_after_the_first_error() {
     assert_eq!(result, Err(()));
     assert_eq!(calls.load(Ordering::Relaxed), 3);
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

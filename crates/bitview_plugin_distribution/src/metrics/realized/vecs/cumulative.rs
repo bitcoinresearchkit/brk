@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyFiatPerBlockCumulativeWithSums, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{Cents, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::{AmountSources, CumulativeUTXOSources};
 
@@ -23,7 +23,6 @@ pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
 
 impl CumulativeRealizedByCohort {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -31,7 +30,6 @@ impl CumulativeRealizedByCohort {
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = CumulativeUTXOSources::forced_import(
-            cache,
             db,
             &format!("{metric}_cumulative_cents"),
             version,
@@ -52,7 +50,6 @@ impl CumulativeRealizedByCohort {
         });
         let addr_version = version + Version::ONE;
         let addr_balance = AmountSources::forced_import(
-            cache,
             db,
             &format!("addrs_{metric}_cumulative_cents_by_balance_range"),
             CohortContext::Addr,

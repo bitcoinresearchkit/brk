@@ -6,15 +6,16 @@ use bitview_query::Vecs;
 use brk_error::Result;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use vecdb::{CacheBudget, ReadOnlyClone};
+use vecdb::{Budgeted, ReadOnlyClone};
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     let tmp = env::temp_dir().join("brk_search_gen");
     fs::create_dir_all(&tmp)?;
 
     let client = Client::new("http://127.0.0.1:1", Auth::None)?;
     let reader = Reader::new_without_rlimit(tmp.join("blocks"), &client);
-    let context = ImportContext::new(&tmp, &CACHE_BUDGET);
+    let context = ImportContext::new(&tmp);
     let plugins = DefaultPlugins::import(context, &reader)?;
 
     let plugins_ro = plugins.read_only_clone();
@@ -34,5 +35,3 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

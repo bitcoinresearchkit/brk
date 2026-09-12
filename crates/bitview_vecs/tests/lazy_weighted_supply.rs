@@ -1,9 +1,9 @@
+use crate::test_cache::init_cache;
 mod common;
 
-use crate::common::CACHE_BUDGET;
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_compute::WeightedCohortState;
-use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazySpotValuePerBlock, import_cached};
 use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{
@@ -12,28 +12,17 @@ use vecdb::{
 
 #[test]
 fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
         common::first_heights("daily_first_height", [0usize, 2, 4].map(Height::from));
-    let mut supply: AgeRange<StoredSeries<Height, Sats>> = AgeRange::from_fn(|id| {
-        import_stored(
-            &CACHE_BUDGET,
-            &db,
-            &format!("supply_{}", id.index()),
-            Version::ONE,
-        )
-        .unwrap()
+    let mut supply: AgeRange<CachedSeries<Height, Sats>> = AgeRange::from_fn(|id| {
+        import_cached(&db, &format!("supply_{}", id.index()), Version::ONE).unwrap()
     });
-    let mut weights: AgeRange<StoredSeries<Height, BoundedRatio>> = AgeRange::from_fn(|id| {
-        import_stored(
-            &CACHE_BUDGET,
-            &db,
-            &format!("weights_{}", id.index()),
-            Version::ONE,
-        )
-        .unwrap()
+    let mut weights: AgeRange<CachedSeries<Height, BoundedRatio>> = AgeRange::from_fn(|id| {
+        import_cached(&db, &format!("weights_{}", id.index()), Version::ONE).unwrap()
     });
     let mut spot = PcoVec::<Height, Cents>::forced_import(&db, "spot", Version::ONE).unwrap();
     let inputs = [
@@ -157,3 +146,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
         }
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use bitview_transforms::{CentsUnsignedToDollars, CentsUnsignedToSats};
 use bitview_vecs::{OhlcPrice, SplitPrice, SpotPrice};
 use brk_types::{Cents, Height, Version};
@@ -11,19 +12,13 @@ mod common;
 
 #[test]
 fn shared_price_shapes_preserve_integer_units_inverse_extrema_empty_periods_and_rewrites() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
         common::first_heights("day_starts", [0usize, 2, 2, 4].map(Height::from));
-    let mut spot = SpotPrice::forced_import(
-        &common::CACHE_BUDGET,
-        &db,
-        "price",
-        Version::new(31),
-        &indexes,
-    )
-    .unwrap();
+    let mut spot = SpotPrice::forced_import(&db, "price", Version::new(31), &indexes).unwrap();
     let _: &EagerVec<PcoVec<Height, Cents, Budgeted>> = &spot.cents.height;
     for value in [200u64, 400, 100, 800, 300, 600] {
         spot.cents.height.push(Cents::from(value));
@@ -98,3 +93,7 @@ fn shared_price_shapes_preserve_integer_units_inverse_extrema_empty_periods_and_
         Some(Some(Cents::from(1000u64)))
     );
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

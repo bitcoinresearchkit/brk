@@ -53,21 +53,23 @@ impl AllChainSources {
 
 #[cfg(test)]
 mod tests {
-    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+    use crate::test_cache::init_cache;
+
     use std::{
         env, fs, process,
         time::{SystemTime, UNIX_EPOCH},
     };
 
     use vecdb::{
-        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, ReadableCloneableVec, ReadableVec, WritableVec,
+        AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
+        ReadableVec, WritableVec,
     };
 
     use super::*;
 
     #[test]
     fn derives_from_shared_chain_sources() {
+        init_cache();
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -76,19 +78,12 @@ mod tests {
             env::temp_dir().join(format!("brk-all-chain-sources-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
-        let mut supply: EagerVec<PcoVec<Height, Sats, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "supply", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+        let mut supply: EagerVec<PcoVec<Height, Sats, Budgeted>> =
+            EagerVec::forced_import(&db, "supply", Version::ONE).unwrap();
         let mut market_cap: EagerVec<PcoVec<Height, Cents, Budgeted>> =
-            EagerVec::forced_import_with(
-                ImportOptions::new(&db, "market_cap", Version::ONE).with_cache_budget(&TEST_CACHE),
-            )
-            .unwrap();
-        let mut realized: EagerVec<PcoVec<Height, Cents>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "realized", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+            EagerVec::forced_import(&db, "market_cap", Version::ONE).unwrap();
+        let mut realized: EagerVec<PcoVec<Height, Cents>> =
+            EagerVec::forced_import(&db, "realized", Version::ONE).unwrap();
 
         for value in [100_000_000, 100_000_000, 200_000_000] {
             supply.push(Sats::new(value));

@@ -6,7 +6,7 @@ use bitview_vecs::PerBlock;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use super::Sopr24hInput;
 
@@ -17,12 +17,7 @@ pub struct Sopr24hVecs<M: StorageMode = Rw> {
 }
 
 impl Sopr24hVecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         let cohorts = UTXOGroupsWithoutAmountOrType::try_new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "sopr_24h");
             let version = version
@@ -32,7 +27,7 @@ impl Sopr24hVecs {
                 } else {
                     Version::ZERO
                 };
-            PerBlock::forced_import(cache, db, &name, version, mappings)
+            PerBlock::forced_import(db, &name, version, mappings)
         })?;
         Ok(Self { cohorts })
     }

@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{BoundedRatio, Height, StoredF64};
 use vecdb::{Rw, StorageMode};
 
-use bitview_vecs::{LazySpotValuePerBlock, PerBlock, StoredSeries};
+use bitview_vecs::{CachedSeries, LazySpotValuePerBlock, PerBlock};
 
 use super::{Mobility, SpendingExposureSeries};
 
@@ -24,6 +24,6 @@ pub struct AgeRangeVecs<M: StorageMode = Rw> {
     pub spending_exposure: SpendingExposureSeries<M>,
     /// Canonical bounded spending probability, batched by age range.
     #[traversable(hidden)]
-    pub mobility_source: AgeRange<StoredSeries<Height, BoundedRatio, M>>,
+    pub mobility_source: AgeRange<CachedSeries<Height, BoundedRatio, M>>,
     pub supply: Mobility<AgeRange<LazySpotValuePerBlock>>,
 }

@@ -4,10 +4,10 @@ use std::sync::{
 };
 
 use bitview_vecs::{
-    CumulativeCountVec, LazyIndexedVec, LazyLookbackVec, LazyPreviousDeltaVec, LazyRollingRatioVec,
-    LazySinceDayVec, LazyWindowVec,
+    LazyIndexedVec, LazyLookbackVec, LazyPreviousDeltaVec, LazyRollingRatioVec, LazySinceDayVec,
+    LazyWindowVec,
 };
-use brk_types::{Day1, Height, StoredU16, StoredU64};
+use brk_types::{Day1, Height, StoredU64};
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, BinaryTransform, BytesVec, Cursor, Database, Ident, ImportableVec,
@@ -42,11 +42,6 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
     let cached_source = source.read_only_clone();
-    let blocks = common::stored::<Height, _>(
-        &db,
-        "ratio_blocks",
-        (0..40_000).map(|_| StoredU16::from(1u16)),
-    );
     let cached = common::stored::<Height, _>(
         &db,
         "ratio_cached",
@@ -69,7 +64,6 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
                 &format!("ratio_starts_{source_id}_{window}"),
                 (0..35_000usize).map(|i| Height::from(i.saturating_sub(window))),
             );
-            let denominator = CumulativeCountVec::new(&blocks);
             let ratio = LazyRollingRatioVec::<StoredU64, StoredU64, StoredU64, TestRatio>::new(
                 "ratio",
                 Version::ONE,
@@ -82,13 +76,11 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
                 StoredU64,
                 StoredU64,
                 ReverseOperands<TestRatio>,
-            >::new(
-                "rolling", Version::ONE, &denominator, &source, &starts
-            );
+            >::new("rolling", Version::ONE, &cached, &source, &starts);
             let cumulative = LazyIndexedVec::new(
                 "cumulative",
                 Version::ONE,
-                &denominator,
+                &cached,
                 &source,
                 |_, count, numerator| TestRatio::apply(numerator, count),
             );
@@ -563,3 +555,7 @@ fn sparse_sources_keep_legacy_emitted_value_alignment() {
         assert_eq!(since.collect_range_at(from, to), expected);
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

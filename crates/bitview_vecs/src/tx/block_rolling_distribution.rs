@@ -2,7 +2,7 @@ use bitview_compute::{ComputedVecValue, NumericValue};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Rw, StorageMode, Version};
+use vecdb::{Database, Rw, StorageMode, Version};
 
 use crate::{IndexSources, PerBlockDistribution};
 
@@ -20,20 +20,13 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self {
-            _6b: PerBlockDistribution::forced_import(
-                cache,
-                db,
-                &format!("{name}_6b"),
-                version,
-                indexes,
-            )?,
+            _6b: PerBlockDistribution::forced_import(db, &format!("{name}_6b"), version, indexes)?,
         })
     }
 }

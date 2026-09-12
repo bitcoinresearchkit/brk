@@ -1,18 +1,18 @@
 #![cfg(feature = "diagnostics")]
 
+use crate::test_cache::init_cache;
 use bitview_collections::Windows;
 use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_types::{Height, StoredF32, StoredU64, Timestamp, Version};
 use tempfile::tempdir;
 use vecdb::{AnyStoredVec, Database, ReadableVec, VecIndex, WritableVec, diagnostics};
 
-use crate::common::CACHE_BUDGET;
-
 #[allow(dead_code)]
 mod common;
 
 #[test]
 fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() {
+    init_cache();
     const N: usize = 32_768;
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
@@ -41,7 +41,6 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         _1y: &starts._1y,
     };
     let mut metric = PerBlockCumulativeRolling::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
         &db,
         "metric",
         Version::ONE,
@@ -65,7 +64,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         .enumerate()
         .map(|(day, _)| days.get(day + 1).copied().unwrap_or(N) - 1)
         .collect();
-    CACHE_BUDGET.clear();
+    init_cache().clear();
     // Eviction includes metadata; exclude it from source-value decompression counts.
     indexes.first_height.day1.collect();
     timestamps.collect();
@@ -182,7 +181,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         &starts_ref,
         &indexes,
     );
-    CACHE_BUDGET.clear();
+    init_cache().clear();
     indexes.first_height.day1.collect();
     timestamps.collect();
     diagnostics::take();
@@ -200,3 +199,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
     lazy.block.collect_range_at(1020, 1030);
     assert_eq!(diagnostics::take(), 0);
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

@@ -1,6 +1,7 @@
+use crate::test_cache::init_cache;
 use bitview_vecs::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
 use brk_types::{Cents, Height, PriceRatio, Version};
-use common::{CACHE_BUDGET, indexes, stored};
+use common::{indexes, stored};
 use tempfile::tempdir;
 use vecdb::{
     AnySerializableVec, AnyStoredVec, Database, ReadableCloneableVec, ReadableVec, WritableVec,
@@ -10,6 +11,7 @@ mod common;
 
 #[test]
 fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
@@ -30,15 +32,8 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
         Cents::new(1),
         Cents::NAN,
     ];
-    let mut imported = PriceWithRatioPerBlock::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "imported",
-        version,
-        &indexes,
-        &spot,
-    )
-    .unwrap();
+    let mut imported =
+        PriceWithRatioPerBlock::forced_import(&db, "imported", version, &indexes, &spot).unwrap();
     for price in prices {
         imported.cents.height.push(price);
     }
@@ -94,3 +89,7 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
     check!(imported);
     check!(lazy);
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

@@ -1,11 +1,12 @@
-use bitview_vecs::PerBlockDistribution;
+use crate::test_cache::init_cache;
+use bitview_vecs::{LazyRollingDistribution, PerBlockDistribution, RollingDistribution};
 use brk_exit::Exit;
 use brk_types::{Height, StoredU64, TxIndex, VSize, Version, get_percentile};
 use common::{indexes, stored};
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, AnyVec, Database, Ident, ReadableVec, WritableVec};
-
-use crate::common::CACHE_BUDGET;
+use vecdb::{
+    AnyStoredVec, AnyVec, Database, Ident, ImportableVec, PcoVec, ReadableVec, WritableVec,
+};
 
 mod common;
 
@@ -24,6 +25,7 @@ fn weighted_reference(values: &[(StoredU64, VSize)], rank: f64) -> StoredU64 {
 
 #[test]
 fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
@@ -39,8 +41,16 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
                 .collect()
         })
         .collect();
-    let values = stored::<TxIndex, _>(&db, "values", blocks.iter().flatten().map(|&(v, _)| v));
-    let weights = stored::<TxIndex, _>(&db, "weights", blocks.iter().flatten().map(|&(_, w)| w));
+    let mut values =
+        PcoVec::<TxIndex, StoredU64>::forced_import(&db, "values", Version::ONE).unwrap();
+    let mut weights =
+        PcoVec::<TxIndex, VSize>::forced_import(&db, "weights", Version::ONE).unwrap();
+    for &(value, weight) in blocks.iter().flatten() {
+        values.push(value);
+        weights.push(weight);
+    }
+    values.write().unwrap();
+    weights.write().unwrap();
     let counts = stored::<Height, _>(
         &db,
         "counts",
@@ -61,14 +71,9 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
         for nblocks in [1, 6] {
             for skip in [0, 1, 20] {
                 let name = format!("output_{weighted}_{nblocks}_{skip}");
-                let mut output = PerBlockDistribution::forced_import(
-                    &CACHE_BUDGET,
-                    &db,
-                    &name,
-                    Version::ONE,
-                    &indexes,
-                )
-                .unwrap();
+                let mut output =
+                    PerBlockDistribution::forced_import(&db, &name, Version::ONE, &indexes)
+                        .unwrap();
                 let compute = |output: &mut PerBlockDistribution<StoredU64>, from: usize| {
                     let from = Height::from(from);
                     match (weighted, nblocks) {
@@ -162,18 +167,13 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
 
 #[test]
 fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
-    use bitview_vecs::{LazyRollingDistribution, RollingDistribution};
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
-    let mut source = RollingDistribution::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "source",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut source =
+        RollingDistribution::<StoredU64>::forced_import(&db, "source", Version::ONE, &indexes)
+            .unwrap();
     let mut value = 0u64;
     let stats = &mut source.0;
     for windows in [
@@ -224,3 +224,7 @@ fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
         }
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

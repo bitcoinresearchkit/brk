@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOSources;
 
@@ -19,19 +19,14 @@ pub struct SpentOutputCount<M: StorageMode = Rw> {
 
 impl SpentOutputCount {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let stored = CumulativeUTXOSources::forced_import(
-            cache,
-            db,
-            "spent_utxo_count_cumulative",
-            version,
-        )?;
+        let stored =
+            CumulativeUTXOSources::forced_import(db, "spent_utxo_count_cumulative", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "spent_utxo_count");
             LazyPerBlockCumulativeRolling::from_cumulative_source(

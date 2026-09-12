@@ -7,7 +7,7 @@ use bitview_vecs::{OhlcPrice, SplitPrice, SpotPrice};
 use brk_error::Result;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 mod compute;
 mod dependencies;
@@ -55,23 +55,17 @@ where
 impl Vecs {
     pub fn import(context: ImportContext<'_>, mappings: &MappingsVecs) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
-        let this = Self::forced_import_inner(
-            context.cache_budget(),
-            &db,
-            STORAGE.schema_version(),
-            mappings,
-        )?;
+        let this = Self::forced_import_inner(&db, STORAGE.schema_version(), mappings)?;
         STORAGE.finalize_database(&this.db)?;
         Ok(this)
     }
 
     fn forced_import_inner(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
     ) -> Result<Self> {
-        let spot = SpotPrice::forced_import(cache, db, "price", version, mappings)?;
+        let spot = SpotPrice::forced_import(db, "price", version, mappings)?;
         let ohlc = OhlcPrice::from_spot("price_ohlc", version, mappings, &spot);
         let split = SplitPrice::new("price", version, mappings, &spot, &ohlc);
 

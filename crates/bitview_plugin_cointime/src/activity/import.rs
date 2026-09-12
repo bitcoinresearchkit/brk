@@ -4,13 +4,12 @@ use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_vecs::{LazyPerBlock, LazyWindowStartVec, PerBlock, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database};
+use vecdb::Database;
 
 use super::{DerivedVecs, Vecs};
 
 impl DerivedVecs {
     fn forced_import_with_prefix(
-        cache: &'static CacheBudget,
         db: &Database,
         prefix: &str,
         version: Version,
@@ -25,13 +24,8 @@ impl DerivedVecs {
         };
         let liveliness_name = name("liveliness");
         let version = version + Version::ONE;
-        let liveliness_source = PerBlock::forced_import(
-            cache,
-            db,
-            &name("liveliness_bounded_source"),
-            version,
-            mappings,
-        )?;
+        let liveliness_source =
+            PerBlock::forced_import(db, &name("liveliness_bounded_source"), version, mappings)?;
         let liveliness = LazyPerBlock::from_resolutions::<BoundedToF64>(
             &liveliness_name,
             version,
@@ -58,7 +52,6 @@ impl DerivedVecs {
 }
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -66,7 +59,6 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     Ok(Vecs {
         coinblocks_created: PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             "coinblocks_created",
             version,
@@ -74,13 +66,12 @@ pub fn forced_import(
             window_starts,
         )?,
         coinblocks_stored: PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             "coinblocks_stored",
             version,
             mappings,
             window_starts,
         )?,
-        derived: DerivedVecs::forced_import_with_prefix(cache, db, "", version, mappings)?,
+        derived: DerivedVecs::forced_import_with_prefix(db, "", version, mappings)?,
     })
 }

@@ -1,12 +1,12 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazyPerBlock, import_cached};
 use brk_error::Result;
 use brk_types::{Height, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Ident, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, Ident, Rw, StorageMode, WritableVec};
 
 use super::AddrTypeToAddrCount;
 
@@ -17,12 +17,11 @@ pub struct AddrCountsVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub series: WithAddrTypes<LazyPerBlock<StoredU64>>,
     #[traversable(hidden)]
-    pub stored: WithAddrTypes<StoredSeries<Height, StoredU64, M>>,
+    pub stored: WithAddrTypes<CachedSeries<Height, StoredU64, M>>,
 }
 
 impl AddrCountsVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -30,12 +29,12 @@ impl AddrCountsVecs {
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = WithAddrTypes {
-            all: import_stored(cache, db, name, version)?,
+            all: import_cached(db, name, version)?,
             by_addr_type: ByAddrType::try_from_fn(|id| {
-                import_stored(cache, db, &format!("{}_{name}", id.name()), version)
+                import_cached(db, &format!("{}_{name}", id.name()), version)
             })?,
         };
-        let build = |name: &str, source: &StoredSeries<Height, StoredU64>| {
+        let build = |name: &str, source: &CachedSeries<Height, StoredU64>| {
             LazyPerBlock::from_height_source::<Ident>(name, version, source, mappings)
         };
         let series = WithAddrTypes {

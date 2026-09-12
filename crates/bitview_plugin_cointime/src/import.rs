@@ -26,15 +26,8 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let v1 = version + Version::ONE;
         let spot_price = prices.spot.cents.height.read_only_boxed_clone();
-        let activity = activity::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let activity = activity::forced_import(&db, version, mappings, window_starts)?;
         let age_range = age_range::forced_import(
-            context.cache_budget(),
             &db,
             version,
             mappings,
@@ -42,33 +35,17 @@ impl Vecs {
             &spot_price,
             distribution,
         )?;
-        let supply = supply::forced_import(
-            context.cache_budget(),
-            &db,
-            v1,
-            mappings,
-            &spot_price,
-            &activity,
-            all_chain,
-        )?;
+        let supply = supply::forced_import(&db, v1, mappings, &spot_price, &activity, all_chain)?;
         let aggregate = aggregate::forced_import(
-            context.cache_budget(),
             &db,
             version + Version::new(4),
             mappings,
             &spot_price,
             &supply.active_supply_in_loss_share.bounded,
         )?;
-        let value = value::forced_import(context.cache_budget(), &db, v1, mappings, window_starts)?;
-        let cap = cap::forced_import(
-            context.cache_budget(),
-            &db,
-            version + Version::TWO,
-            mappings,
-            subsidy_cents,
-        )?;
+        let value = value::forced_import(&db, v1, mappings, window_starts)?;
+        let cap = cap::forced_import(&db, version + Version::TWO, mappings, subsidy_cents)?;
         let prices = prices::forced_import(
-            context.cache_budget(),
             &db,
             version + Version::new(3),
             mappings,
@@ -76,9 +53,8 @@ impl Vecs {
             all_chain,
             cap.cointime.cents.resolutions.height_source(),
         )?;
-        let adjusted = adjusted::forced_import(context.cache_budget(), &db, version, mappings)?;
-        let reserve_risk =
-            reserve_risk::forced_import(context.cache_budget(), &db, v1, mappings, &spot_price)?;
+        let adjusted = adjusted::forced_import(&db, version, mappings)?;
+        let reserve_risk = reserve_risk::forced_import(&db, v1, mappings, &spot_price)?;
 
         let this = Self {
             db,

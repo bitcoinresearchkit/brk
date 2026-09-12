@@ -14,9 +14,10 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use color_eyre::{Result, install};
 use tracing::{debug, info};
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     install()?;
 
     init(Some(Path::new(".log")))?;
@@ -36,7 +37,7 @@ fn main() -> Result<()> {
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     debug!("Reader created.");
 
-    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let context = ImportContext::new(&outputs_dir);
     let mut indexer = Indexer::import(context, &reader)?;
     debug!("Indexer imported.");
 
@@ -54,5 +55,3 @@ fn main() -> Result<()> {
         sleep(Duration::from_secs(60));
     }
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

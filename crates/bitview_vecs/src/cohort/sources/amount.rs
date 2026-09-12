@@ -6,11 +6,11 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, PcoVecValue, ReadableCloneableVec, ReadableVec,
-    Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, Database, PcoVecValue, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode, WritableVec,
 };
 
-use crate::{CumulativeState, StoredSeries, import_stored};
+use crate::{CachedSeries, CumulativeState, import_cached};
 
 /// Named amount cohorts and views derived from their individual sources.
 #[derive(Deref, DerefMut, Traversable)]
@@ -20,14 +20,13 @@ pub struct AmountSources<T: PcoVecValue, S: Clone, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub series: AmountRange<S>,
     #[traversable(hidden)]
-    pub stored: AmountRange<StoredSeries<Height, T, M>>,
+    pub stored: AmountRange<CachedSeries<Height, T, M>>,
     last: M::WriteOnly<CumulativeState<AmountRange<T>>>,
 }
 
 impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         storage_name: &str,
         context: CohortContext,
@@ -37,8 +36,7 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
     ) -> Result<Self> {
         let stored = AmountRange::try_new(|cohort_id| {
             let cohort = cohort_id.name();
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{storage_name}_{cohort}"),
                 version + Version::ONE,

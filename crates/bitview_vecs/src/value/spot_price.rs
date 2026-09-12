@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Dollars, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock, Price};
 
@@ -16,13 +16,12 @@ pub struct SpotPrice<M: StorageMode = Rw>(
 
 impl SpotPrice {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let cents = PerBlock::forced_import(cache, db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(name, version, &cents);
         let sats = LazyPerBlock::from_resolutions::<CentsUnsignedToSats>(
             &format!("{name}_sats"),

@@ -16,6 +16,10 @@ impl<'a> Request<'a> {
         }
     }
 
+    #[expect(
+        clippy::single_range_in_vec_init,
+        reason = "A request contains ranges, not their individual indexes"
+    )]
     pub(super) fn ranges(self) -> Vec<Range<usize>> {
         match self {
             Self::Range(from, to) => {

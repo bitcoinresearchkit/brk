@@ -55,3 +55,7 @@ fn direct_transforms_preserve_sparse_epochs_and_export_metadata() {
         }
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

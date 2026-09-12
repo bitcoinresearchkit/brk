@@ -92,6 +92,9 @@ where
                     this.region().truncate_write(from, &bytes)?;
                 }
                 this.base.update_stored_len(stored_len + pushed_len);
+                if let Some(cache) = C::cache(&this.cache) {
+                    cache.extend_tail(stored_len, &taken);
+                }
             } else if truncated {
                 this.region().truncate(from)?;
             }

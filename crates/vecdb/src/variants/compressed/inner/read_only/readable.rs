@@ -19,28 +19,22 @@ where
 {
     fn collect_one_at(&self, index: usize) -> Option<T> {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                if index >= self.base.len() {
-                    return None;
-                }
-                let stored = self.base.len();
-                Some(cache.get(index, |ranges| {
+            return cache.get_source(
+                index,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
                         &self.pages,
                         stored,
                         ranges,
                     )
-                }))
-            });
+                },
+            );
         }
         let mut values = Vec::with_capacity(1);
         self.read_into_at(index, index.saturating_add(1), &mut values);
         values.pop()
-    }
-
-    fn data_revision(&self) -> Option<u64> {
-        C::cache(&self.cache).map(|cache| cache.revision())
     }
 
     fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
@@ -56,17 +50,19 @@ where
     #[inline(always)]
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let len = self.base.len();
-                cache.read(Request::Range(from, to).clamp(len), buf, |ranges| {
+            return cache.read_source(
+                Request::Range(from, to),
+                buf,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
                         &self.pages,
-                        len,
+                        stored,
                         ranges,
                     )
-                });
-            });
+                },
+            );
         }
         let len = self.base.len();
         let from = from.min(len);
@@ -101,17 +97,19 @@ where
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let len = self.base.len();
-                cache.read(Request::Sorted(indices).clamp(len), out, |ranges| {
+            return cache.read_source(
+                Request::Sorted(indices),
+                out,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
                         &self.pages,
-                        len,
+                        stored,
                         ranges,
                     )
-                });
-            });
+                },
+            );
         }
         let len = self.base.len();
         let indices = &indices[..indices.partition_point(|&i| i < len)];
@@ -129,28 +127,20 @@ where
         let Some(cache) = C::cache(&self.cache) else {
             return for_each_chunk(self, from, to, f);
         };
-        cache.read_scope(|| {
-            let stored = self.base.len();
-            let to = to.min(self.base.len());
-            cache
-                .try_for_each_chunk(
-                    from,
-                    to.min(stored),
-                    |ranges| {
-                        ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
-                            self.base.region(),
-                            &self.pages,
-                            stored,
-                            ranges,
-                        )
-                    },
-                    |at, values| {
-                        f(at, values);
-                        Ok::<_, Infallible>(())
-                    },
+        cache.for_each_source(
+            from,
+            to,
+            || (self.base.len(), &[][..]),
+            |stored, ranges| {
+                ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
+                    self.base.region(),
+                    &self.pages,
+                    stored,
+                    ranges,
                 )
-                .unwrap();
-        });
+            },
+            f,
+        );
     }
 
     #[inline]
@@ -192,23 +182,21 @@ where
         Self: Sized,
     {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let len = self.base.len();
-                cache.try_fold(
-                    from,
-                    to.min(len),
-                    init,
-                    |ranges| {
-                        ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
-                            self.base.region(),
-                            &self.pages,
-                            len,
-                            ranges,
-                        )
-                    },
-                    f,
-                )
-            });
+            return cache.try_fold_source(
+                from,
+                to,
+                init,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
+                    ReadWriteCompressedVec::<I, T, S, C>::load_cache_ranges(
+                        self.base.region(),
+                        &self.pages,
+                        stored,
+                        ranges,
+                    )
+                },
+                f,
+            );
         }
         let len = self.base.len();
         let from = from.min(len);

@@ -1,8 +1,7 @@
 use bitview_traversable::Traversable;
-use bitview_vecs::StoredSeries;
 use brk_types::{StoredBool, TxIndex};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Rw, StorageMode};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{CountVecs, Flags};
 
@@ -12,5 +11,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub flags: Flags<StoredSeries<TxIndex, StoredBool, M>>,
+    pub flags: Flags<M::Stored<EagerVec<PcoVec<TxIndex, StoredBool>>>>,
 }

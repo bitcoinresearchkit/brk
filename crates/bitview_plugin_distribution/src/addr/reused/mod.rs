@@ -29,8 +29,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode,
+    AnyStoredVec, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
 };
 
 use super::{
@@ -67,7 +66,6 @@ pub struct ReusedAddrVecs<M: StorageMode = Rw> {
 impl ReusedAddrVecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -78,9 +76,8 @@ impl ReusedAddrVecs {
         inputs_by_type: &InputsByTypeVecs,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
-        let count = AddrCountFundedTotalVecs::forced_import(cache, db, name, version, mappings)?;
+        let count = AddrCountFundedTotalVecs::forced_import(db, name, version, mappings)?;
         let events = AddrEventsVecs::forced_import(
-            cache,
             db,
             name,
             version,
@@ -89,10 +86,9 @@ impl ReusedAddrVecs {
             outputs_by_type,
             inputs_by_type,
         )?;
-        let supply = AddrSupplyVecs::forced_import(cache, db, name, version, mappings, spot_price)?;
-        let supply_share = AddrSupplyShareVecs::forced_import(
-            cache, db, name, version, mappings, &supply, all_supply,
-        )?;
+        let supply = AddrSupplyVecs::forced_import(db, name, version, mappings, spot_price)?;
+        let supply_share =
+            AddrSupplyShareVecs::forced_import(db, name, version, mappings, &supply, all_supply)?;
 
         Ok(Self {
             count,

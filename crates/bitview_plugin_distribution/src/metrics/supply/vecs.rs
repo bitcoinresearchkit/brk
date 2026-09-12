@@ -17,8 +17,8 @@ use brk_types::{
     Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, StoredU64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, Database, Halve, LazyVec, ReadableBoxedVec,
-    Rw, StorageMode,
+    AnyStoredVec, AnyVec, BinaryTransform, Database, Halve, LazyVec, ReadableBoxedVec, Rw,
+    StorageMode,
 };
 
 use super::{SupplyBase, SupplyByCohort, SupplySources, SupplyTotal};
@@ -54,31 +54,18 @@ pub struct SupplyVecs<M: StorageMode = Rw> {
 
 impl SupplyVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
         spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Box<Self>> {
-        let total = SupplyTotal::forced_import(cache, db, version, mappings, spot_price)?;
+        let total = SupplyTotal::forced_import(db, version, mappings, spot_price)?;
         let all_supply = total.all_supply();
-        let in_profit = SupplyByCohort::forced_import(
-            cache,
-            db,
-            "supply_in_profit",
-            version,
-            mappings,
-            spot_price,
-        )?;
-        let in_loss = SupplyByCohort::forced_import(
-            cache,
-            db,
-            "supply_in_loss",
-            version,
-            mappings,
-            spot_price,
-        )?;
+        let in_profit =
+            SupplyByCohort::forced_import(db, "supply_in_profit", version, mappings, spot_price)?;
+        let in_loss =
+            SupplyByCohort::forced_import(db, "supply_in_loss", version, mappings, spot_price)?;
         let utxo = total.cohorts.utxo.map_with_id(|cohort_id, total| {
             if matches!(cohort_id, CohortId::All) {
                 SupplyBase::from_all_total(version, total.clone(), mappings, window_starts)
@@ -130,7 +117,6 @@ impl SupplyVecs {
             );
             Ok(SatsCents {
                 sats: PerBlockCumulativeRolling::forced_import(
-                    cache,
                     db,
                     &format!("{name}_raw_sats"),
                     matured_version + Version::ONE,
@@ -138,7 +124,6 @@ impl SupplyVecs {
                     window_starts,
                 )?,
                 cents: PerBlockCumulativeRolling::forced_import(
-                    cache,
                     db,
                     &format!("{name}_raw_cents"),
                     matured_version + Version::ONE,

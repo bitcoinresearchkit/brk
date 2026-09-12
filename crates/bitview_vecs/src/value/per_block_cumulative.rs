@@ -4,28 +4,24 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{
-    BinaryTransform, Budgeted, CacheBudget, CachePolicy, Database, ReadableVec, Rw, StorageMode,
-    VecIndex, VecValue,
-};
+use vecdb::{BinaryTransform, Database, ReadableVec, Rw, StorageMode, VecIndex, VecValue};
 
 use crate::{IndexSources, LazyValueBlock, ValuePerBlock};
 
 #[derive(Traversable)]
-pub struct ValuePerBlockCumulative<M: StorageMode = Rw, P: CachePolicy = Budgeted> {
+pub struct ValuePerBlockCumulative<M: StorageMode = Rw> {
     /// Value for the represented block. At time-period indexes, the value is
     /// taken from the period's final block.
     pub block: LazyValueBlock,
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: ValuePerBlock<M, P>,
+    pub cumulative: ValuePerBlock<M>,
 }
 
 const VERSION: Version = Version::ONE;
 
-impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
+impl ValuePerBlockCumulative {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -33,7 +29,7 @@ impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
     ) -> Result<Self> {
         let v = version + VERSION;
         let cumulative =
-            ValuePerBlock::forced_import(cache, db, &format!("{name}_cumulative"), v, indexes)?;
+            ValuePerBlock::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
         let block = LazyValueBlock::from_cumulative(name, v, &cumulative);
 
         Ok(Self { block, cumulative })
@@ -187,7 +183,7 @@ impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
     }
 }
 
-impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
+impl ValuePerBlockCumulative {
     pub fn compute_cents(
         &mut self,
         max_from: Height,

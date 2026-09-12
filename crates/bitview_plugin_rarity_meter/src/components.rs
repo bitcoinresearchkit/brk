@@ -8,7 +8,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::Version;
 use rayon::prelude::*;
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use super::{Component, component, reference_prices::ReferencePrices};
 
@@ -72,7 +72,6 @@ pub struct Components<M: StorageMode = Rw> {
 
 #[allow(clippy::too_many_arguments)]
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -87,7 +86,7 @@ pub fn forced_import(
 
     macro_rules! import {
         ($name:expr, $source:expr) => {
-            component::forced_import(cache, db, $name, version, mappings, &$source.cents.height)?
+            component::forced_import(db, $name, version, mappings, &$source.cents.height)?
         };
     }
 

@@ -5,14 +5,13 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    LazyFiatPerBlock, LazyRatioPerBlock, LazySpotValuePerBlockWithDeltas, LazyWindowStartVec,
-    StoredSeries, import_stored,
+    CachedSeries, LazyFiatPerBlock, LazyRatioPerBlock, LazySpotValuePerBlockWithDeltas,
+    LazyWindowStartVec, import_cached,
 };
 use brk_error::Result;
 use brk_types::{Cents, CentsSats, Height, PartsPerMillionSigned32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode,
-    WritableVec,
+    AnyStoredVec, AnyVec, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode, WritableVec,
 };
 
 const VERSION: Version = Version::new(9);
@@ -36,13 +35,13 @@ pub struct ProfitabilityVecs<M: StorageMode = Rw> {
     /// or the cohort's unspent supply is zero.
     pub nupl: ProfitabilityRange<LazyRatioPerBlock<PartsPerMillionSigned32>>,
     #[traversable(hidden)]
-    supply_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Sats, M>>>,
+    supply_stored: ProfitabilityRange<UTXOAggregate<CachedSeries<Height, Sats, M>>>,
     #[traversable(hidden)]
-    realized_cap_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
+    realized_cap_stored: ProfitabilityRange<UTXOAggregate<CachedSeries<Height, Cents, M>>>,
     #[traversable(hidden)]
-    unrealized_pnl_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
+    unrealized_pnl_stored: ProfitabilityRange<UTXOAggregate<CachedSeries<Height, Cents, M>>>,
     #[traversable(hidden)]
-    nupl_stored: ProfitabilityRange<StoredSeries<Height, PartsPerMillionSigned32, M>>,
+    nupl_stored: ProfitabilityRange<CachedSeries<Height, PartsPerMillionSigned32, M>>,
 }
 
 impl<M: StorageMode> ProfitabilityVecs<M> {
@@ -71,7 +70,6 @@ impl<M: StorageMode> ProfitabilityVecs<M> {
 
 impl ProfitabilityVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -79,13 +77,12 @@ impl ProfitabilityVecs {
         spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Box<Self>> {
         let version = version + VERSION;
-        let supply_stored = Self::import_sources(cache, db, "supply_sats", version)?;
-        let realized_cap_stored = Self::import_sources(cache, db, "realized_cap_cents", version)?;
-        let unrealized_pnl_stored =
-            Self::import_sources(cache, db, "unrealized_pnl_cents", version)?;
+        let supply_stored = Self::import_sources(db, "supply_sats", version)?;
+        let realized_cap_stored = Self::import_sources(db, "realized_cap_cents", version)?;
+        let unrealized_pnl_stored = Self::import_sources(db, "unrealized_pnl_cents", version)?;
         let nupl_stored = ProfitabilityRange::try_from_fn(|id| {
             let name = id.select(ProfitabilityRange::names()).id;
-            import_stored(cache, db, &format!("{name}_nupl_ppm"), version)
+            import_cached(db, &format!("{name}_nupl_ppm"), version)
         })?;
         let supply = Self::series(&supply_stored, "supply", |name, source| {
             LazySpotValuePerBlockWithDeltas::from_sats_source(
@@ -126,23 +123,22 @@ impl ProfitabilityVecs {
     }
 
     fn import_sources<T: PcoVecValue>(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
-    ) -> Result<ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>> {
+    ) -> Result<ProfitabilityRange<UTXOAggregate<CachedSeries<Height, T>>>> {
         ProfitabilityRange::try_from_fn(|id| {
             let cohort = id.select(ProfitabilityRange::names()).id;
             UTXOAggregate::try_from_fn(|id| {
-                import_stored(cache, db, &Self::metric_name(cohort, id, metric), version)
+                import_cached(db, &Self::metric_name(cohort, id, metric), version)
             })
         })
     }
 
     fn series<T: PcoVecValue, S>(
-        sources: &ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>,
+        sources: &ProfitabilityRange<UTXOAggregate<CachedSeries<Height, T>>>,
         metric: &str,
-        mut build: impl FnMut(&str, &StoredSeries<Height, T>) -> S,
+        mut build: impl FnMut(&str, &CachedSeries<Height, T>) -> S,
     ) -> ProfitabilityRange<UTXOAggregate<S>> {
         ProfitabilityRange::from_fn(|id| {
             let cohort = id.select(ProfitabilityRange::names()).id;
@@ -185,7 +181,7 @@ impl ProfitabilityVecs {
     }
 
     fn push_sources<T: PcoVecValue + Copy + Add<Output = T>>(
-        targets: &mut ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>,
+        targets: &mut ProfitabilityRange<UTXOAggregate<CachedSeries<Height, T>>>,
         values: ByTerm<ProfitabilityRange<T>>,
     ) {
         let ByTerm { short, long } = values;

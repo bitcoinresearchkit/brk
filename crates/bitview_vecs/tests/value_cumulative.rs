@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use bitview_collections::Windows;
 use bitview_transforms::SatsToCents;
 use bitview_vecs::{
@@ -8,14 +9,16 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Timestamp, TxIndex, Version};
 use common::{indexes, stored};
 use tempfile::tempdir;
-use vecdb::{AnyVec, BinaryTransform, Budgeted, Database, ReadableVec, Rw, WritableVec};
-
-use crate::common::CACHE_BUDGET;
+use vecdb::{
+    AnyStoredVec, AnyVec, BinaryTransform, Database, ImportableVec, PcoVec, ReadableVec,
+    WritableVec,
+};
 
 mod common;
 
 #[test]
 fn full_value_retains_cumulative_rolling_versions_and_fiat_flows() {
+    init_cache();
     let directory = tempdir().unwrap();
     let reference_directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
@@ -33,17 +36,10 @@ fn full_value_retains_cumulative_rolling_versions_and_fiat_flows() {
         _1m: &starts,
         _1y: &starts,
     });
-    let mut full = ValuePerBlockFull::<Rw, Budgeted>::forced_import(
-        &common::CACHE_BUDGET,
-        &db,
-        "value",
-        Version::new(11),
-        &indexes,
-        &windows,
-    )
-    .unwrap();
-    let reference = ValuePerBlockCumulativeRolling::<Rw, Budgeted>::forced_import(
-        &common::CACHE_BUDGET,
+    let mut full =
+        ValuePerBlockFull::forced_import(&db, "value", Version::new(11), &indexes, &windows)
+            .unwrap();
+    let reference = ValuePerBlockCumulativeRolling::forced_import(
         &reference_db,
         "value",
         Version::new(13),
@@ -67,7 +63,11 @@ fn full_value_retains_cumulative_rolling_versions_and_fiat_flows() {
     );
     let first = stored::<Height, _>(&db, "first_tx", (0..3usize).map(TxIndex::from));
     let counts = stored::<Height, _>(&db, "tx_counts", [StoredU64::from(1_u64); 3]);
-    let amounts = stored::<TxIndex, _>(&db, "amounts", [1_u64, 2, 3].map(Sats::from));
+    let mut amounts = PcoVec::<TxIndex, Sats>::forced_import(&db, "amounts", Version::ONE).unwrap();
+    for sats in [1_u64, 2, 3].map(Sats::from) {
+        amounts.push(sats);
+    }
+    amounts.write().unwrap();
     full.compute_from_indexes(
         Height::ZERO,
         &windows,
@@ -103,6 +103,7 @@ fn full_value_retains_cumulative_rolling_versions_and_fiat_flows() {
 
 #[test]
 fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
@@ -133,7 +134,12 @@ fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
             }
         })
         .collect();
-    let tx_source = stored::<TxIndex, _>(&db, "tx_amounts", tx_amounts.iter().copied());
+    let mut tx_source =
+        PcoVec::<TxIndex, Sats>::forced_import(&db, "tx_amounts", Version::ONE).unwrap();
+    for &sats in &tx_amounts {
+        tx_source.push(sats);
+    }
+    tx_source.write().unwrap();
 
     for mode in 0..3 {
         let name = format!("cumulative_{mode}");
@@ -175,25 +181,13 @@ fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
             })
             .collect();
 
-        let mut output: ValuePerBlockCumulative = ValuePerBlockCumulative::forced_import(
-            &CACHE_BUDGET,
-            &db,
-            &name,
-            Version::ONE,
-            &indexes,
-        )
-        .unwrap();
+        let mut output: ValuePerBlockCumulative =
+            ValuePerBlockCumulative::forced_import(&db, &name, Version::ONE, &indexes).unwrap();
         for phase in 0..5 {
             if phase == 2 {
                 drop(output);
-                output = ValuePerBlockCumulative::forced_import(
-                    &CACHE_BUDGET,
-                    &db,
-                    &name,
-                    Version::ONE,
-                    &indexes,
-                )
-                .unwrap();
+                output = ValuePerBlockCumulative::forced_import(&db, &name, Version::ONE, &indexes)
+                    .unwrap();
             }
             if phase == 4 {
                 output
@@ -249,3 +243,7 @@ fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
         }
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

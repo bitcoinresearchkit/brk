@@ -4,10 +4,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, SatsSigned, Version};
 use schemars::JsonSchema;
-use vecdb::{
-    Budgeted, CacheBudget, CachePolicy, Database, ReadableVec, Rw, UnaryTransform, VecIndex,
-    VecValue,
-};
+use vecdb::{Database, ReadableVec, Rw, UnaryTransform, VecIndex, VecValue};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock, Value};
 
@@ -24,27 +21,26 @@ impl AmountType for SatsSigned {
     type ToBitcoin = SatsSignedToBitcoin;
 }
 
-/// The policy selects sats retention; the independent cents source stays budgeted.
-pub type ValuePerBlock<M = Rw, S = Budgeted> = Value<
-    PerBlock<Sats, M, S>,
+/// Sats and cents each own one shared source cache.
+pub type ValuePerBlock<M = Rw> = Value<
+    PerBlock<Sats, M>,
     PerBlock<Cents, M>,
     LazyPerBlock<Bitcoin, Sats>,
     LazyPerBlock<Dollars, Cents>,
 >;
 
-impl<S: CachePolicy> ValuePerBlock<Rw, S> {
+impl ValuePerBlock {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let sats = PerBlock::forced_import(cache, db, &format!("{name}_sats"), version, indexes)?;
+        let sats = PerBlock::forced_import(db, &format!("{name}_sats"), version, indexes)?;
 
         let btc = LazyPerBlock::from_resolutions::<SatsToBitcoin>(name, version, &sats);
 
-        let cents = PerBlock::forced_import(cache, db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
 
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
@@ -61,7 +57,7 @@ impl<S: CachePolicy> ValuePerBlock<Rw, S> {
     }
 }
 
-impl<S: CachePolicy> ValuePerBlock<Rw, S> {
+impl ValuePerBlock {
     #[allow(clippy::too_many_arguments)]
     pub fn compute_sats_from_indexes<A, B>(
         &mut self,

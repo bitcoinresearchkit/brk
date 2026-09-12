@@ -1,12 +1,14 @@
 mod class_vecs;
 mod dca_sats;
 mod dca_stack;
+mod dependencies;
 mod has;
 mod lump_sum_stack;
 mod period_vecs;
 mod vecs;
 
 use bitview_collections::ByDcaClass;
+pub use dependencies::Dependencies;
 pub use has::HasInvesting;
 pub use vecs::Vecs;
 

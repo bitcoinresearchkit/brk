@@ -9,8 +9,8 @@ use vecdb::ZeroCopyVec;
 #[cfg(feature = "zstd")]
 use vecdb::ZstdVec;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, BytesVec, CacheBudget, Database, EagerVec, ImportOptions,
-    ImportableVec, ReadableVec, StoredVec, Version, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, BytesVec, Database, EagerVec, ImportableVec, ReadableVec,
+    StoredVec, Version, WritableVec,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -20,6 +20,7 @@ enum Compute {
 }
 
 fn check_recovery<V: StoredVec<I = usize, T = u64>>(compute: Compute) {
+    init_cache();
     let exit = Exit::new();
     for max_from in [3, 99] {
         let directory = tempdir().unwrap();
@@ -36,20 +37,16 @@ fn check_recovery<V: StoredVec<I = usize, T = u64>>(compute: Compute) {
             let dependency_version;
             {
                 let db = Database::open(directory.path()).unwrap();
-                let mut source = EagerVec::<BytesVec<usize, u64>>::forced_import_with(
-                    ImportOptions::new(&db, "source", version).with_cache_budget(&TEST_CACHE),
-                )
-                .unwrap();
+                let mut source =
+                    EagerVec::<BytesVec<usize, u64>>::forced_import(&db, "source", version)
+                        .unwrap();
                 source.truncate_if_needed_at(0).unwrap();
                 for &value in expected {
                     source.push(value);
                 }
                 source.write().unwrap();
                 dependency_version = source.version();
-                let mut output = EagerVec::<V>::forced_import_with(
-                    ImportOptions::new(&db, "output", Version::ONE).with_cache_budget(&TEST_CACHE),
-                )
-                .unwrap();
+                let mut output = EagerVec::<V>::forced_import(&db, "output", Version::ONE).unwrap();
                 let previous = output.collect();
                 let start =
                     if output.version() == output.header().vec_version() + dependency_version {
@@ -91,10 +88,7 @@ fn check_recovery<V: StoredVec<I = usize, T = u64>>(compute: Compute) {
                 // No extra write/flush: the compute call must publish truncation itself.
             }
             let db = Database::open(directory.path()).unwrap();
-            let output = EagerVec::<V>::forced_import_with(
-                ImportOptions::new(&db, "output", Version::ONE).with_cache_budget(&TEST_CACHE),
-            )
-            .unwrap();
+            let output = EagerVec::<V>::forced_import(&db, "output", Version::ONE).unwrap();
             assert_eq!(output.len(), to, "reopened length at max_from={max_from}");
             assert_eq!(output.collect_range_at(0, to), expected);
             assert_eq!(
@@ -108,6 +102,7 @@ fn check_recovery<V: StoredVec<I = usize, T = u64>>(compute: Compute) {
 
 #[test]
 fn raw_batched_recovery() {
+    init_cache();
     check_recovery::<BytesVec<usize, u64>>(Compute::Batched);
     check_recovery::<BytesVec<usize, u64, Budgeted>>(Compute::Batched);
 }
@@ -115,6 +110,7 @@ fn raw_batched_recovery() {
 #[cfg(feature = "pco")]
 #[test]
 fn pco_batched_recovery() {
+    init_cache();
     check_recovery::<PcoVec<usize, u64>>(Compute::Batched);
     check_recovery::<PcoVec<usize, u64, Budgeted>>(Compute::Batched);
 }
@@ -122,6 +118,7 @@ fn pco_batched_recovery() {
 #[cfg(feature = "lz4")]
 #[test]
 fn lz4_batched_recovery() {
+    init_cache();
     check_recovery::<LZ4Vec<usize, u64>>(Compute::Batched);
     check_recovery::<LZ4Vec<usize, u64, Budgeted>>(Compute::Batched);
 }
@@ -129,6 +126,7 @@ fn lz4_batched_recovery() {
 #[cfg(feature = "zstd")]
 #[test]
 fn zstd_batched_recovery() {
+    init_cache();
     check_recovery::<ZstdVec<usize, u64>>(Compute::Batched);
     check_recovery::<ZstdVec<usize, u64, Budgeted>>(Compute::Batched);
 }
@@ -136,16 +134,19 @@ fn zstd_batched_recovery() {
 #[cfg(feature = "zerocopy")]
 #[test]
 fn zerocopy_batched_recovery() {
+    init_cache();
     check_recovery::<ZeroCopyVec<usize, u64>>(Compute::Batched);
     check_recovery::<ZeroCopyVec<usize, u64, Budgeted>>(Compute::Batched);
 }
 
 #[test]
 fn zero_append_compute_transform_recovery() {
+    init_cache();
     check_legacy_recovery(Compute::Transform);
 }
 
 fn check_legacy_recovery(compute: Compute) {
+    init_cache();
     check_recovery::<BytesVec<usize, u64>>(compute);
     #[cfg(feature = "pco")]
     check_recovery::<PcoVec<usize, u64>>(compute);
@@ -157,4 +158,7 @@ fn check_legacy_recovery(compute: Compute) {
     check_recovery::<ZeroCopyVec<usize, u64>>(compute);
 }
 
-static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod cache;
+use cache::init_cache;

@@ -153,7 +153,9 @@ impl DefaultPlugins {
 
             let investing_handle = big_thread().spawn_scoped(scope, || -> Result<_> {
                 timed(Phase::Import, INVESTING_ID, || {
-                    Ok(Box::new(Investing::import(&mappings, &blocks, &price)?))
+                    Ok(Box::new(Investing::import(
+                        context, &mappings, &blocks, &price,
+                    )?))
                 })
             })?;
 

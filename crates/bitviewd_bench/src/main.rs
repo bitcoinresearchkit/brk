@@ -7,11 +7,12 @@ use brk_exit::Exit;
 use brk_logger::init;
 use brk_reader::Reader;
 use tracing::info;
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 mod benchmark;
 
 fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     let RunnerConfig {
         client,
         blocks_path,
@@ -34,7 +35,7 @@ fn main() -> Result<()> {
 
     benchmark.measure(|| {
         bootstrap(
-            ImportContext::new(&data_path, &CACHE_BUDGET),
+            ImportContext::new(&data_path),
             |context| DefaultPlugins::import(context, &reader),
             UpdateContext::new(&exit),
         )
@@ -42,5 +43,3 @@ fn main() -> Result<()> {
     info!("Benchmark saved to {}", benchmark.path().display());
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

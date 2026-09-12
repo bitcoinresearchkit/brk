@@ -12,21 +12,21 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachePolicy, Database, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, VecIndex, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecIndex,
+    VecValue, WritableVec,
 };
 
 use crate::{IndexSources, LazyPreviousDeltaVec, PerBlock, RollingTotals};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachePolicy = Budgeted>
+pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
     pub block: LazyPreviousDeltaVec<Height, T>,
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: PerBlock<T, M, P>,
+    pub cumulative: PerBlock<T, M>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -34,12 +34,11 @@ where
     last_cumulative: M::WriteOnly<Option<(usize, T)>>,
 }
 
-impl<T, P: CachePolicy> PerBlockCumulativeRolling<T, Rw, P>
+impl<T> PerBlockCumulativeRolling<T>
 where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -47,7 +46,7 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative =
-            PerBlock::forced_import(cache, db, &format!("{name}_cumulative"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let source = cumulative.resolutions.height_source();
         let block = LazyPreviousDeltaVec::new(name, version, source);
         let rolling = RollingTotals::new(name, version, source, window_starts, indexes);
@@ -64,7 +63,7 @@ where
         })
     }
 
-    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T, P>) {
+    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T>) {
         self.cumulative.resolutions.height_source()
     }
 

@@ -1,9 +1,11 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use std::iter;
 
 use bitview_cohort::{AgeRange, AgeRangeId, CohortId, Term, UTXOCoreValues, UTXOValues};
 use brk_types::{Cents, Height, OutputType, Sats, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, Database, ReadableVec};
+use vecdb::{Database, ReadableVec};
 
 use crate::SatsCents;
 
@@ -11,18 +13,15 @@ use super::{CumulativeUTXOCoreValueSources, CumulativeUTXOValueSources, UTXOCore
 
 #[test]
 fn additive_and_cumulative_sources_share_exact_aggregate_selection() {
-    static SOURCE_CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
-    let cache = &SOURCE_CACHE_BUDGET;
+    init_cache();
 
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut additive =
-        UTXOCoreSources::<Sats>::forced_import(cache, &db, "additive", Version::ONE).unwrap();
+        UTXOCoreSources::<Sats>::forced_import(&db, "additive", Version::ONE).unwrap();
     let mut cumulative =
-        CumulativeUTXOCoreValueSources::forced_import(cache, &db, "cumulative", Version::ONE)
-            .unwrap();
-    let mut full =
-        CumulativeUTXOValueSources::forced_import(cache, &db, "full", Version::ONE).unwrap();
+        CumulativeUTXOCoreValueSources::forced_import(&db, "cumulative", Version::ONE).unwrap();
+    let mut full = CumulativeUTXOValueSources::forced_import(&db, "full", Version::ONE).unwrap();
     let sats = UTXOValues {
         core: UTXOCoreValues {
             age_range: AgeRange::from_fn(|id| Sats::from(id.index() as u64 + 1)),

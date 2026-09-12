@@ -5,13 +5,12 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use crate::{
-    CumulativeState, FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums, StoredSeries,
-    import_stored,
+    CachedSeries, CumulativeState, FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums,
+    import_cached,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -21,13 +20,12 @@ pub struct AdditiveAggregateFiatPerBlockCumulativeWithSums<C: FiatType, M: Stora
     #[traversable(flatten)]
     pub series: UTXOAggregate<LazyFiatPerBlockCumulativeWithSums<C>>,
     #[traversable(hidden)]
-    pub stored: UTXOAggregate<StoredSeries<Height, C, M>>,
+    pub stored: UTXOAggregate<CachedSeries<Height, C, M>>,
     last: M::WriteOnly<CumulativeState<UTXOAggregate<C>>>,
 }
 
 impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -35,8 +33,7 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let stored = UTXOAggregate::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{}_cumulative_cents", id.metric_name(metric)),
                 version + Version::ONE,

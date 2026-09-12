@@ -18,7 +18,7 @@ use color_eyre::{
 };
 use serde_json::{json, to_string, to_string_pretty};
 use tempfile::tempdir;
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -69,6 +69,7 @@ impl OutputScope {
 }
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     install()?;
 
     let args = env::args().skip(1).collect::<Vec<_>>();
@@ -112,7 +113,7 @@ fn generate(check: bool, scope: OutputScope) -> Result<()> {
 
     let client = Client::new("http://127.0.0.1:1", Auth::None)?;
     let reader = Reader::new_without_rlimit(tmp.join("blocks"), &client);
-    let context = ImportContext::new(tmp, &CACHE_BUDGET);
+    let context = ImportContext::new(tmp);
     let plugins = DefaultPlugins::import(context, &reader)?;
     let vecs = Vecs::build(&plugins);
 
@@ -236,8 +237,6 @@ fn verify_output_pairs(
     }
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, CacheBudget, Database, LazyVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, LazyVec, Rw, StorageMode};
 
 use super::AmountSources;
 use crate::SatsCents;
@@ -22,7 +22,6 @@ pub struct AmountValueSources<S: Clone, M: StorageMode = Rw> {
 impl<S: Clone> AmountValueSources<S> {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         storage_name: &str,
         context: CohortContext,
@@ -35,7 +34,6 @@ impl<S: Clone> AmountValueSources<S> {
         ) -> S,
     ) -> Result<Self> {
         let sats = AmountSources::forced_import(
-            cache,
             db,
             &format!("{storage_name}_sats"),
             context,
@@ -44,7 +42,6 @@ impl<S: Clone> AmountValueSources<S> {
             |_, _| (),
         )?;
         let cents = AmountSources::forced_import(
-            cache,
             db,
             &format!("{storage_name}_cents"),
             context,

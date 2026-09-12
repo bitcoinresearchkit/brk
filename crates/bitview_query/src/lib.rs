@@ -367,3 +367,8 @@ impl Query {
         self.0.vecs
     }
 }
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/common/cache.rs"]
+mod test_cache;

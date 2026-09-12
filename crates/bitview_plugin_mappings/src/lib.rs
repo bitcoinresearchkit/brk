@@ -96,10 +96,9 @@ impl Vecs {
     pub fn import(context: ImportContext<'_>, indexer: &Indexer) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
-        let cache = context.cache_budget();
 
         let addr = AddrVecs::forced_import(version, indexer);
-        let monotonic = Timestamps::forced_import_monotonic(cache, &db, version)?;
+        let monotonic = Timestamps::forced_import_monotonic(&db, version)?;
         let chain_counts = ChainCounts::new(version, indexer);
         let monotonic_source = monotonic.read_only_boxed_clone();
         let epoch_source = IndexVec::new(

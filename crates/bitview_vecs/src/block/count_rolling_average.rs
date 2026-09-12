@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, StoredU32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{IndexSources, PerBlockCumulativeAverage};
 
@@ -18,14 +18,13 @@ pub struct CountPerBlockRollingAverage<M: StorageMode = Rw>(
 
 impl CountPerBlockRollingAverage {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
-        PerBlockCumulativeAverage::forced_import(cache, db, name, version, indexes, window_starts)
+        PerBlockCumulativeAverage::forced_import(db, name, version, indexes, window_starts)
             .map(Self)
     }
 }

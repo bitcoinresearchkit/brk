@@ -9,14 +9,12 @@ use std::{
 
 use parking_lot::Mutex;
 
-use super::Charge;
-
 pub(super) trait Reclaim: Send + Sync {
     fn try_clear(&self);
     fn clear(&self);
 }
 
-/// Shared limit for retained buffers and a conservative range-directory allowance.
+/// Shared limit for retained buffer and span-directory allocations.
 ///
 /// Charges follow allocation lifetimes, including buffers borrowed by active reads
 /// after eviction. Decoder scratch and caller-owned results are not retained bytes.
@@ -27,7 +25,7 @@ pub struct CacheBudget {
 }
 
 impl CacheBudget {
-    pub const fn new(limit: usize) -> Self {
+    pub(super) const fn new(limit: usize) -> Self {
         Self {
             limit,
             used: AtomicUsize::new(0),
@@ -66,26 +64,25 @@ impl CacheBudget {
         }
     }
 
-    pub(super) fn reserve(&'static self, bytes: usize) -> Option<Charge> {
+    pub(super) fn reserve(&self, bytes: usize) -> bool {
         if bytes > self.limit {
-            return None;
+            return false;
         }
         let claim = || {
             self.used
                 .fetch_update(Relaxed, Relaxed, |used| {
                     used.checked_add(bytes).filter(|&next| next <= self.limit)
                 })
-                .ok()
-                .map(|_| Charge::new(self, bytes))
+                .is_ok()
         };
-        if let Some(charge) = claim() {
-            return Some(charge);
+        if claim() {
+            return true;
         }
 
-        // Make one bounded pass over owners, clearing whole source caches.
+        // Two bounded clock passes: a recently used owner gets one second chance.
         // Never wait on a busy cache or call it while holding the registry lock.
         let count = self.registry.lock().len();
-        for _ in 0..count {
+        for _ in 0..count.saturating_mul(2) {
             let cache = {
                 let mut registry = self.registry.lock();
                 let Some(owner) = registry.pop_front() else {
@@ -100,11 +97,11 @@ impl CacheBudget {
             if let Some(cache) = cache {
                 cache.try_clear();
             }
-            if let Some(charge) = claim() {
-                return Some(charge);
+            if claim() {
+                return true;
             }
         }
-        None
+        false
     }
 
     pub(super) fn release(&self, bytes: usize) {

@@ -21,7 +21,6 @@ brk_error = { workspace = true, features = ["vecdb"] }
 bitview_traversable = { workspace = true }
 brk_types = { workspace = true, features = ["storage"] }
 derive_more = { workspace = true }
-parking_lot = { workspace = true }
 rayon = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
@@ -29,4 +28,5 @@ serde_json = { workspace = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]
+parking_lot = { workspace = true }
 tempfile = { workspace = true }

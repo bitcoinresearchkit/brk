@@ -2,7 +2,7 @@ use rawdb::Database;
 
 pub mod from;
 
-use crate::{CacheBudget, Version};
+use crate::Version;
 
 /// Options for importing or creating stored vectors.
 #[derive(Clone, Copy)]
@@ -19,9 +19,6 @@ pub struct ImportOptions<'a> {
     pub initial_capacity: Option<usize>,
     /// Overrides the compression strategy's maximum uncompressed chunk size.
     pub max_compression_chunk_size: Option<usize>,
-    /// Shared retention limit required by the `Budgeted` cache policy.
-    /// `NoCache` ignores this option.
-    pub cache_budget: Option<&'static CacheBudget>,
 }
 
 impl<'a> ImportOptions<'a> {
@@ -33,7 +30,6 @@ impl<'a> ImportOptions<'a> {
             saved_stamped_changes: 0,
             initial_capacity: None,
             max_compression_chunk_size: None,
-            cache_budget: None,
         }
     }
 
@@ -49,11 +45,6 @@ impl<'a> ImportOptions<'a> {
 
     pub fn with_max_compression_chunk_size(mut self, bytes: usize) -> Self {
         self.max_compression_chunk_size = Some(bytes);
-        self
-    }
-
-    pub fn with_cache_budget(mut self, budget: &'static CacheBudget) -> Self {
-        self.cache_budget = Some(budget);
         self
     }
 }

@@ -1,13 +1,10 @@
 use bitview_cohort::SpendableType;
 use bitview_traversable::Traversable;
-use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
+use brk_types::{Height, PartsPerMillion32, StoredU64};
 use vecdb::{Rw, StorageMode};
 
 use super::WithInputTypes;
-use bitview_vecs::{
-    LazyCountPerBlockCumulativeRolling, LazyPerBlockCumulativeRolling,
-    LazyPercentCumulativeRolling, StoredSeries,
-};
+use bitview_vecs::{CachedSeries, LazyPerBlockCumulativeRolling, LazyPercentCumulativeRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -15,7 +12,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// input per block. Per-type series exclude coinbase and classify inputs by
     /// the BRK output type of the previous output they spend; `OP_RETURN` is
     /// excluded because it is unspendable.
-    pub input_count: WithInputTypes<LazyCountPerBlockCumulativeRolling>,
+    pub input_count: WithInputTypes<LazyPerBlockCumulativeRolling<StoredU64>>,
     /// Inputs spending a previous-output type divided by all inputs
     /// over the same cumulative or trailing window. The denominator includes
     /// coinbase inputs.
@@ -29,7 +26,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// trailing window.
     pub tx_share: SpendableType<LazyPercentCumulativeRolling<PartsPerMillion32>>,
     #[traversable(hidden)]
-    pub input_count_stored: SpendableType<StoredSeries<Height, StoredU16, M>>,
+    pub input_count_stored: SpendableType<CachedSeries<Height, StoredU64, M>>,
     #[traversable(hidden)]
-    pub tx_count_stored: SpendableType<StoredSeries<Height, StoredU64, M>>,
+    pub tx_count_stored: SpendableType<CachedSeries<Height, StoredU64, M>>,
 }

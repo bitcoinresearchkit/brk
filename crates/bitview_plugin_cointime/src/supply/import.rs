@@ -3,12 +3,11 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{BoundedRatioPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, Database, ReadableBoxedVec};
+use vecdb::{Database, ReadableBoxedVec};
 
 use super::{super::activity, LazyBaseVecs, Vecs};
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -19,7 +18,6 @@ pub fn forced_import(
     Ok(Vecs {
         base: LazyBaseVecs::new(version, mappings, spot_price, activity, all_chain),
         active_supply_in_loss_share: BoundedRatioPerBlock::forced_import(
-            cache,
             db,
             "cointime_supply_in_loss_share",
             version + Version::ONE,

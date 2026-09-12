@@ -98,42 +98,19 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let spot_price = prices.spot.cents.height.read_only_boxed_clone();
 
-        let cohorts = CohortMetrics::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-            &spot_price,
-        )?;
+        let cohorts =
+            CohortMetrics::forced_import(&db, version, mappings, window_starts, &spot_price)?;
 
         let addr_state = AddrStateVecs::forced_import(&db, version)?;
 
-        let funded_addr_count = FundedAddrCountsVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let empty_addr_count = AddrCountsVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            "empty_addr_count",
-            version,
-            mappings,
-        )?;
-        let addr_activity = AddrActivityVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let funded_addr_count =
+            FundedAddrCountsVecs::forced_import(&db, version, mappings, window_starts)?;
+        let empty_addr_count =
+            AddrCountsVecs::forced_import(&db, "empty_addr_count", version, mappings)?;
+        let addr_activity = AddrActivityVecs::forced_import(&db, version, mappings, window_starts)?;
 
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived mappings)
-        let total_addr_count =
-            TotalAddrCountVecs::forced_import(context.cache_budget(), &db, version, mappings)?;
+        let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, mappings)?;
 
         // Per-block delta of total (global + per-type)
         let new_addr_count =
@@ -144,7 +121,6 @@ impl Vecs {
         // industry standard). `respent_*` uses the spend-side counterpart
         // (spent_txo_count > 1, strictly more restrictive).
         let reused_addr_count = ReusedAddrVecs::forced_import(
-            context.cache_budget(),
             &db,
             "reused",
             version,
@@ -156,7 +132,6 @@ impl Vecs {
             cohorts.all_supply(),
         )?;
         let respent_addr_count = ReusedAddrVecs::forced_import(
-            context.cache_budget(),
             &db,
             "respent",
             version,
@@ -170,7 +145,6 @@ impl Vecs {
 
         // Exposed address tracking (counts + supply) - quantum / pubkey-exposure sense
         let exposed_addr_vecs = ExposedAddrVecs::forced_import(
-            context.cache_budget(),
             &db,
             version,
             mappings,
@@ -184,7 +158,6 @@ impl Vecs {
         // Average amount (supply / utxo_count, supply / funded_addr_count) for `all` and per addr type.
         let all_chain = AllChainSources::new(cohorts.all_supply(), cohorts.all_market_cap());
         let avg_amount = AvgAmountVecs::forced_import(
-            context.cache_budget(),
             &db,
             version,
             mappings,
@@ -217,7 +190,6 @@ impl Vecs {
 
             coindays_created: AgeRange::try_from_fn(|id| {
                 PerBlockCumulativeRolling::forced_import(
-                    context.cache_budget(),
                     &db,
                     &format!(
                         "{}_coindays_created",
@@ -230,7 +202,6 @@ impl Vecs {
             })?,
 
             coinblocks_destroyed: PerBlockCumulativeRolling::forced_import(
-                context.cache_budget(),
                 &db,
                 "coinblocks_destroyed",
                 version + Version::TWO,

@@ -10,7 +10,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{PartsPerMillion32, PoolSlug};
 use derive_more::{Deref, DerefMut};
-use vecdb::{BinaryTransform, CacheBudget, Database, Rw, StorageMode, Version};
+use vecdb::{BinaryTransform, Database, Rw, StorageMode, Version};
 
 use super::{PoolHeights, minor};
 
@@ -34,7 +34,6 @@ pub struct Vecs<M: StorageMode = Rw> {
 
 impl Vecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         slug: PoolSlug,
         pool_heights: PoolHeights,
@@ -47,7 +46,6 @@ impl Vecs {
         let base = minor::Vecs::forced_import(slug, pool_heights, version, mappings, window_starts);
 
         let rewards = ValuePerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             &suffix("rewards"),
             version,

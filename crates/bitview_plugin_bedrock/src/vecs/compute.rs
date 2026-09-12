@@ -7,7 +7,7 @@ use bitview_plugin_coinflow::HorizonId;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
-use brk_types::{Cents, CostBasisByPercentile, Day1, PERCENTILES_LEN, Sats, StoredF64, Version};
+use brk_types::{Cents, Day1, Sats, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecValue, WritableVec};
 
 use super::Vecs;
@@ -54,6 +54,7 @@ impl ComputePlugin for Vecs {
     ) -> Result<Self::Output> {
         let Dependencies {
             indexer,
+            price,
             mappings,
             distribution,
             utxo_states,
@@ -61,6 +62,7 @@ impl ComputePlugin for Vecs {
             coinflow,
         } = dependencies;
         let exit = context.exit();
+        let spot = &price.split.close.cents.day1;
 
         self.db.sync_bg_tasks()?;
 
@@ -135,13 +137,16 @@ impl ComputePlugin for Vecs {
             vec.any_validate_computed_version_or_reset(source_version)?;
         }
         for vec in self.cost_basis.stored_vecs_mut() {
-            vec.any_validate_computed_version_or_reset(weighted_urpd_source_version)?;
+            vec.any_validate_computed_version_or_reset(
+                weighted_urpd_source_version + spot.version(),
+            )?;
         }
         for vec in self.capitalized_price.stored_vecs_mut() {
             vec.any_validate_computed_version_or_reset(weighted_urpd_source_version)?;
         }
 
         let source_end = iter::once(mappings.day1.date.len())
+            .chain(iter::once(spot.len()))
             .chain(iter::once(raw_loss_share.len()))
             .chain(weighted_loss_shares.iter().map(|vec| vec.len()))
             .chain(age_supplies.iter().map(|vec| vec.len()))
@@ -209,6 +214,7 @@ impl ComputePlugin for Vecs {
             // Reuse version-validated weighted URPDs without rebuilding the Bedrock models.
             self.backfill_cost_basis(
                 mappings,
+                spot,
                 &weighted_urpd_names,
                 cost_basis_start,
                 model_start,
@@ -225,7 +231,7 @@ impl ComputePlugin for Vecs {
             let loss_shares = Calibration::loss_shares(raw_loss_share, &weighted_loss_shares, day);
             let thresholds = calibration.thresholds(&loss_shares);
             let mut result = DayResult::from_thresholds(&thresholds);
-            let mut cost_basis_prices = Self::missing_cost_basis_prices();
+            let mut cost_basis_data = WeightedPair::default();
             let mut capitalized_prices = Self::missing_capitalized_prices();
 
             let needs_evaluation = thresholds.iter().any(Option::is_some);
@@ -257,7 +263,8 @@ impl ComputePlugin for Vecs {
                         result.evaluate(&urpds);
                     }
                     if needs_cost_basis {
-                        cost_basis_prices = urpds.all_cost_basis_percentile_prices();
+                        cost_basis_data =
+                            urpds.cost_basis(spot.collect_one(day).flatten().unwrap_or(Cents::NAN));
                     }
                     if needs_capitalized {
                         capitalized_prices = urpds.capitalized_prices();
@@ -267,7 +274,7 @@ impl ComputePlugin for Vecs {
             calibration.observe(loss_shares);
 
             if needs_cost_basis {
-                self.cost_basis.push(&cost_basis_prices);
+                self.cost_basis.push(&cost_basis_data);
             }
             if needs_capitalized {
                 self.capitalized_price.push(&capitalized_prices);
@@ -345,6 +352,7 @@ impl Vecs {
     fn backfill_cost_basis(
         &mut self,
         mappings: &MappingsVecs,
+        spot: &impl ReadableVec<Day1, Option<Cents>>,
         names: &WeightedUrpdNames,
         start: usize,
         end: usize,
@@ -353,14 +361,15 @@ impl Vecs {
         for day_index in start..end {
             let day = Day1::from(day_index);
             let prices = if let Some(date) = mappings.day1.date.collect_one(day) {
-                DayUrpds::read_all_cost_basis_percentile_prices_if_exists(
+                DayUrpds::read_cost_basis_if_exists(
                     &self.states_path,
                     names,
                     date,
+                    spot.collect_one(day).flatten().unwrap_or(Cents::NAN),
                 )?
-                .unwrap_or_else(Self::missing_cost_basis_prices)
+                .unwrap_or_default()
             } else {
-                Self::missing_cost_basis_prices()
+                WeightedPair::default()
             };
             self.cost_basis.push(&prices);
 
@@ -372,13 +381,6 @@ impl Vecs {
             }
         }
         Ok(())
-    }
-
-    fn missing_cost_basis_prices() -> WeightedPair<CostBasisByPercentile> {
-        WeightedPair::from_fn(|_| CostBasisByPercentile {
-            per_coin: [Cents::NAN; PERCENTILES_LEN],
-            per_dollar: [Cents::NAN; PERCENTILES_LEN],
-        })
     }
 
     fn model_stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {

@@ -2,7 +2,7 @@ use bitview_cohort::{CohortId, UTXOCoreValues};
 use bitview_transforms::{StoredU64ToCents, StoredU64ToSats};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, LazyVec, Rw};
+use vecdb::{AnyStoredVec, Database, LazyVec, Rw};
 
 use super::CumulativeUTXOCoreSources;
 use crate::SatsCents;
@@ -11,25 +11,10 @@ pub type CumulativeUTXOCoreValueSources<M = Rw> =
     SatsCents<CumulativeUTXOCoreSources<StoredU64, M>>;
 
 impl CumulativeUTXOCoreValueSources {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            sats: CumulativeUTXOCoreSources::forced_import(
-                cache,
-                db,
-                &format!("{name}_sats"),
-                version,
-            )?,
-            cents: CumulativeUTXOCoreSources::forced_import(
-                cache,
-                db,
-                &format!("{name}_cents"),
-                version,
-            )?,
+            sats: CumulativeUTXOCoreSources::forced_import(db, &format!("{name}_sats"), version)?,
+            cents: CumulativeUTXOCoreSources::forced_import(db, &format!("{name}_cents"), version)?,
         })
     }
 

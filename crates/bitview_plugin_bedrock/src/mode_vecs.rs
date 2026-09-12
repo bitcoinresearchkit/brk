@@ -4,7 +4,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
 use super::{Percentiles, PriceBands};
-use bitview_vecs::{LazyDailyMetric, LazyDailyPrice, StoredSeries};
+use bitview_vecs::{CachedSeries, LazyDailyMetric, LazyDailyPrice};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ModeVecs<M: StorageMode = Rw> {
@@ -24,7 +24,7 @@ pub struct ModeVecs<M: StorageMode = Rw> {
     /// price when that output was created.
     pub prices: PriceBands<LazyDailyPrice>,
     #[traversable(hidden)]
-    pub loss_threshold_stored: Percentiles<StoredSeries<Day1, BoundedRatio, M>>,
+    pub loss_threshold_stored: Percentiles<CachedSeries<Day1, BoundedRatio, M>>,
     #[traversable(hidden)]
-    pub prices_stored: PriceBands<StoredSeries<Day1, Cents, M>>,
+    pub prices_stored: PriceBands<CachedSeries<Day1, Cents, M>>,
 }

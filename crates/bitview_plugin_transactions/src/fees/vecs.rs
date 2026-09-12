@@ -3,7 +3,7 @@ use brk_types::{FeeRate, Sats, StoredBool, TxIndex};
 use derive_more::{Deref, DerefMut};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
-use bitview_vecs::{PerTxDistribution, StoredSeries};
+use bitview_vecs::PerTxDistribution;
 
 mod count;
 mod cpfp_flags;
@@ -44,5 +44,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub cpfp_flags: CpfpFlags<StoredSeries<TxIndex, StoredBool, M>>,
+    pub cpfp_flags: CpfpFlags<M::Stored<EagerVec<PcoVec<TxIndex, StoredBool>>>>,
 }

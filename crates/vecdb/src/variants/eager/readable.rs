@@ -7,10 +7,6 @@ impl<V> ReadableVec<V::I, V::T> for EagerVec<V>
 where
     V: StoredVec,
 {
-    fn data_revision(&self) -> Option<u64> {
-        self.0.data_revision()
-    }
-
     fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<V::T>) -> bool {
         self.0.read_cached_into_at(from, to, out)
     }

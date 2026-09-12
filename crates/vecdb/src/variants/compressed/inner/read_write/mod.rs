@@ -94,7 +94,7 @@ where
         let pages_per_chunk =
             (compression_chunk_size / COMPRESSED_PAGE_SIZE).clamp(1, PAGES_PER_BLOCK);
 
-        let cache = C::create(options.cache_budget)?;
+        let cache = C::create()?;
         let base = ReadWriteBaseVec::import(options, format)?;
 
         let pages = Pages::import(

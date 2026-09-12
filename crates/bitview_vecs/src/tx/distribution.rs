@@ -9,9 +9,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Lengths, TxIndex, VSize};
 use schemars::JsonSchema;
-use vecdb::{
-    CacheBudget, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version,
-};
+use vecdb::{Database, EagerVec, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{IndexSources, TxDerivedDistribution};
 
@@ -30,14 +28,13 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         let tx_index = EagerVec::forced_import(db, name, version)?;
-        let distribution = TxDerivedDistribution::forced_import(cache, db, name, version, indexes)?;
+        let distribution = TxDerivedDistribution::forced_import(db, name, version, indexes)?;
         Ok(Self {
             tx_index,
             distribution,

@@ -10,12 +10,10 @@ use bitview_cohort::{
 };
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_error::Result;
-use brk_types::{
-    Cents, CentsCompact, CostBasisByPercentile, Date, Sats, UrpdRaw, UrpdWeight, Version,
-};
+use brk_types::{Cents, CentsCompact, Date, Sats, UrpdRaw, UrpdWeight, Version};
 
 use super::{ModeId, ModeWeights, WeightedModeId, WeightedModes, WeightedPair, WeightedUrpdNames};
-use crate::capitalized_price;
+use crate::{CostBasisData, capitalized_price};
 
 const VERSION_FILE: &str = "bedrock_urpd.version";
 
@@ -128,15 +126,22 @@ impl DayUrpds {
         }
     }
 
-    pub fn all_cost_basis_percentile_prices(&self) -> WeightedPair<CostBasisByPercentile> {
-        Self::cost_basis_percentile_prices(self.mode(ModeId::Cointime), self.mode(ModeId::Coinflow))
+    pub fn cost_basis(&self, spot: Cents) -> WeightedPair<CostBasisData> {
+        let compute = |urpd: &UrpdRaw| {
+            CostBasisData::from_entries(urpd.map.iter().map(|(&p, &s)| (p, s)), spot)
+        };
+        WeightedPair {
+            cointime: compute(&self.all.cointime),
+            coinflow: compute(&self.all.coinflow),
+        }
     }
 
-    pub fn read_all_cost_basis_percentile_prices_if_exists(
+    pub fn read_cost_basis_if_exists(
         states_path: &Path,
         names: &WeightedUrpdNames,
         date: Date,
-    ) -> Result<Option<WeightedPair<CostBasisByPercentile>>> {
+        spot: Cents,
+    ) -> Result<Option<WeightedPair<CostBasisData>>> {
         let cointime_path = UrpdRaw::path(states_path, &names.all.cointime, date);
         let coinflow_path = UrpdRaw::path(states_path, &names.all.coinflow, date);
         match (cointime_path.try_exists()?, coinflow_path.try_exists()?) {
@@ -154,17 +159,14 @@ impl DayUrpds {
                 .into());
             }
         }
+        let read = |name: &str| -> Result<CostBasisData> {
+            let bytes = UrpdRaw::read_bytes(states_path, name, date)?;
+            let entries = UrpdRaw::deserialize_entries(&bytes)?;
+            Ok(CostBasisData::from_entries(entries.iter().copied(), spot))
+        };
         Ok(Some(WeightedPair {
-            cointime: UrpdRaw::read_cost_basis_percentile_prices(
-                states_path,
-                &names.all.cointime,
-                date,
-            )?,
-            coinflow: UrpdRaw::read_cost_basis_percentile_prices(
-                states_path,
-                &names.all.coinflow,
-                date,
-            )?,
+            cointime: read(&names.all.cointime)?,
+            coinflow: read(&names.all.coinflow)?,
         }))
     }
 
@@ -338,16 +340,6 @@ impl DayUrpds {
     ) {
         Self::insert_mass(price, &mut distributions.cointime, masses.cointime);
         Self::insert_mass(price, &mut distributions.coinflow, masses.coinflow);
-    }
-
-    fn cost_basis_percentile_prices(
-        cointime: &UrpdRaw,
-        coinflow: &UrpdRaw,
-    ) -> WeightedPair<CostBasisByPercentile> {
-        WeightedPair {
-            cointime: cointime.cost_basis_percentile_prices(),
-            coinflow: coinflow.cost_basis_percentile_prices(),
-        }
     }
 
     fn insert_mass(price: CentsCompact, distribution: &mut UrpdRaw, mass: f64) {

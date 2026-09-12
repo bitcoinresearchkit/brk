@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::{path::Path, time::Duration};
 
 use bitview::update;
@@ -10,7 +11,7 @@ use brk_error::{Error, Result};
 use brk_exit::Exit;
 use brk_types::{Height, Index, Version, Weight};
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CacheBudget, Database, ImportableVec, PAGE_SIZE, PcoVec, WritableVec};
+use vecdb::{AnyStoredVec, Database, ImportableVec, PAGE_SIZE, PcoVec, WritableVec};
 
 #[derive(PluginSet, Traversable)]
 struct TestPlugins {
@@ -34,6 +35,7 @@ struct TestPlugins {
 
 impl TestPlugins {
     fn import(outputs_path: &Path) -> Result<Self> {
+        init_cache();
         let source_db = Database::open(&outputs_path.join("source"))?;
         source_db.set_min_len(PAGE_SIZE)?;
         let block_weights = PcoVec::forced_import(&source_db, "block_weight", Version::ONE)?;
@@ -43,10 +45,7 @@ impl TestPlugins {
             safe_height: Height::ZERO,
             _source_db: source_db,
             block_weights,
-            near_full_blocks: NearFullBlocks::import(ImportContext::new(
-                outputs_path,
-                &CACHE_BUDGET,
-            ))?,
+            near_full_blocks: NearFullBlocks::import(ImportContext::new(outputs_path))?,
             computed_while_closed: false,
         })
     }
@@ -127,4 +126,6 @@ fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

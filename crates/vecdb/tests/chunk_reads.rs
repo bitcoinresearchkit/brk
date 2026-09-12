@@ -7,9 +7,9 @@ use std::sync::{
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, DeltaOp, DeltaSub, EagerVec, Ident,
-    ImportOptions, ImportableVec, LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec,
-    ReadableCloneableVec, ReadableVec, StoredVec, UnaryTransform, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, Database, DeltaOp, DeltaSub, EagerVec, Ident, ImportableVec,
+    LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
+    StoredVec, UnaryTransform, Version, WritableVec,
 };
 
 #[cfg(feature = "pco")]
@@ -243,11 +243,9 @@ fn chunked_transforms_preserve_emitted_indices_across_holes_and_empty_pages() {
 fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(256 * 1024)));
-    let mut source = EagerVec::<BytesVec<usize, u64, Budgeted>>::import_with(
-        ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
+    let budget = init_cache();
+    let mut source =
+        EagerVec::<BytesVec<usize, u64, Budgeted>>::import(&db, "source", Version::ONE).unwrap();
     let len = 20_000;
     for value in 0..len as u64 {
         source.push(value);
@@ -330,11 +328,10 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
         "caller-owned results remain immutable"
     );
     // A too-small budget preserves correctness through all the same read APIs.
-    let denied = Box::leak(Box::new(CacheBudget::new(1024)));
-    let mut tiny = BytesVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "tiny", Version::ONE).with_cache_budget(denied),
-    )
-    .unwrap();
+    let denied = budget;
+    let expected: Vec<_> = expected.iter().copied().cycle().take(100_000).collect();
+    let len = expected.len();
+    let mut tiny = BytesVec::<usize, u64, Budgeted>::import(&db, "tiny", Version::ONE).unwrap();
     for &value in &expected {
         tiny.push(value);
     }
@@ -396,3 +393,8 @@ fn bulk_lazy_reads_preserve_absolute_indices_clones_folds_and_early_exit() {
     assert_eq!(visited, [8000, 8002, 8004]);
     assert_eq!(TRANSFORM_CALLS.load(Ordering::Relaxed), 3);
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod cache;
+use cache::init_cache;

@@ -18,37 +18,18 @@ impl Vecs {
         let version = STORAGE.schema_version();
 
         let spot_price = prices.spot.cents.resolutions.height_source();
-        let ath = ath::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
+        let ath = ath::forced_import(&db, version, mappings, spot_price)?;
         let window_starts = ByLookbackPeriod::try_new(|_, days| {
             Ok::<_, Error>(blocks.lookback.start_vec(days as usize))
         })?;
         let lookback = lookback::forced_import(version, mappings, &window_starts, prices)?;
-        let returns = returns::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            &window_starts,
-            prices,
-        )?;
+        let returns = returns::forced_import(&db, version, mappings, &window_starts, prices)?;
         let volatility = volatility::forced_import(version, &returns)?;
-        let range =
-            range::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
-        let moving_average = moving_average::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            blocks,
-            spot_price,
-        )?;
-        let technical = technical::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            &returns.periods._24h.ratio,
-        )?;
+        let range = range::forced_import(&db, version, mappings, spot_price)?;
+        let moving_average =
+            moving_average::forced_import(&db, version, mappings, blocks, spot_price)?;
+        let technical =
+            technical::forced_import(&db, version, mappings, &returns.periods._24h.ratio)?;
 
         let this = Self {
             db,

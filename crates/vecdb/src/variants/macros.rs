@@ -285,10 +285,6 @@ macro_rules! impl_vec_wrapper {
             I: $crate::VecIndex,
             T: $value_trait,
         {
-            fn data_revision(&self) -> Option<u64> {
-                $crate::ReadableVec::<I, T>::data_revision(&self.0)
-            }
-
             fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
                 $crate::ReadableVec::<I, T>::read_cached_into_at(&self.0, from, to, out)
             }

@@ -5,12 +5,11 @@ use bitview_transforms::RatioDiffDollars;
 use bitview_vecs::{LazyPercentPerBlock, LazyWindowVec, StdDevPerBlock};
 use brk_error::{Error, Result};
 use brk_types::{Dollars, Height, PartsPerMillionSigned64, Version};
-use vecdb::{BinaryTransform, CacheBudget, Database, ReadableCloneableVec};
+use vecdb::{BinaryTransform, Database, ReadableCloneableVec};
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -52,7 +51,6 @@ pub fn forced_import(
     let sd_24h = Windows::try_from_fn(|suffix| {
         let days = *days_iter.next().unwrap();
         StdDevPerBlock::forced_import(
-            cache,
             db,
             "price_return_24h",
             suffix,

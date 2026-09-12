@@ -17,15 +17,8 @@ impl Vecs {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
 
-        let rewards = rewards::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            indexer,
-            mappings,
-            window_starts,
-        )?;
-        let hashrate = hashrate::forced_import(context.cache_budget(), &db, version, mappings)?;
+        let rewards = rewards::forced_import(&db, version, indexer, mappings, window_starts)?;
+        let hashrate = hashrate::forced_import(&db, version, mappings)?;
 
         let this = Self {
             db,

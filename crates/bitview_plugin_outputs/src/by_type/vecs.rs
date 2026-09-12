@@ -1,19 +1,16 @@
 use bitview_cohort::ByType;
 use bitview_traversable::Traversable;
-use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
+use brk_types::{Height, PartsPerMillion32, StoredU64};
 use vecdb::{Rw, StorageMode};
 
 use super::{SpendableOutputCount, WithOutputTypes};
-use bitview_vecs::{
-    LazyCountPerBlockCumulativeRolling, LazyPerBlockCumulativeRolling,
-    LazyPercentCumulativeRolling, StoredSeries,
-};
+use bitview_vecs::{CachedSeries, LazyPerBlockCumulativeRolling, LazyPercentCumulativeRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     /// Counts of transaction outputs, including coinbase. Per-type series
     /// classify outputs by BRK locking-script type.
-    pub output_count: WithOutputTypes<LazyCountPerBlockCumulativeRolling>,
+    pub output_count: WithOutputTypes<LazyPerBlockCumulativeRolling<StoredU64>>,
     /// Number of transaction outputs excluding `OP_RETURN` outputs, which are
     /// provably unspendable.
     pub spendable_output_count: SpendableOutputCount,
@@ -29,7 +26,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// coinbase transactions.
     pub tx_share: ByType<LazyPercentCumulativeRolling<PartsPerMillion32>>,
     #[traversable(hidden)]
-    pub output_count_stored: ByType<StoredSeries<Height, StoredU16, M>>,
+    pub output_count_stored: ByType<CachedSeries<Height, StoredU64, M>>,
     #[traversable(hidden)]
-    pub tx_count_stored: ByType<StoredSeries<Height, StoredU64, M>>,
+    pub tx_count_stored: ByType<CachedSeries<Height, StoredU64, M>>,
 }

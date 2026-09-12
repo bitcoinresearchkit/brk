@@ -2,7 +2,7 @@ use bitview_transforms::FixedToRatio;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{BasisPoints32, StoredF32, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
 
@@ -18,13 +18,12 @@ pub struct BasisPointsPerBlock<M: StorageMode = Rw> {
 
 impl BasisPointsPerBlock {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let bps = PerBlock::forced_import(cache, db, &format!("{name}_bps"), version, indexes)?;
+        let bps = PerBlock::forced_import(db, &format!("{name}_bps"), version, indexes)?;
         let ratio = LazyPerBlock::from_resolutions::<FixedToRatio>(name, version, &bps);
         Ok(Self { bps, ratio })
     }

@@ -6,8 +6,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec,
-    Rw, Stamp, StorageMode, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode,
+    WritableVec,
 };
 
 pub mod features;
@@ -101,11 +101,7 @@ impl TransactionsVecs {
         )
     }
 
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
             first_tx_index,
             txid,
@@ -119,7 +115,7 @@ impl TransactionsVecs {
             first_txout_index,
             position,
         ) = parallel_import! {
-            first_tx_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_tx_index", version).with_cache_budget(cache)),
+            first_tx_index = PcoVec::forced_import(db, "first_tx_index", version),
             txid = BytesVec::forced_import(db, "txid", version),
             tx_version = PcoVec::forced_import(db, "tx_version", version),
             raw_locktime = PcoVec::forced_import(db, "raw_locktime", version),
@@ -127,7 +123,7 @@ impl TransactionsVecs {
             total_size = PcoVec::forced_import(db, "total_size", version),
             total_sigop_cost = PcoVec::forced_import(db, "total_sigop_cost", version),
             is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
-            first_txin_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_txin_index", version).with_cache_budget(cache)),
+            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             first_txout_index = BytesVec::forced_import(db, "first_txout_index", version),
             position = PcoVec::forced_import(db, "tx_position", version),
         };

@@ -1,10 +1,9 @@
+use crate::test_cache::init_cache;
 use brk_types::{Height, Version};
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CacheBudget, Database, Stamp};
+use vecdb::{AnyStoredVec, Database, Stamp};
 
 use super::*;
-
-static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
 
 fn expected(timestamps: &[Timestamp]) -> Vec<Timestamp> {
     (0..timestamps.len())
@@ -18,9 +17,10 @@ fn expected(timestamps: &[Timestamp]) -> Vec<Timestamp> {
 
 #[test]
 fn batches_reorgs_and_reopen_match_window_medians() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+    let mut blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     let mut timestamps = Vec::new();
     // Nonmonotonic, repeated timestamps, early even windows, and page crossings.
     for end in [1, 2, 6, 10, 11, 12, 25, 10_000] {
@@ -40,7 +40,7 @@ fn batches_reorgs_and_reopen_match_window_medians() {
     blocks.median_time.stamped_write(stamp).unwrap();
     db.flush().unwrap();
     drop(blocks);
-    let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+    let mut blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     assert_eq!(blocks.median_time.collect(), expected(&timestamps));
 
     // Replace a suffix, then return to precisely the same height and stamp.
@@ -59,9 +59,10 @@ fn batches_reorgs_and_reopen_match_window_medians() {
 
 #[test]
 fn import_backfills_missing_or_mismatched_checkpoint() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+    let mut blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     let timestamps = (0..10_000)
         .map(|height| Timestamp::from(((height * 7919) % 101) as u32))
         .collect::<Vec<_>>();
@@ -74,7 +75,7 @@ fn import_backfills_missing_or_mismatched_checkpoint() {
     drop(blocks);
 
     // Simulates an existing database predating the median-time vector.
-    let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+    let mut blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     assert_eq!(blocks.median_time.collect(), expected(&timestamps));
     assert_eq!(blocks.median_time.stamp(), stamp);
 
@@ -89,7 +90,7 @@ fn import_backfills_missing_or_mismatched_checkpoint() {
         .unwrap();
     db.flush().unwrap();
     drop(blocks);
-    let blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+    let blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     assert_eq!(blocks.median_time.collect(), expected(&timestamps));
     assert_eq!(blocks.median_time.stamp(), stamp);
 }

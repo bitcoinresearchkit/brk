@@ -81,7 +81,13 @@ bitview_default = { workspace = true }
 bitview_plugin = { workspace = true }
 bitview_plugin_distribution = { workspace = true }
 bitview_plugin_indexer = { workspace = true }
+bitview_plugin_inputs = { workspace = true }
+bitview_plugin_investing = { workspace = true }
+bitview_plugin_mappings = { workspace = true }
+bitview_plugin_market = { workspace = true }
+bitview_plugin_outputs = { workspace = true }
 bitview_plugin_price = { workspace = true }
+bitview_plugin_transactions = { workspace = true }
 bitview_runtime = { workspace = true }
 brk_reader = { workspace = true }
 tempfile = { workspace = true }

@@ -6,22 +6,18 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachePolicy, Database, EagerVec, Ident,
-    ImportOptions, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, AnyVec, Database, Ident, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
     UnaryTransform, VecValue, WritableVec,
 };
 
-use crate::{IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight};
+use crate::{
+    CachedSeries, IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, import_cached,
+};
 
 /// Cumulative source of truth with lazy exact per-block values and rolling averages.
 #[derive(Traversable)]
-pub struct PerBlockCumulativeAverage<
-    T,
-    C = T,
-    M: StorageMode = Rw,
-    F = Ident,
-    P: CachePolicy = Budgeted,
-> where
+pub struct PerBlockCumulativeAverage<T, C = T, M: StorageMode = Rw, F = Ident>
+where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
     F: UnaryTransform<C, T>,
@@ -30,20 +26,19 @@ pub struct PerBlockCumulativeAverage<
     /// taken from the period's final block.
     pub block: LazyPreviousDeltaVec<Height, C, T, F>,
     #[traversable(hidden)]
-    cumulative: M::Stored<EagerVec<PcoVec<Height, C, P>>>,
+    cumulative: CachedSeries<Height, C, M>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
     last_cumulative: M::WriteOnly<Option<(usize, C)>>,
 }
 
-impl<T, C, F, P: CachePolicy> PerBlockCumulativeAverage<T, C, Rw, F, P>
+impl<T, C, F> PerBlockCumulativeAverage<T, C, Rw, F>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
     F: UnaryTransform<C, T>,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -51,10 +46,7 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
-        let cumulative = EagerVec::<PcoVec<Height, C, P>>::forced_import_with(
-            ImportOptions::new(db, &format!("{name}_cumulative"), cumulative_version)
-                .with_cache_budget(cache),
-        )?;
+        let cumulative = import_cached(db, &format!("{name}_cumulative"), cumulative_version)?;
         let last_cumulative = cumulative
             .collect_last()
             .map(|value| (cumulative.len(), value));

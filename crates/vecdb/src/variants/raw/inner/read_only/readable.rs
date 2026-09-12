@@ -17,19 +17,17 @@ where
     #[inline(always)]
     fn collect_one_at(&self, index: usize) -> Option<T> {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                if index >= self.base.len() {
-                    return None;
-                }
-                let stored = self.base.len();
-                Some(cache.get(index, |ranges| {
+            return cache.get_source(
+                index,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
                         stored,
                         ranges,
                     )
-                }))
-            });
+                },
+            );
         }
         let len = self.base.len();
         if index >= len {
@@ -40,10 +38,6 @@ where
         }))
     }
 
-    fn data_revision(&self) -> Option<u64> {
-        C::cache(&self.cache).map(|cache| cache.revision())
-    }
-
     fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
         C::cache(&self.cache)
             .is_some_and(|cache| cache.try_read_range(from, to, || self.base.len(), out))
@@ -52,16 +46,18 @@ where
     #[inline(always)]
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let len = self.base.len();
-                cache.read(Request::Range(from, to).clamp(len), buf, |ranges| {
+            return cache.read_source(
+                Request::Range(from, to),
+                buf,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
-                        len,
+                        stored,
                         ranges,
                     )
-                });
-            });
+                },
+            );
         }
         ReadWriteRawVec::<I, T, S, C>::read_stored_into(
             self.base.region(),
@@ -75,16 +71,18 @@ where
     #[inline]
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let len = self.base.len();
-                cache.read(Request::Sorted(indices).clamp(len), out, |ranges| {
+            return cache.read_source(
+                Request::Sorted(indices),
+                out,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
                     ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
-                        len,
+                        stored,
                         ranges,
                     )
-                });
-            });
+                },
+            );
         }
         let reader = self.reader();
         out.reserve(indices.len());
@@ -99,27 +97,15 @@ where
         let Some(cache) = C::cache(&self.cache) else {
             return for_each_chunk(self, from, to, f);
         };
-        cache.read_scope(|| {
-            let stored = self.base.len();
-            let to = to.min(self.base.len());
-            cache
-                .try_for_each_chunk(
-                    from,
-                    to.min(stored),
-                    |ranges| {
-                        ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
-                            self.base.region(),
-                            stored,
-                            ranges,
-                        )
-                    },
-                    |at, values| {
-                        f(at, values);
-                        Ok::<_, Infallible>(())
-                    },
-                )
-                .unwrap();
-        });
+        cache.for_each_source(
+            from,
+            to,
+            || (self.base.len(), &[][..]),
+            |stored, ranges| {
+                ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(self.base.region(), stored, ranges)
+            },
+            f,
+        );
     }
 
     #[inline]
@@ -161,23 +147,20 @@ where
         Self: Sized,
     {
         if let Some(cache) = C::cache(&self.cache) {
-            return cache.read_scope(|| {
-                let stored = self.base.len();
-                let to = to.min(self.base.len());
-                cache.try_fold(
-                    from,
-                    to,
-                    init,
-                    |ranges| {
-                        ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
-                            self.base.region(),
-                            stored,
-                            ranges,
-                        )
-                    },
-                    f,
-                )
-            });
+            return cache.try_fold_source(
+                from,
+                to,
+                init,
+                || (self.base.len(), &[][..]),
+                |stored, ranges| {
+                    ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
+                        self.base.region(),
+                        stored,
+                        ranges,
+                    )
+                },
+                f,
+            );
         }
         let len = self.base.len();
         let from = from.min(len);

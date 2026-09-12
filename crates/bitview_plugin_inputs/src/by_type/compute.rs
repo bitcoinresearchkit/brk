@@ -4,7 +4,7 @@ use bitview_cohort::{SpendableType, SpendableTypeId};
 use bitview_plugin_indexer::Indexer;
 use brk_error::OptionData;
 use brk_exit::Exit;
-use brk_types::{StoredU16, StoredU64};
+use brk_types::StoredU64;
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
@@ -37,7 +37,12 @@ impl Vecs {
             for target in self.stored_vecs_mut() {
                 target.any_truncate_if_needed_at(skip)?;
             }
-            let mut cumulative = SpendableType::from_fn(|id| {
+            let mut input_cumulative = SpendableType::from_fn(|id| {
+                id.select(&self.input_count_stored)
+                    .collect_last()
+                    .unwrap_or_default()
+            });
+            let mut tx_cumulative = SpendableType::from_fn(|id| {
                 id.select(&self.tx_count_stored)
                     .collect_last()
                     .unwrap_or_default()
@@ -86,12 +91,10 @@ impl Vecs {
                 |agg| {
                     for &id in SpendableTypeId::ALL {
                         let output_type = id.output_type();
-                        let value = agg.entries_per_type[output_type as usize];
-                        debug_assert!(u16::try_from(value).is_ok());
-                        self.input_count_stored
-                            .get_mut(output_type)
-                            .push(StoredU16::new(value as u16));
-                        let total = cumulative.get_mut(output_type);
+                        let total = input_cumulative.get_mut(output_type);
+                        *total += StoredU64::from(agg.entries_per_type[output_type as usize]);
+                        self.input_count_stored.get_mut(output_type).push(*total);
+                        let total = tx_cumulative.get_mut(output_type);
                         *total += StoredU64::from(agg.txs_per_type[output_type as usize]);
                         self.tx_count_stored.get_mut(output_type).push(*total);
                     }

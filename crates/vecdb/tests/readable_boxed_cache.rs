@@ -1,22 +1,19 @@
 #![cfg(feature = "pco")]
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Stamp, Version,
-    WritableVec,
+    AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
+    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Stamp, Version, WritableVec,
 };
 
 #[test]
 fn captured_readers_share_ranges_and_source_owned_invalidation() {
+    init_cache();
     fn capture(source: &impl ReadableCloneableVec<usize, u64>) -> ReadableBoxedVec<usize, u64> {
         source.read_only_boxed_clone()
     }
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut values = PcoVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "values", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut values = PcoVec::<usize, u64, Budgeted>::import(&db, "values", Version::ONE).unwrap();
     values.push(10);
     values.push(20);
     values.write().unwrap();
@@ -34,39 +31,37 @@ fn captured_readers_share_ranges_and_source_owned_invalidation() {
 }
 
 #[test]
-fn append_and_noop_truncation_preserve_prefixes_and_revisions() {
+fn append_and_noop_truncation_preserve_prefixes() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut values = EagerVec::<PcoVec<usize, u64, Budgeted>>::import_with(
-        ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut values =
+        EagerVec::<PcoVec<usize, u64, Budgeted>>::import(&db, "prices", Version::ONE).unwrap();
     values.push(10);
     values.push(20);
     values.write().unwrap();
     let reader = values.read_only_clone();
     assert_eq!(reader.collect(), [10, 20]);
-    let revision = reader.data_revision();
     for length in [2, 3] {
         values.truncate_if_needed_at(length).unwrap();
         assert!(reader.read_cached_into_at(0, 2, &mut Vec::new()));
-        assert_eq!(reader.data_revision(), revision);
     }
     let stamp = Stamp::from(42_u64);
     values.truncate_if_needed_with_stamp(2, stamp).unwrap();
     assert_eq!(values.stamp(), stamp);
     values.push(40);
     values.write().unwrap();
-    assert_eq!(reader.data_revision(), revision);
     assert!(reader.read_cached_into_at(0, 2, &mut Vec::new()));
-    assert!(!reader.read_cached_into_at(2, 3, &mut Vec::new()));
+    assert!(reader.read_cached_into_at(2, 3, &mut Vec::new()));
     assert_eq!(reader.collect(), [10, 20, 40]);
     values.truncate_if_needed_at(1).unwrap();
     values.push(30);
     values.push(50);
     values.write().unwrap();
-    assert_ne!(reader.data_revision(), revision);
     assert_eq!(reader.collect(), [10, 30, 50]);
 }
 
-static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod cache;
+use cache::init_cache;

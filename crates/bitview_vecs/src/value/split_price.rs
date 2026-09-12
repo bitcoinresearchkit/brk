@@ -1,7 +1,6 @@
 use bitview_collections::Ohlc;
 use bitview_transforms::{
     CentsUnsignedToDollars, CentsUnsignedToSats, OhlcCentsToHighCents, OhlcCentsToLowCents,
-    OhlcCentsToOpenCents,
 };
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Dollars, OHLCCents, Sats, Version};
@@ -9,13 +8,13 @@ use derive_more::{Deref, DerefMut};
 
 use crate::{IndexSources, LazyIndexes, OhlcPrice, Price, Resolutions, SpotPrice};
 
-pub type IndexedPrice =
-    Price<LazyIndexes<Cents, OHLCCents>, LazyIndexes<Dollars, Cents>, LazyIndexes<Sats, Cents>>;
+pub type IndexedPrice<S = OHLCCents> =
+    Price<LazyIndexes<Cents, S>, LazyIndexes<Dollars, Cents>, LazyIndexes<Sats, Cents>>;
 pub type ClosePrice = Price<Resolutions<Cents>, Resolutions<Dollars>, Resolutions<Sats>>;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct SplitPrice(pub Ohlc<IndexedPrice, ClosePrice>);
+pub struct SplitPrice(pub Ohlc<IndexedPrice, ClosePrice, IndexedPrice<Cents>>);
 
 impl SplitPrice {
     pub fn new(
@@ -25,10 +24,11 @@ impl SplitPrice {
         spot: &SpotPrice,
         ohlc: &OhlcPrice,
     ) -> Self {
-        let open_cents = LazyIndexes::from_ohlc_indexes::<OhlcCentsToOpenCents>(
+        let open_cents = LazyIndexes::from_open_source(
             &format!("{name}_open_cents"),
             version,
-            &ohlc.cents,
+            &spot.cents.height,
+            indexes,
         );
         let high_cents = LazyIndexes::from_ohlc_indexes::<OhlcCentsToHighCents>(
             &format!("{name}_high_cents"),

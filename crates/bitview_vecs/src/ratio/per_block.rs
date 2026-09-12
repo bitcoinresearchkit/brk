@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Lengths, StoredF32, Version};
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
 
@@ -19,17 +19,15 @@ const VERSION: Version = Version::new(3);
 
 impl<R: FixedRatio> RatioPerBlock<R> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        Self::forced_import_ppm(cache, db, &format!("{name}_ratio"), version, indexes)
+        Self::forced_import_ppm(db, &format!("{name}_ratio"), version, indexes)
     }
 
     pub fn forced_import_ppm(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -37,7 +35,7 @@ impl<R: FixedRatio> RatioPerBlock<R> {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let ppm = PerBlock::forced_import(cache, db, &format!("{name}_{}", R::SUFFIX), v, indexes)?;
+        let ppm = PerBlock::forced_import(db, &format!("{name}_{}", R::SUFFIX), v, indexes)?;
 
         let ratio = LazyPerBlock::from_resolutions::<R::ToRatio>(name, v, &ppm);
 

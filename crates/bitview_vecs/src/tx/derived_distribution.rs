@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Lengths, TxIndex, VSize};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode, Version};
+use vecdb::{Database, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{BlockRollingDistribution, IndexSources, PerBlockDistribution};
 
@@ -23,15 +23,13 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let block = PerBlockDistribution::forced_import(cache, db, name, version, indexes)?;
-        let distribution =
-            BlockRollingDistribution::forced_import(cache, db, name, version, indexes)?;
+        let block = PerBlockDistribution::forced_import(db, name, version, indexes)?;
+        let distribution = BlockRollingDistribution::forced_import(db, name, version, indexes)?;
 
         Ok(Self {
             block,

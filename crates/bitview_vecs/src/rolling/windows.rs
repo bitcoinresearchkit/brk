@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{IndexSources, PerBlock};
 
@@ -20,14 +20,13 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(Windows::try_from_fn(|suffix| {
-            PerBlock::forced_import(cache, db, &format!("{name}_{suffix}"), version, indexes)
+            PerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 }

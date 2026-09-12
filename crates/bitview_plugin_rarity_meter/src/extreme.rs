@@ -9,10 +9,7 @@ use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, StoredU8, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableVec, Rw, StorageMode, VecIndex,
-    WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::threshold_vecs::ThresholdVecs;
 
@@ -100,7 +97,6 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -109,21 +105,18 @@ where
         let version = version + Version::ONE;
         let thresholds = ThresholdVecs {
             threshold_pct0_1: PerBlock::forced_import(
-                cache,
                 db,
                 &format!("{name}_threshold_pct0_1"),
                 version,
                 mappings,
             )?,
             threshold_pct0_05: PerBlock::forced_import(
-                cache,
                 db,
                 &format!("{name}_threshold_pct0_05"),
                 version,
                 mappings,
             )?,
             threshold_pct0_025: PerBlock::forced_import(
-                cache,
                 db,
                 &format!("{name}_threshold"),
                 version,
@@ -133,14 +126,8 @@ where
 
         Ok(Self {
             thresholds,
-            tail: PercentPerBlock::forced_import(
-                cache,
-                db,
-                &format!("{name}_tail"),
-                version,
-                mappings,
-            )?,
-            rank: PerBlock::forced_import(cache, db, &format!("{name}_rank"), version, mappings)?,
+            tail: PercentPerBlock::forced_import(db, &format!("{name}_tail"), version, mappings)?,
+            rank: PerBlock::forced_import(db, &format!("{name}_rank"), version, mappings)?,
             history: LiveHistory::new(),
         })
     }

@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::ptr;
 
 use bitview_cohort::{
@@ -11,16 +12,13 @@ use bitview_vecs::{
 };
 use brk_types::{Cents, Height, PartsPerMillion32, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{
-    CacheBudget, Database, PcoVecValue, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Ro,
-};
+use vecdb::{Database, PcoVecValue, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Ro};
 
 mod common;
 
-static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
-
 #[test]
 fn aggregate_view_families_share_storage_and_read_only_projection() {
+    init_cache();
     fn check<V: Clone, T: PcoVecValue + PartialEq>(
         mut owner: AggregatePerBlock<V, T>,
         values: UTXOAggregate<T>,
@@ -53,17 +51,15 @@ fn aggregate_view_families_share_storage_and_read_only_projection() {
     let spot = common::stored::<Height, _>(&db, "spot", [Cents::from(100_u64)]);
     let amounts = UTXOAggregate::from_fn(|id| Cents::from(id.index() as u64 + 1));
     check(
-        AggregateFiatPerBlock::forced_import(&CACHE, &db, "fiat", Version::ONE, &indexes).unwrap(),
+        AggregateFiatPerBlock::forced_import(&db, "fiat", Version::ONE, &indexes).unwrap(),
         amounts.clone(),
     );
     check(
-        AggregatePercentPerBlock::forced_import(&CACHE, &db, "share", Version::ONE, &indexes)
-            .unwrap(),
+        AggregatePercentPerBlock::forced_import(&db, "share", Version::ONE, &indexes).unwrap(),
         UTXOAggregate::from_fn(|id| PartsPerMillion32::from(id.index() as f64 / 2.0)),
     );
     check(
         AggregatePriceWithRatioPerBlock::forced_import(
-            &CACHE,
             &db,
             "price",
             Version::ONE,
@@ -77,10 +73,11 @@ fn aggregate_view_families_share_storage_and_read_only_projection() {
 
 #[test]
 fn exact_totals_never_sum_independently_computed_values() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut sources =
-        UTXOSources::<Cents>::forced_import(&CACHE, &db, "exact_prices", Version::ONE).unwrap();
+        UTXOSources::<Cents>::forced_import(&db, "exact_prices", Version::ONE).unwrap();
     let maximum = Cents::from(u64::MAX - 1);
     let direct = UTXOValues::<Cents>::default().map(|_| maximum);
     let aggregate = UTXOAggregate::<Cents>::default().map(|_| Cents::from(17_u64));
@@ -117,10 +114,10 @@ fn exact_totals_never_sum_independently_computed_values() {
 
 #[test]
 fn source_selection_borrows_the_named_owner_for_each_cohort_family() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let sources =
-        UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "selection", Version::ONE).unwrap();
+    let sources = UTXOSources::<StoredU64>::forced_import(&db, "selection", Version::ONE).unwrap();
     assert!(ptr::eq(
         sources.get(CohortId::All).unwrap(),
         &sources.cohorts.all
@@ -147,13 +144,13 @@ fn source_selection_borrows_the_named_owner_for_each_cohort_family() {
 
 #[test]
 fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
+    init_cache();
     let dir = tempdir().unwrap();
     let version = Version::new(31);
     let mut expected_names = Vec::new();
     {
         let db = Database::open(dir.path()).unwrap();
-        let mut sources =
-            UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+        let mut sources = UTXOSources::<StoredU64>::forced_import(&db, "exact", version).unwrap();
         let mut direct = UTXOValues::default();
         direct.core.age_range = AgeRange::from_fn(|id| StoredU64::from(id.index() as u64 + 1));
         let aggregate = UTXOAggregate::default().map(|_: &StoredU64| StoredU64::from(17_u64));
@@ -166,8 +163,7 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
         db.flush().unwrap();
     }
     let db = Database::open(dir.path()).unwrap();
-    let mut sources =
-        UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+    let mut sources = UTXOSources::<StoredU64>::forced_import(&db, "exact", version).unwrap();
     assert_eq!(sources.min_len(), 1);
     let names: Vec<_> = sources
         .collect_vecs_mut()
@@ -187,10 +183,10 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
 
 #[test]
 fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut amounts = AmountSources::<StoredU64, ()>::forced_import(
-        &CACHE,
         &db,
         "amount_source",
         CohortContext::Addr,
@@ -221,3 +217,7 @@ fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
             .all(|v| *v == StoredU64::from(13_u64))
     );
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

@@ -6,9 +6,7 @@ use bitview_vecs::IndexSources;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, CentsSats, Height, Sats, Version};
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{COMPUTE_BATCH_SIZE, reference_price::ReferencePrice};
 
@@ -31,15 +29,9 @@ pub struct ReferencePrices<M: StorageMode = Rw> {
 }
 
 impl ReferencePrices {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        indexes: &IndexSources,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, indexes: &IndexSources) -> Result<Self> {
         let import = |name| {
             ReferencePrice::forced_import(
-                cache,
                 db,
                 &format!("rarity_meter_{name}_realized_price"),
                 version + Version::ONE,

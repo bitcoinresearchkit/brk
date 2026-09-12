@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_types::{AddrHash, Height, OutputType, Version};
 use rayon::prelude::*;
 use tracing::debug;
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, RawDBError, Rw, Stamp, StorageMode};
+use vecdb::{AnyStoredVec, AnyVec, Database, RawDBError, Rw, Stamp, StorageMode};
 
 use crate::Lengths;
 
@@ -51,11 +51,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        parent: &Path,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
         debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
         debug!("Setting min len...");
@@ -71,11 +67,11 @@ impl Vecs {
             scripts,
             op_return,
         ) = parallel_import! {
-            blocks = BlocksVecs::forced_import(cache, &db, version),
-            transactions = TransactionsVecs::forced_import(cache, &db, version),
+            blocks = BlocksVecs::forced_import(&db, version),
+            transactions = TransactionsVecs::forced_import(&db, version),
             transaction_features = TransactionFeaturesVecs::forced_import(&db, version),
-            inputs = InputsVecs::forced_import(cache, &db, version),
-            outputs = OutputsVecs::forced_import(cache, &db, version),
+            inputs = InputsVecs::forced_import(&db, version),
+            outputs = OutputsVecs::forced_import(&db, version),
             addrs = AddrsVecs::forced_import(&db, version),
             scripts = ScriptsVecs::forced_import(&db, version),
             op_return = OpReturnVecs::forced_import(&db, version),

@@ -7,31 +7,27 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{
-    Budgeted, CacheBudget, CachePolicy, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec,
-    Rw, StorageMode,
-};
+use vecdb::{Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, PerBlock, RollingComplete, WindowStarts};
 
 #[derive(Traversable)]
-pub struct PerBlockRolling<T, M: StorageMode = Rw, S: CachePolicy = Budgeted>
+pub struct PerBlockRolling<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: PerBlock<T, M, S>,
+    pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
     pub rolling: RollingComplete<T, M>,
 }
 
-impl<T, S: CachePolicy> PerBlockRolling<T, Rw, S>
+impl<T> PerBlockRolling<T>
 where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -39,10 +35,9 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative =
-            PerBlock::forced_import(cache, db, &format!("{name}_cumulative"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let cumulative_source = cumulative.height.read_only_clone();
         let rolling = RollingComplete::forced_import(
-            cache,
             db,
             name,
             version,
@@ -57,7 +52,7 @@ where
         })
     }
 
-    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T, S>) {
+    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T>) {
         self.cumulative.resolutions.height_source()
     }
 

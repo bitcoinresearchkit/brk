@@ -50,7 +50,8 @@ impl UrpdRaw {
         )
     }
 
-    fn cost_basis_percentile_prices_from_entries(
+    /// Calculate percentiles from entries ordered by ascending creation price.
+    pub fn cost_basis_percentile_prices_from_entries(
         entries: impl Iterator<Item = (CentsCompact, Sats)> + Clone,
     ) -> CostBasisByPercentile {
         let (total_sats, total_value) = entries.clone().fold(

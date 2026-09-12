@@ -208,18 +208,20 @@ impl Sources {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_cache::init_cache;
+
     use tempfile::tempdir;
-    use vecdb::{CacheBudget, Database, ImportableVec};
+    use vecdb::{Database, ImportableVec};
 
     use super::*;
 
     #[test]
     fn shared_batches_cover_boundaries_short_inputs_and_rewrites() {
-        static CACHE: CacheBudget = CacheBudget::new(1 << 20);
-        let cache = &CACHE;
+        init_cache();
+
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut sources = Sources::forced_import(cache, &db, Version::ONE).unwrap();
+        let mut sources = Sources::forced_import(&db, Version::ONE).unwrap();
         let mut loss_share = EagerVec::<PcoVec<Height, BoundedRatio>>::forced_import(
             &db,
             "loss_share",

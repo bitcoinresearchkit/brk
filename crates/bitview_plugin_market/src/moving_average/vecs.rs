@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPriceWithRatioPerBlock, StoredSeries};
-use brk_types::{Cents, Height};
+use bitview_vecs::{CachedSeries, LazyPriceWithRatioPerBlock};
+use brk_types::{Cents, Height, StoredU64};
 use vecdb::{Rw, StorageMode};
 
 use super::{ema_vecs::EmaVecs, sma::SmaVecs};
@@ -185,7 +185,10 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// through the represented block.
     pub ema: EmaVecs<LazyPriceWithRatioPerBlock>,
     #[traversable(hidden)]
-    pub ema_stored: EmaVecs<StoredSeries<Height, Cents, M>>,
+    pub ema_stored: EmaVecs<CachedSeries<Height, Cents, M>>,
+    /// Cumulative integer-cent prices shared by all SMA windows.
+    #[traversable(hidden)]
+    pub sma_prefix_sum: CachedSeries<Height, StoredU64, M>,
 }
 
 #[cfg(test)]

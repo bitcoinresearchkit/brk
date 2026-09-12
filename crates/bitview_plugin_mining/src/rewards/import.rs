@@ -8,12 +8,11 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{PartsPerMillion32, PartsPerMillion64, Sats, Version};
-use vecdb::{AnyVec, CacheBudget, Database, EagerVec, ImportableVec};
+use vecdb::{AnyVec, Database, EagerVec, ImportableVec};
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     indexer: &Indexer,
@@ -26,7 +25,6 @@ pub fn forced_import(
         + indexer.vecs().outputs.value.version();
 
     let coinbase = ValuePerBlockCumulativeRolling::forced_import(
-        cache,
         db,
         "coinbase",
         coinbase_version,
@@ -34,15 +32,13 @@ pub fn forced_import(
         window_starts,
     )?;
     let subsidy = ValuePerBlockCumulativeRolling::forced_import(
-        cache,
         db,
         "subsidy",
         version,
         mappings,
         window_starts,
     )?;
-    let fees =
-        ValuePerBlockFull::forced_import(cache, db, "fees", version, mappings, window_starts)?;
+    let fees = ValuePerBlockFull::forced_import(db, "fees", version, mappings, window_starts)?;
     let fees_source = fees.cumulative_sats_source();
 
     let fee_dominance = LazyPercentCumulativeRolling::from_cumulative_ratio_with_numerator::<
@@ -81,7 +77,6 @@ pub fn forced_import(
         fees,
         output_volume: EagerVec::forced_import(db, "output_volume", version)?,
         unclaimed: ValuePerBlockCumulative::forced_import(
-            cache,
             db,
             "unclaimed_rewards",
             version,

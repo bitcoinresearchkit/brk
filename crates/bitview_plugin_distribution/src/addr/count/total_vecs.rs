@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use super::AddrCountsVecs;
 
@@ -13,14 +13,8 @@ use super::AddrCountsVecs;
 pub struct TotalAddrCountVecs<M: StorageMode = Rw>(#[traversable(flatten)] pub AddrCountsVecs<M>);
 
 impl TotalAddrCountVecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         Ok(Self(AddrCountsVecs::forced_import(
-            cache,
             db,
             "total_addr_count",
             version,

@@ -1,6 +1,7 @@
 //! Native warmup versus owned warmed-state reuse. Synthetic indexed blocks;
 //! excludes HTTP, cold device I/O, producer update cost and cache-key checks.
 
+use crate::test_cache::init_cache;
 use std::{
     fs,
     hint::black_box,
@@ -29,7 +30,6 @@ use tokio::{
     runtime::Builder,
     spawn as TokioSpawn,
 };
-use vecdb::CacheBudget;
 
 use super::chain_rpc;
 
@@ -83,6 +83,7 @@ fn chain() -> Vec<Block> {
 #[test]
 #[ignore = "native 12/40-block oracle replay tradeoff; synthetic 2000-transaction blocks, excludes HTTP and cold storage"]
 fn benchmark_native_oracle_window() {
+    init_cache();
     thread::Builder::new().stack_size(8 * 1024 * 1024).spawn(|| {
         Builder::new_multi_thread().worker_threads(2).enable_all().build().unwrap().block_on(async {
             let directory = tempdir().unwrap();
@@ -120,7 +121,7 @@ fn benchmark_native_oracle_window() {
                 }
             });
             let reader = Reader::new_without_rlimit(blocks_path, &client);
-            let mut indexer = Indexer::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader).unwrap();
+            let mut indexer = Indexer::import(ImportContext::new(directory.path()), &reader).unwrap();
             indexer.checked_index(&Exit::default()).unwrap();
             indexer.finish_update().unwrap();
             let safe = indexer.safe_lengths();
@@ -161,5 +162,3 @@ fn benchmark_native_oracle_window() {
         });
     }).unwrap().join().unwrap();
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

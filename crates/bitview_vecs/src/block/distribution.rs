@@ -9,8 +9,8 @@ use brk_types::{Height, StoredU64, VSize, get_percentile, get_weighted_percentil
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CheckedSub, Database, EagerVec, PcoVec,
-    ReadableVec, Rw, StorageMode, VecIndex, VecValue, Version, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, CheckedSub, Database, EagerVec, PcoVec, ReadableVec, Rw,
+    StorageMode, VecIndex, VecValue, Version, WritableVec,
 };
 
 use crate::{IndexSources, PerBlock};
@@ -63,14 +63,13 @@ pub struct PerBlockDistribution<T: ComputedVecValue + PartialOrd + JsonSchema, M
 
 impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|suffix| {
-            PerBlock::forced_import(cache, db, &format!("{name}_{suffix}"), version, indexes)
+            PerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

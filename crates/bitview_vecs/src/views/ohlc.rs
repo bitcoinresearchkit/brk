@@ -217,7 +217,8 @@ impl<I: VecIndex> Traversable for LazyOhlcVec<I> {
 
 #[cfg(test)]
 mod tests {
-    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+    use crate::test_cache::init_cache;
+
     use std::{
         env, fs, process,
         time::{SystemTime, UNIX_EPOCH},
@@ -225,10 +226,7 @@ mod tests {
 
     use brk_types::Day1;
     use rangeindex::SharedRangeMap;
-    use vecdb::{
-        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, WritableVec,
-    };
+    use vecdb::{AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
 
     use super::*;
     use crate::RangeMapVec;
@@ -239,6 +237,7 @@ mod tests {
 
     #[test]
     fn derives_candles_and_preserves_empty_periods() {
+        init_cache();
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -246,10 +245,8 @@ mod tests {
         let path = env::temp_dir().join(format!("brk-lazy-ohlc-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
-        let mut prices: EagerVec<PcoVec<Height, Cents, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+        let mut prices: EagerVec<PcoVec<Height, Cents, Budgeted>> =
+            EagerVec::forced_import(&db, "prices", Version::ONE).unwrap();
         for value in [10, 20, 5, 7] {
             prices.push(Cents::new(value));
         }

@@ -10,7 +10,7 @@ use brk_types::{
     Cents, CentsSigned, CentsSquaredSats, Dollars, PartsPerMillionSigned32, PriceRatio, Sats,
     Version,
 };
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use super::{
     super::UnrealizedAggregateSources, NetUnrealizedByCohort, UnrealizedByCohort, UnrealizedSources,
@@ -82,44 +82,38 @@ pub struct UnrealizedVecs<M: StorageMode = Rw> {
 
 impl UnrealizedVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         realized_price: &UTXOGroups<LazyPriceWithRatioPerBlock>,
     ) -> Result<Box<Self>> {
         let profit = UnrealizedByCohort::forced_import(
-            cache,
             db,
             "unrealized_profit",
             version + Version::ONE,
             mappings,
         )?;
         let loss = UnrealizedByCohort::forced_import(
-            cache,
             db,
             "unrealized_loss",
             version + Version::ONE,
             mappings,
         )?;
-        let net_pnl = NetUnrealizedByCohort::forced_import(cache, db, version, mappings)?;
+        let net_pnl = NetUnrealizedByCohort::forced_import(db, version, mappings)?;
         let aggregate_version = version + Version::ONE;
         let gross_pnl = AdditiveAggregateFiatPerBlock::forced_import(
-            cache,
             db,
             "unrealized_gross_pnl",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_profit = AdditiveAggregateFiatPerBlock::forced_import(
-            cache,
             db,
             "invested_capital_in_profit",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_loss = AdditiveAggregateFiatPerBlock::forced_import(
-            cache,
             db,
             "invested_capital_in_loss",
             aggregate_version,
@@ -129,27 +123,12 @@ impl UnrealizedVecs {
             UTXOTermSources::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
         let capitalized_cap_in_loss_raw =
             UTXOTermSources::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
-        let pain_index = AggregateFiatPerBlock::forced_import(
-            cache,
-            db,
-            "pain_index",
-            aggregate_version,
-            mappings,
-        )?;
-        let greed_index = AggregateFiatPerBlock::forced_import(
-            cache,
-            db,
-            "greed_index",
-            aggregate_version,
-            mappings,
-        )?;
-        let net_sentiment = AggregateFiatPerBlock::forced_import(
-            cache,
-            db,
-            "net_sentiment",
-            aggregate_version,
-            mappings,
-        )?;
+        let pain_index =
+            AggregateFiatPerBlock::forced_import(db, "pain_index", aggregate_version, mappings)?;
+        let greed_index =
+            AggregateFiatPerBlock::forced_import(db, "greed_index", aggregate_version, mappings)?;
+        let net_sentiment =
+            AggregateFiatPerBlock::forced_import(db, "net_sentiment", aggregate_version, mappings)?;
         let nupl = realized_price.map_with_id(|cohort_id, price| {
             LazyRatioPerBlock::from_lazy_source::<MvrvToNupl, PriceRatio>(
                 &CohortContext::Utxo.metric_name(cohort_id, "nupl"),

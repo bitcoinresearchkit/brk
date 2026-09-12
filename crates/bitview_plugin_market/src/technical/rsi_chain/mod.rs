@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlock, PerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_types::{PartsPerMillion32, PartsPerMillionSigned64, StoredF32, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode, UnaryTransform};
+use vecdb::{Database, Rw, StorageMode, UnaryTransform};
 
 mod compute;
 
@@ -59,7 +59,6 @@ pub struct RsiChain<M: StorageMode = Rw> {
 }
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     tf: &str,
     version: Version,
@@ -68,31 +67,19 @@ pub fn forced_import(
 ) -> Result<RsiChain> {
     macro_rules! import {
         ($name:expr) => {
-            PerBlock::forced_import(
-                cache,
-                db,
-                &format!("rsi_{}_{}", $name, tf),
-                version,
-                mappings,
-            )?
+            PerBlock::forced_import(db, &format!("rsi_{}_{}", $name, tf), version, mappings)?
         };
     }
 
     macro_rules! percent_import {
         ($name:expr) => {
-            PercentPerBlock::forced_import(
-                cache,
-                db,
-                &format!("rsi_{}_{}", $name, tf),
-                version,
-                mappings,
-            )?
+            PercentPerBlock::forced_import(db, &format!("rsi_{}_{}", $name, tf), version, mappings)?
         };
     }
 
     let average_gain = import!("average_gain");
     let average_loss = import!("average_loss");
-    let rsi = PercentPerBlock::forced_import(cache, db, &format!("rsi_{tf}"), version, mappings)?;
+    let rsi = PercentPerBlock::forced_import(db, &format!("rsi_{tf}"), version, mappings)?;
 
     Ok(RsiChain {
         gains: LazyPerBlock::from_lazy::<Gain, PartsPerMillionSigned64>(

@@ -338,13 +338,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+    use crate::test_cache::init_cache;
+
     use brk_types::{Day1, Height, StoredU64, Version};
     use rangeindex::SharedRangeMap;
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, ReadableVec, WritableVec,
+        AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
     };
 
     use super::LazySinceDayVec;
@@ -352,13 +352,11 @@ mod tests {
 
     #[test]
     fn sorted_reads_reuse_the_fixed_start_and_handle_boundaries() {
+        init_cache();
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
-            EagerVec::forced_import_with(
-                ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
-            )
-            .unwrap();
+            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
         let first_heights = RangeMapVec::new(
             "first_height",
             Version::ONE,

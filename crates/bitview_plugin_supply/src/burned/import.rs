@@ -2,20 +2,14 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::ValuePerBlockCumulative;
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database};
+use vecdb::Database;
 
 use super::Vecs;
 
 impl Vecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         Ok(Self {
             total: ValuePerBlockCumulative::forced_import(
-                cache,
                 db,
                 "unspendable_supply",
                 version,

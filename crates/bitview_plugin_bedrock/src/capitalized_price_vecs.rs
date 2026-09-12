@@ -1,11 +1,11 @@
 use bitview_cohort::UTXOAggregate;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    DailyMappings, IndexSources, LazyDailyPriceWithRatio, StoredSeries, import_stored,
+    CachedSeries, DailyMappings, IndexSources, LazyDailyPriceWithRatio, import_cached,
 };
 use brk_error::Result;
 use brk_types::{Cents, Day1, Height, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec};
 
 use crate::WeightedPair;
 
@@ -19,12 +19,11 @@ pub struct CapitalizedPriceVecs<M: StorageMode = Rw> {
     /// The same capital-weighted mean using daily mobility-weighted URPDs.
     pub coinflow: UTXOAggregate<LazyDailyPriceWithRatio>,
     #[traversable(hidden)]
-    pub stored: WeightedPair<UTXOAggregate<StoredSeries<Day1, Cents, M>>>,
+    pub stored: WeightedPair<UTXOAggregate<CachedSeries<Day1, Cents, M>>>,
 }
 
 impl CapitalizedPriceVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         indexes: &IndexSources,
@@ -34,8 +33,7 @@ impl CapitalizedPriceVecs {
         let version = version + Version::TWO;
         let import = |weight: &str| {
             UTXOAggregate::try_from_fn(|id| {
-                import_stored(
-                    cache,
+                import_cached(
                     db,
                     &id.metric_name(&format!("{weight}_capitalized_price_cents")),
                     version,
@@ -46,7 +44,7 @@ impl CapitalizedPriceVecs {
             cointime: import("awake")?,
             coinflow: import("coinflow")?,
         };
-        let build = |weight: &str, sources: &UTXOAggregate<StoredSeries<Day1, Cents>>| {
+        let build = |weight: &str, sources: &UTXOAggregate<CachedSeries<Day1, Cents>>| {
             UTXOAggregate::from_fn(|id| {
                 LazyDailyPriceWithRatio::from_day1_source(
                     &id.metric_name(&format!("{weight}_capitalized_price")),

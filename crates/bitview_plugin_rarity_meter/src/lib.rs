@@ -89,11 +89,9 @@ impl Vecs {
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let version = STORAGE.schema_version();
-        let reference_prices =
-            ReferencePrices::forced_import(context.cache_budget(), &db, version, mappings)?;
+        let reference_prices = ReferencePrices::forced_import(&db, version, mappings)?;
         let this = Self {
             components: components::forced_import(
-                context.cache_budget(),
                 &db,
                 version,
                 mappings,
@@ -103,28 +101,10 @@ impl Vecs {
                 coinflow,
             )?,
             reference_prices,
-            extremes: extremes::forced_import(context.cache_budget(), &db, version, mappings)?,
-            full: inner::forced_import(
-                context.cache_budget(),
-                &db,
-                "rarity_meter",
-                version,
-                mappings,
-            )?,
-            local: inner::forced_import(
-                context.cache_budget(),
-                &db,
-                "local_rarity_meter",
-                version,
-                mappings,
-            )?,
-            cycle: inner::forced_import(
-                context.cache_budget(),
-                &db,
-                "cycle_rarity_meter",
-                version,
-                mappings,
-            )?,
+            extremes: extremes::forced_import(&db, version, mappings)?,
+            full: inner::forced_import(&db, "rarity_meter", version, mappings)?,
+            local: inner::forced_import(&db, "local_rarity_meter", version, mappings)?,
+            cycle: inner::forced_import(&db, "cycle_rarity_meter", version, mappings)?,
             db,
         };
         STORAGE.finalize_database(&this.db)?;
@@ -297,3 +277,8 @@ impl ComputePlugin for Vecs {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/common/cache.rs"]
+mod test_cache;

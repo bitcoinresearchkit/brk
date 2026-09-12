@@ -102,8 +102,6 @@ fn benchmark_lazy_folds() {
         "days",
         (0..len.div_ceil(144)).map(|i| Height::from(i * 144)),
     );
-    let counts = stored(&db, "counts", (0..len).map(|_| StoredU16::new(100)));
-    let counts = CumulativeCountVec::new(&counts);
     let cumulative = stored(
         &db,
         "cumulative",
@@ -138,7 +136,7 @@ fn benchmark_lazy_folds() {
     let ratio = LazyIndexedVec::new(
         "ratio",
         Version::ONE,
-        &counts,
+        &cumulative,
         &source,
         |_, count, numerator| RatioU64::<PartsPerMillion32>::apply(numerator, count),
     );
@@ -147,7 +145,7 @@ fn benchmark_lazy_folds() {
         StoredU64,
         PartsPerMillion32,
         ReverseOperands<RatioU64<PartsPerMillion32>>,
-    >::new("rolling", Version::ONE, &counts, &source, &starts);
+    >::new("rolling", Version::ONE, &cumulative, &source, &starts);
     let cached_rolling = LazyRollingRatioVec::<
         StoredU64,
         StoredU64,

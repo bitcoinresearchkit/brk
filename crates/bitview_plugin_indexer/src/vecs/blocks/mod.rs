@@ -7,8 +7,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
-    PcoVec, Rw, Stamp, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp,
+    StorageMode, WritableVec,
 };
 
 pub mod median_time;
@@ -59,11 +59,7 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
 }
 
 impl BlocksVecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
             blockhash,
             coinbase_tag,
@@ -79,8 +75,8 @@ impl BlocksVecs {
         ) = parallel_import! {
             blockhash = BytesVec::forced_import(db, "blockhash", version),
             coinbase_tag = BytesVec::forced_import(db, "coinbase_tag", version),
-            difficulty = PcoVec::forced_import_with(ImportOptions::new(db, "difficulty", version).with_cache_budget(cache)),
-            timestamp = PcoVec::forced_import_with(ImportOptions::new(db, "timestamp", version).with_cache_budget(cache)),
+            difficulty = PcoVec::forced_import(db, "difficulty", version),
+            timestamp = PcoVec::forced_import(db, "timestamp", version),
             median_time = PcoVec::forced_import(db, "median_time", version),
             total_size = PcoVec::forced_import(db, "total_size", version),
             weight = PcoVec::forced_import(db, "block_weight", version),

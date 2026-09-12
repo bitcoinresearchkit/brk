@@ -4,7 +4,7 @@ use bitview_cohort::UTXOValues;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{AnyStoredVec, CacheBudget, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, PcoVecValue, Rw, StorageMode};
 
 use super::super::UTXOSources;
 use crate::CumulativeState;
@@ -23,14 +23,9 @@ impl<T> CumulativeUTXOSources<T>
 where
     T: PcoVecValue + AddAssign + Copy + Default,
 {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            stored: UTXOSources::forced_import(cache, db, name, version)?,
+            stored: UTXOSources::forced_import(db, name, version)?,
             last: Default::default(),
         })
     }

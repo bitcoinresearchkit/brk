@@ -35,5 +35,3 @@ pub use rolling::PerBlockRolling;
 pub use rolling_average::PerBlockRollingAverage;
 pub use std_dev::StdDevPerBlock;
 pub use stored::PerBlock;
-mod lazy_count_cumulative_rolling;
-pub use lazy_count_cumulative_rolling::LazyCountPerBlockCumulativeRolling;

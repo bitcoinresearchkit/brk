@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, PriceRatio, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 /// A stored reference price and its stored spot/reference ratio. Unit and
 /// resolution views remain single-source derivations of those two histories.
@@ -21,15 +21,14 @@ pub struct ReferencePrice<M: StorageMode = Rw> {
 
 impl ReferencePrice {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self {
-            price: Price::forced_import(cache, db, name, version, indexes)?,
-            relative: RatioPerBlock::forced_import(cache, db, name, version, indexes)?,
+            price: Price::forced_import(db, name, version, indexes)?,
+            relative: RatioPerBlock::forced_import(db, name, version, indexes)?,
         })
     }
 

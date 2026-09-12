@@ -1,35 +1,32 @@
+use crate::test_cache::init_cache;
 use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
 
 use bitview_transforms::RatioU64;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CumulativeCountVec, DailyMappings, DailyMetric, LazyPercentPerBlock, PerBlock, Resolutions,
-};
+use bitview_vecs::{DailyMappings, DailyMetric, LazyPercentPerBlock, PerBlock, Resolutions};
 use brk_exit::Exit;
-use brk_types::{Day1, Height, PartsPerMillion32, StoredU16, StoredU64, Version};
+use brk_types::{Day1, Height, PartsPerMillion32, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, LazyVec,
-    PcoVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, WritableVec,
+    AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadOnlyClone,
+    ReadableCloneableVec, ReadableVec, WritableVec,
 };
-
-use crate::common::CACHE_BUDGET;
 
 #[allow(dead_code)]
 mod common;
 
 #[test]
-fn compact_ratio_reads_do_not_retain_an_expanded_cumulative_history() {
+fn ratio_reads_reuse_stored_counts_without_retaining_derived_history() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let counts = common::stored::<Height, _>(&db, "compact_counts", [StoredU16::from(3u16); 16]);
-    let compact = CumulativeCountVec::new(&counts);
+    let counts =
+        common::stored::<Height, _>(&db, "counts", (1..=16).map(|i| StoredU64::from(i * 3u64)));
     static READS: AtomicUsize = AtomicUsize::new(0);
     let counted = LazyVec::init(
         "counted",
         Version::ONE,
-        compact.read_only_boxed_clone(),
+        counts.read_only_boxed_clone(),
         |_, value| {
             READS.fetch_add(1, Relaxed);
             value
@@ -55,19 +52,19 @@ fn compact_ratio_reads_do_not_retain_an_expanded_cumulative_history() {
         );
         assert!(
             READS.load(Relaxed) > 0,
-            "compact source acquired an expanded cache"
+            "derived source acquired its own cache"
         );
     }
 }
 
 #[test]
 fn generic_clones_share_source_ranges_without_retaining_derived_histories() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut source = EagerVec::<PcoVec<Height, StoredU64, Budgeted>>::import_with(
-        ImportOptions::new(&db, "generic", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut source =
+        EagerVec::<PcoVec<Height, StoredU64, Budgeted>>::import(&db, "generic", Version::ONE)
+            .unwrap();
     for i in 0..4096_u64 {
         source.push(StoredU64::from(i));
     }
@@ -93,10 +90,7 @@ fn generic_clones_share_source_ranges_without_retaining_derived_histories() {
     assert_eq!(derived.collect_last(), Some(StoredU64::from(8190_u64)));
     assert!(!derived.read_cached_into_at(0, 4096, &mut Vec::new()));
 
-    let mut plain = PcoVec::<Height, StoredU64>::import_with(
-        ImportOptions::new(&db, "uncached", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut plain = PcoVec::<Height, StoredU64>::import(&db, "uncached", Version::ONE).unwrap();
     for &value in &expected {
         plain.push(value);
     }
@@ -111,24 +105,19 @@ fn generic_clones_share_source_ranges_without_retaining_derived_histories() {
 
 #[test]
 fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let mut metric = PerBlock::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "source_cache_height",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut metric =
+        PerBlock::<StoredU64>::forced_import(&db, "source_cache_height", Version::ONE, &indexes)
+            .unwrap();
     let _: &EagerVec<PcoVec<Height, StoredU64, Budgeted>> = &metric.height;
     for i in 0..4096_u64 {
         metric.height.push(StoredU64::from(i));
     }
     metric.height.write().unwrap();
     let reader = metric.read_only_clone();
-    assert_eq!(metric.height.data_revision(), reader.height.data_revision());
     assert!(!metric.height.read_cached_into_at(0, 4096, &mut Vec::new()));
     assert_eq!(
         reader.height.collect_last(),
@@ -150,14 +139,12 @@ fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
     assert!(json.starts_with(b"[0,1,2,"));
     let mut original = Vec::new();
     assert!(metric.height.read_cached_into_at(0, 4096, &mut original));
-    let revision = reader.height.data_revision();
     metric.height.truncate_if_needed_at(4096).unwrap();
     metric.height.push(StoredU64::from(4096_u64));
     metric.height.write().unwrap();
-    assert_eq!(reader.height.data_revision(), revision);
     assert!(reader.height.read_cached_into_at(0, 4096, &mut Vec::new()));
     assert!(
-        !reader
+        reader
             .height
             .read_cached_into_at(4096, 4097, &mut Vec::new())
     );
@@ -171,7 +158,7 @@ fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
     metric.height.write().unwrap();
     assert!(reader.height.read_cached_into_at(0, 4095, &mut Vec::new()));
     assert!(
-        !reader
+        reader
             .height
             .read_cached_into_at(4095, 4097, &mut Vec::new())
     );
@@ -184,17 +171,13 @@ fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
 
 #[test]
 fn compute_helpers_share_the_same_source_owner() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let mut metric = PerBlock::<StoredU64, Rw, Budgeted>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "source_cache_compute",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut metric =
+        PerBlock::<StoredU64>::forced_import(&db, "source_cache_compute", Version::ONE, &indexes)
+            .unwrap();
     metric.height.push(StoredU64::from(1_u64));
     metric.height.write().unwrap();
     let reader = metric.read_only_clone();
@@ -209,6 +192,7 @@ fn compute_helpers_share_the_same_source_owner() {
 
 #[test]
 fn daily_views_retain_only_their_requested_points_and_catalog_reuses_them() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
@@ -219,14 +203,9 @@ fn daily_views_retain_only_their_requested_points_and_catalog_reuses_them() {
     )
     .read_only_boxed_clone();
     let mappings = DailyMappings::new(&indexes);
-    let mut metric = DailyMetric::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "source_cache_day",
-        Version::ONE,
-        &mappings,
-    )
-    .unwrap();
+    let mut metric =
+        DailyMetric::<StoredU64>::forced_import(&db, "source_cache_day", Version::ONE, &mappings)
+            .unwrap();
     let _: &EagerVec<PcoVec<Day1, StoredU64, Budgeted>> = &metric.day1;
     for i in 0..4096_u64 {
         metric.day1.push(StoredU64::from(i));
@@ -269,25 +248,16 @@ fn daily_views_retain_only_their_requested_points_and_catalog_reuses_them() {
 
 #[test]
 fn incremental_compute_preserves_cached_prefixes_and_invalidates_rewrites() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let mut source = PerBlock::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "incremental_source",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
-    let mut target = PerBlock::<StoredU64>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "incremental_target",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut source =
+        PerBlock::<StoredU64>::forced_import(&db, "incremental_source", Version::ONE, &indexes)
+            .unwrap();
+    let mut target =
+        PerBlock::<StoredU64>::forced_import(&db, "incremental_target", Version::ONE, &indexes)
+            .unwrap();
     for i in 0..4096_u64 {
         source.height.push(StoredU64::from(i));
     }
@@ -329,7 +299,7 @@ fn incremental_compute_preserves_cached_prefixes_and_invalidates_rewrites() {
     assert_eq!(compute(4095, &mut target, &source), 2);
     assert!(reader.height.read_cached_into_at(0, 4095, &mut Vec::new()));
     assert!(
-        !reader
+        reader
             .height
             .read_cached_into_at(4095, 4097, &mut Vec::new())
     );
@@ -340,4 +310,6 @@ fn incremental_compute_preserves_cached_prefixes_and_invalidates_rewrites() {
     assert_eq!(original[4095], StoredU64::from(4095_u64));
 }
 
-static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

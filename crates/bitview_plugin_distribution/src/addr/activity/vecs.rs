@@ -7,7 +7,7 @@ use bitview_vecs::{LazyPerBlockCumulativeAverage, LazyWindowStartVec, PerBlockCu
 use brk_error::Result;
 use brk_types::{StoredU32, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
 
 use super::{AddrTypeToActivityCounts, BlockActivityCounts};
 
@@ -47,7 +47,6 @@ pub struct AddrActivityVecs<M: StorageMode = Rw> {
 
 impl AddrActivityVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -57,7 +56,6 @@ impl AddrActivityVecs {
         let import = |name: &str| -> Result<_> {
             let source = |name: &str| {
                 PerBlockCumulativeRolling::forced_import(
-                    cache,
                     db,
                     name,
                     cumulative_version + Version::ONE,

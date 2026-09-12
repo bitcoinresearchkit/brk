@@ -9,7 +9,8 @@ use vecdb::{ReadableVec, VecIndex, VecValue};
 /// Determines how values are produced from a source vec and a range map.
 /// Implement this on a zero-sized marker type to define a custom strategy.
 ///
-/// Built-in strategy: `Sparse`.
+/// Built-in strategies: `Sparse` (last value or none) and `Open` (first price
+/// or the preceding close).
 pub trait AggFold<O: VecValue, S1I: VecIndex, S1T: VecValue>: 'static {
     fn try_fold<
         MI: VecIndex,

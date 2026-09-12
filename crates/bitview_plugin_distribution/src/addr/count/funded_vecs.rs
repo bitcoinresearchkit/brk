@@ -6,7 +6,7 @@ use bitview_vecs::{LazyPerBlockWithDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use super::{AddrCountsVecs, AddrTypeToAddrCount};
 use crate::metrics::AmountSources;
@@ -25,16 +25,14 @@ pub struct FundedAddrCountsVecs<M: StorageMode = Rw> {
 
 impl FundedAddrCountsVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
-            counts: AddrCountsVecs::forced_import(cache, db, "addr_count", version, mappings)?,
+            counts: AddrCountsVecs::forced_import(db, "addr_count", version, mappings)?,
             balance: AmountSources::forced_import(
-                cache,
                 db,
                 "addrs_addr_count_by_balance_range",
                 CohortContext::Addr,

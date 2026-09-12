@@ -95,8 +95,8 @@ impl<M: StorageMode> HasIndicators<M> for DefaultPlugins<M> {
     }
 }
 
-impl<M: StorageMode> HasInvesting for DefaultPlugins<M> {
-    fn investing(&self) -> &Investing {
+impl<M: StorageMode> HasInvesting<M> for DefaultPlugins<M> {
+    fn investing(&self) -> &Investing<M> {
         self.investing.as_ref()
     }
 }

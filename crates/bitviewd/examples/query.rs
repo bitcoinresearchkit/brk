@@ -9,9 +9,10 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Addr;
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
@@ -30,7 +31,7 @@ pub fn main() -> Result<()> {
     exit.set_ctrlc_handler();
 
     let reader = Reader::new(blocks_dir, &client);
-    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let context = ImportContext::new(&outputs_dir);
 
     let plugins = DefaultPlugins::import(context, &reader)?;
 
@@ -70,5 +71,3 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

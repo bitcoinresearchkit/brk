@@ -17,21 +17,9 @@ impl Vecs {
         let version = STORAGE.schema_version();
 
         let value = PcoVec::forced_import(&db, "value", version)?;
-        let count = CountVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let count = CountVecs::forced_import(&db, version, mappings, window_starts)?;
         let per_sec = LazyPerSecondWindows::new("inputs_per_sec", version, &count.rolling.sum);
-        let by_type = ByTypeVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let by_type = ByTypeVecs::forced_import(&db, version, mappings, window_starts)?;
 
         let this = Self {
             db,

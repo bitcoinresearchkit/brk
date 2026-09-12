@@ -7,7 +7,7 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use vecdb::{Budgeted, CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Budgeted, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, RollingWindows, WindowStarts};
 
@@ -22,14 +22,13 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|suffix| {
-            RollingWindows::forced_import(cache, db, &format!("{name}_{suffix}"), version, indexes)
+            RollingWindows::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

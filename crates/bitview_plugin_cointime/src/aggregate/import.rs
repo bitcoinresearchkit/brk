@@ -2,17 +2,16 @@ use bitview_cohort::{ByTerm, Term, UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BoundedToF64;
 use bitview_vecs::{
-    LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, PerBlock,
-    StoredSeries, import_stored,
+    CachedSeries, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
+    LazySpotValuePerBlock, PerBlock, import_cached,
 };
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, Version};
-use vecdb::{CacheBudget, Database, PcoVecValue, ReadableBoxedVec};
+use vecdb::{Database, PcoVecValue, ReadableBoxedVec};
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -20,7 +19,7 @@ pub fn forced_import(
     all_supply_in_loss_share: &PerBlock<BoundedRatio>,
 ) -> Result<Vecs> {
     let version = version + Version::ONE;
-    let sources = Sources::forced_import(cache, db, version)?;
+    let sources = Sources::forced_import(db, version)?;
     let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
     let term_loss_share = |term: Term| {
         sources
@@ -62,21 +61,16 @@ pub fn forced_import(
 }
 
 impl Sources {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let version = version + Version::ONE;
         Ok(Self {
-            awake_supply: import_aggregate(cache, db, "awake_supply_sats", version)?,
-            dormant_supply: import_aggregate(cache, db, "dormant_supply_sats", version)?,
-            awake_cap: import_aggregate(cache, db, "awake_cap_cents", version)?,
-            awake_price: import_aggregate(cache, db, "awake_price_cents", version)?,
+            awake_supply: import_aggregate(db, "awake_supply_sats", version)?,
+            dormant_supply: import_aggregate(db, "dormant_supply_sats", version)?,
+            awake_cap: import_aggregate(db, "awake_cap_cents", version)?,
+            awake_price: import_aggregate(db, "awake_price_cents", version)?,
             supply_in_loss_share: ByTerm::try_new(|cohort_id| {
                 let name = cohort_id.name();
-                import_stored(
-                    cache,
+                import_cached(
                     db,
                     &format!("{name}_awake_supply_in_loss_share_bounded"),
                     version,
@@ -87,12 +81,11 @@ impl Sources {
 }
 
 fn import_aggregate<T: PcoVecValue>(
-    cache: &'static CacheBudget,
     db: &Database,
     metric: &str,
     version: Version,
-) -> Result<UTXOAggregate<StoredSeries<Height, T>>> {
-    UTXOAggregate::try_from_fn(|id| import_stored(cache, db, &id.metric_name(metric), version))
+) -> Result<UTXOAggregate<CachedSeries<Height, T>>> {
+    UTXOAggregate::try_from_fn(|id| import_cached(db, &id.metric_name(metric), version))
 }
 
 impl CohortVecs {

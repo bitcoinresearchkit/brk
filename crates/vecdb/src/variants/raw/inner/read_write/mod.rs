@@ -77,7 +77,7 @@ where
 
         let name = options.name;
 
-        let cache = C::create(options.cache_budget)?;
+        let cache = C::create()?;
         let base = ReadWriteBaseVec::import(options, format)?;
 
         // Raw format requires data to be aligned to SIZE_OF_T

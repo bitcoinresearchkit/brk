@@ -3,12 +3,11 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database, EagerVec, ImportableVec};
+use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::{CountVecs, Vecs};
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -17,7 +16,6 @@ pub fn forced_import(
     Ok(Vecs {
         count: CountVecs {
             nonstandard: PerBlockCumulativeRolling::forced_import(
-                cache,
                 db,
                 "nonstandard_count",
                 version,

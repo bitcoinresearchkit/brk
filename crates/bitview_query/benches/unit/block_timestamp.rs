@@ -3,14 +3,12 @@ use std::{cmp::Reverse, hint::black_box, time::Instant};
 use brk_types::Version;
 use tempfile::{TempDir, tempdir};
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec, Stamp,
-    StoredVec, WritableVec,
+    AnyStoredVec, Budgeted, Database, ImportableVec, PcoVec, Stamp, StoredVec, WritableVec,
 };
 
 use super::*;
 
 type Timestamps = <PcoVec<Height, Timestamp, Budgeted> as StoredVec>::ReadOnly;
-static CACHE: CacheBudget = CacheBudget::new(32 * 1024 * 1024);
 
 // Exact pre-optimization control; never used by production lookup.
 fn select_with_stored_median(
@@ -103,15 +101,11 @@ fn a_valid_two_hour_spike_can_leave_a_long_scan_window() {
 }
 
 fn fixture(len: usize, skewed: bool) -> (TempDir, Database, [Timestamps; 3]) {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut columns: [PcoVec<Height, Timestamp, Budgeted>; 3] =
-        ["raw", "maximum", "median"].map(|name| {
-            PcoVec::forced_import_with(
-                ImportOptions::new(&db, name, Version::ONE).with_cache_budget(&CACHE),
-            )
-            .unwrap()
-        });
+    let mut columns: [PcoVec<Height, Timestamp, Budgeted>; 3] = ["raw", "maximum", "median"]
+        .map(|name| PcoVec::forced_import(&db, name, Version::ONE).unwrap());
     let mut maximum = Timestamp::ZERO;
     let mut window = [Timestamp::ZERO; 11];
     for h in 0..len {
@@ -179,7 +173,7 @@ fn persisted_timestamp_search_matches_sorted_predecessor() {
         .collect();
     oracle.sort_unstable();
     for warm in [false, true] {
-        CACHE.clear();
+        init_cache().clear();
         if warm {
             columns[0].collect();
             columns[1].collect();
@@ -213,7 +207,7 @@ fn benchmark_timestamp_selection_storage() {
             Timestamp::from(1_231_006_505u32 + 7199),
         ];
         for warm in [false, true] {
-            CACHE.clear();
+            init_cache().clear();
             if warm {
                 let started = Instant::now();
                 columns[0].collect();
@@ -221,7 +215,7 @@ fn benchmark_timestamp_selection_storage() {
                 eprintln!(
                     "timestamp range fill {:?}; retained {} bytes",
                     started.elapsed(),
-                    CACHE.used()
+                    init_cache().used()
                 );
             }
             for target in targets {
@@ -251,3 +245,4 @@ fn benchmark_timestamp_selection_storage() {
         }
     }
 }
+use crate::test_cache::init_cache;

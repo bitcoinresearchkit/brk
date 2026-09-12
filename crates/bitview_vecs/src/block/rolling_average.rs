@@ -5,49 +5,40 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{
-    Budgeted, CacheBudget, CachePolicy, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
-    ReadableCloneableVec, Rw, StorageMode,
-};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
-use crate::{IndexSources, LazyRollingAvgsFromHeight};
+use crate::{CachedSeries, IndexSources, LazyRollingAvgsFromHeight, import_cached};
 
 /// Stored-block fallback for values whose cumulative delta is not exact, such as floats.
 #[derive(Traversable)]
-pub struct PerBlockRollingAverage<T, C = T, M: StorageMode = Rw, P: CachePolicy = Budgeted>
+pub struct PerBlockRollingAverage<T, C = T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
     /// Value for the represented block. At time-period indexes, the value is
     /// taken from the period's final block.
-    pub block: M::Stored<EagerVec<PcoVec<Height, T, P>>>,
+    pub block: CachedSeries<Height, T, M>,
     #[traversable(hidden)]
-    cumulative: M::Stored<EagerVec<PcoVec<Height, C, P>>>,
+    cumulative: CachedSeries<Height, C, M>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
 }
 
-impl<T, C, P: CachePolicy> PerBlockRollingAverage<T, C, Rw, P>
+impl<T, C> PerBlockRollingAverage<T, C>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
-        let block = EagerVec::<PcoVec<Height, T, P>>::forced_import_with(
-            ImportOptions::new(db, name, version).with_cache_budget(cache),
-        )?;
-        let cumulative = EagerVec::<PcoVec<Height, C, P>>::forced_import_with(
-            ImportOptions::new(db, &format!("{name}_cumulative"), version + Version::TWO)
-                .with_cache_budget(cache),
-        )?;
+        let block = import_cached(db, name, version)?;
+        let cumulative = import_cached(db, &format!("{name}_cumulative"), version + Version::TWO)?;
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version + Version::TWO,

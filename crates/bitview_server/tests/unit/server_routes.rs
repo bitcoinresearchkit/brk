@@ -2,14 +2,11 @@ use super::broadcast;
 #[cfg(feature = "chain")]
 use super::urpd;
 #[cfg(feature = "chain")]
-use brk_types::BlockHash;
-#[cfg(feature = "chain")]
-#[cfg(feature = "chain")]
-use vecdb::CacheBudget;
-
-#[cfg(feature = "chain")]
+use crate::test_cache::init_cache;
 #[cfg(feature = "chain")]
 use bitcoin::consensus::encode;
+#[cfg(feature = "chain")]
+use brk_types::BlockHash;
 #[cfg(any(feature = "chain", all(feature = "chain", feature = "series")))]
 use serde_json::from_str;
 #[cfg(feature = "chain")]
@@ -824,13 +821,14 @@ pub async fn exchange_headers_bytes(
 #[test]
 #[cfg(feature = "chain")]
 fn server_routes_preserve_validation_and_errors_before_conditionals() {
+    init_cache();
     thread::Builder::new().stack_size(8 * 1024 * 1024).spawn(|| {
         let directory = tempdir().unwrap();
         let node = StdListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
         node.set_nonblocking(true).unwrap();
         let client = Client::new(&format!("http://{}", node.local_addr().unwrap()), Auth::None).unwrap();
         let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-        let plugins = DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader).unwrap();
+        let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
         #[cfg(feature = "urpd")]
         let states_path = plugins.distribution().states_path.clone();
         let query = AsyncQuery::build(&plugins, None);
@@ -1435,17 +1433,15 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
 #[test]
 #[cfg(all(feature = "chain", feature = "series"))]
 fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
+    init_cache();
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
         .spawn(|| {
             let directory = tempdir().unwrap();
             let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
             let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-            let plugins = DefaultPlugins::import(
-                ImportContext::new(directory.path(), &CACHE_BUDGET),
-                &reader,
-            )
-            .unwrap();
+            let plugins =
+                DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
             let query = AsyncQuery::build(&plugins, None);
             Builder::new_current_thread()
                 .enable_all()
@@ -1508,6 +1504,3 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
         .join()
         .unwrap();
 }
-
-#[cfg(feature = "chain")]
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

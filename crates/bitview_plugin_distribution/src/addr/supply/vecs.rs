@@ -1,14 +1,12 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazySpotValuePerBlock, import_cached};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec};
 
 use super::AddrTypeToSupply;
 
@@ -19,12 +17,11 @@ pub struct AddrSupplyVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub series: WithAddrTypes<LazySpotValuePerBlock>,
     #[traversable(hidden)]
-    pub stored: WithAddrTypes<StoredSeries<Height, Sats, M>>,
+    pub stored: WithAddrTypes<CachedSeries<Height, Sats, M>>,
 }
 
 impl AddrSupplyVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -34,12 +31,12 @@ impl AddrSupplyVecs {
         let name = format!("{name}_addr_supply");
         let version = version + Version::ONE;
         let stored = WithAddrTypes {
-            all: import_stored(cache, db, &format!("{name}_sats"), version)?,
+            all: import_cached(db, &format!("{name}_sats"), version)?,
             by_addr_type: ByAddrType::try_from_fn(|id| {
-                import_stored(cache, db, &format!("{}_{name}_sats", id.name()), version)
+                import_cached(db, &format!("{}_{name}_sats", id.name()), version)
             })?,
         };
-        let build = |name: &str, source: &StoredSeries<Height, Sats>| {
+        let build = |name: &str, source: &CachedSeries<Height, Sats>| {
             LazySpotValuePerBlock::from_sats_source(name, version, source, mappings, spot_price)
         };
         let series = WithAddrTypes {

@@ -1,17 +1,18 @@
+use crate::test_cache::init_cache;
 use tempfile::tempdir;
-use vecdb::{Budgeted, ImportOptions, ReadableVec};
+use vecdb::{Budgeted, ReadableVec};
 
 use super::*;
 
 #[test]
 fn truncate_cached_invalidates_same_length_cache() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let cache = Box::leak(Box::new(CacheBudget::new(1024)));
-    let mut timestamps = PcoVec::<Height, Timestamp, Budgeted>::forced_import_with(
-        ImportOptions::new(&db, "timestamp", Version::ONE).with_cache_budget(cache),
-    )
-    .unwrap();
+
+    let mut timestamps =
+        PcoVec::<Height, Timestamp, Budgeted>::forced_import(&db, "timestamp", Version::ONE)
+            .unwrap();
 
     for timestamp in [10_u32, 20, 30] {
         timestamps.push(Timestamp::from(timestamp));

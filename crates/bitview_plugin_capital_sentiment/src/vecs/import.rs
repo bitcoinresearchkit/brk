@@ -48,15 +48,9 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let mappings = DailyMappings::new(mappings);
 
-        let phase_code = DailyMetric::forced_import(
-            context.cache_budget(),
-            &db,
-            "capital_sentiment_phase_code",
-            version,
-            &mappings,
-        )?;
+        let phase_code =
+            DailyMetric::forced_import(&db, "capital_sentiment_phase_code", version, &mappings)?;
         let is_long = DailyMetric::<StoredBool>::forced_import(
-            context.cache_budget(),
             &db,
             "capital_sentiment_is_long",
             version,

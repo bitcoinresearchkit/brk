@@ -1,6 +1,7 @@
+use crate::test_cache::init_cache;
 use bitview_cohort::UTXOAggregate;
 use bitview_vecs::{
-    DailyMappings, LazyDailyPriceWithRatio, RangeMapLookupVec, StoredSeries, import_stored,
+    CachedSeries, DailyMappings, LazyDailyPriceWithRatio, RangeMapLookupVec, import_cached,
 };
 use brk_types::{Cents, Day1, Height, PriceRatio, Version};
 use tempfile::tempdir;
@@ -9,14 +10,13 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::common::CACHE_BUDGET;
-
 #[path = "daily_price/benchmark.rs"]
 mod benchmark;
 mod common;
 
 #[test]
 fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
@@ -40,8 +40,7 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
     let mappings = DailyMappings::new(&indexes);
     let import = || {
         let stored = UTXOAggregate::try_from_fn(|id| {
-            import_stored::<Day1, Cents>(
-                &CACHE_BUDGET,
+            import_cached::<Day1, Cents>(
                 &db,
                 &id.metric_name("test_capitalized_price_cents"),
                 Version::ONE,
@@ -60,7 +59,7 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         });
         (stored, prices)
     };
-    let push = |stored: &mut UTXOAggregate<StoredSeries<Day1, Cents>>,
+    let push = |stored: &mut UTXOAggregate<CachedSeries<Day1, Cents>>,
                 values: UTXOAggregate<Cents>| {
         for (target, &value) in stored.iter_mut().zip(values.iter()) {
             target.push(value);
@@ -187,3 +186,7 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         Some(Cents::new(600))
     );
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

@@ -1,10 +1,10 @@
 use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BoundedToF64;
-use bitview_vecs::{DailyMappings, LazyDailyMetric, LazyDailyPrice, import_stored};
+use bitview_vecs::{DailyMappings, LazyDailyMetric, LazyDailyPrice, import_cached};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, Database, ReadableBoxedVec};
+use vecdb::{Database, ReadableBoxedVec};
 
 use super::Vecs;
 use crate::{
@@ -13,7 +13,6 @@ use crate::{
 
 impl ModeVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -21,8 +20,7 @@ impl ModeVecs {
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let loss_threshold_stored = Percentiles::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{name}_loss_threshold_{}_bounded", id.suffix()),
                 version,
@@ -37,7 +35,7 @@ impl ModeVecs {
             )
         });
         let prices_stored = PriceBands::try_from_fn(|id| {
-            import_stored(cache, db, &format!("{name}_{}_cents", id.suffix()), version)
+            import_cached(db, &format!("{name}_{}_cents", id.suffix()), version)
         })?;
         let prices = PriceBands::from_fn(|id| {
             LazyDailyPrice::from_day1_source(
@@ -70,24 +68,11 @@ impl Vecs {
 
         let modes = Modes::try_from_fn(|mode| {
             let name = mode.name();
-            ModeVecs::forced_import(
-                context.cache_budget(),
-                &db,
-                &format!("bedrock_{name}"),
-                version,
-                &mappings,
-            )
+            ModeVecs::forced_import(&db, &format!("bedrock_{name}"), version, &mappings)
         })?;
-        let cost_basis =
-            CostBasisVecs::forced_import(context.cache_budget(), &db, version, &mappings)?;
-        let capitalized_price = CapitalizedPriceVecs::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            indexes,
-            &mappings,
-            spot,
-        )?;
+        let cost_basis = CostBasisVecs::forced_import(&db, version, &mappings)?;
+        let capitalized_price =
+            CapitalizedPriceVecs::forced_import(&db, version, indexes, &mappings, spot)?;
         let this = Self {
             db,
             states_path,

@@ -4,34 +4,30 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    Budgeted, CacheBudget, CachePolicy, Database, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, VecIndex, VecValue,
-};
+use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecIndex, VecValue};
 
 use crate::{
     IndexSources, RollingDistributionValuePerBlock, ValuePerBlockCumulativeRolling, WindowStarts,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachePolicy = Budgeted> {
+pub struct ValuePerBlockFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: ValuePerBlockCumulativeRolling<M, S>,
+    pub inner: ValuePerBlockCumulativeRolling<M>,
     #[traversable(flatten)]
     pub distribution: RollingDistributionValuePerBlock<M>,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl<S: CachePolicy> ValuePerBlockFull<Rw, S> {
-    pub fn cumulative_sats_source(&self) -> &(impl ReadableCloneableVec<Height, Sats> + use<S>) {
+impl ValuePerBlockFull {
+    pub fn cumulative_sats_source(&self) -> &(impl ReadableCloneableVec<Height, Sats> + use<>) {
         self.cumulative.sats.resolutions.height_source()
     }
 
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -40,20 +36,14 @@ impl<S: CachePolicy> ValuePerBlockFull<Rw, S> {
     ) -> Result<Self> {
         let full_version = version + VERSION;
         let inner = ValuePerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             name,
             full_version,
             indexes,
             window_starts,
         )?;
-        let distribution = RollingDistributionValuePerBlock::forced_import(
-            cache,
-            db,
-            name,
-            full_version,
-            indexes,
-        )?;
+        let distribution =
+            RollingDistributionValuePerBlock::forced_import(db, name, full_version, indexes)?;
 
         Ok(Self {
             inner,

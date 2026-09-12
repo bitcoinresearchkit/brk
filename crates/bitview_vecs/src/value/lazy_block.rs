@@ -1,6 +1,6 @@
 use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin};
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{CachePolicy, LazyVec, ReadableCloneableVec, Rw};
+use vecdb::{LazyVec, ReadableCloneableVec};
 
 use crate::{LazyPreviousDeltaVec, Value, ValuePerBlock};
 
@@ -13,11 +13,7 @@ pub type LazyValueBlock = Value<
 >;
 
 impl LazyValueBlock {
-    pub fn from_cumulative<P: CachePolicy>(
-        name: &str,
-        version: Version,
-        cumulative: &ValuePerBlock<Rw, P>,
-    ) -> Self {
+    pub fn from_cumulative(name: &str, version: Version, cumulative: &ValuePerBlock) -> Self {
         Self::from_cumulative_sources(
             name,
             version,

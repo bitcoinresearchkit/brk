@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, LazyVec, ReadableCloneableVec, Rw, StorageMode, VecValue};
+use vecdb::{Database, LazyVec, ReadableCloneableVec, Rw, StorageMode, VecValue};
 
 use crate::{IndexSources, PerBlock, RollingComplete, WindowStarts};
 
@@ -34,7 +34,6 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -45,9 +44,8 @@ where
     ) -> Result<Self> {
         let block = LazyVec::init(name, version, source.read_only_boxed_clone(), compute_block);
         let cumulative =
-            PerBlock::forced_import(cache, db, &format!("{name}_cumulative"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let rolling = RollingComplete::forced_import(
-            cache,
             db,
             name,
             version,

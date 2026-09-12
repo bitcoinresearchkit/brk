@@ -3,7 +3,7 @@ use bitview_compute::{CoinbasePolicy, walk_blocks};
 use bitview_plugin_indexer::Indexer;
 use brk_error::{OptionData, Result};
 use brk_exit::Exit;
-use brk_types::{StoredU16, StoredU64};
+use brk_types::StoredU64;
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
@@ -34,7 +34,13 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
         for target in vecs.stored_vecs_mut() {
             target.any_truncate_if_needed_at(skip)?;
         }
-        let mut cumulative = ByType::from_fn(|output_type| {
+        let mut output_cumulative = ByType::from_fn(|output_type| {
+            vecs.output_count_stored
+                .get(output_type)
+                .collect_last()
+                .unwrap_or_default()
+        });
+        let mut tx_cumulative = ByType::from_fn(|output_type| {
             vecs.tx_count_stored
                 .get(output_type)
                 .collect_last()
@@ -77,10 +83,10 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
             },
             |agg| {
                 for (output_type, target) in vecs.output_count_stored.iter_typed_mut() {
-                    let value = agg.entries_per_type[output_type as usize];
-                    debug_assert!(u16::try_from(value).is_ok());
-                    target.push(StoredU16::new(value as u16));
-                    let total = cumulative.get_mut(output_type);
+                    let total = output_cumulative.get_mut(output_type);
+                    *total += StoredU64::from(agg.entries_per_type[output_type as usize]);
+                    target.push(*total);
+                    let total = tx_cumulative.get_mut(output_type);
                     *total += StoredU64::from(agg.txs_per_type[output_type as usize]);
                     vecs.tx_count_stored.get_mut(output_type).push(*total);
                 }

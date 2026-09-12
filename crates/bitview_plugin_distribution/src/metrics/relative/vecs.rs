@@ -6,7 +6,7 @@ use bitview_vecs::{LazyPercentPerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode};
 
 use super::{GrossPnlComposition, RelativeSource, SupplyProfitabilityShares};
 use crate::{AllChainSources, metrics::AggregatePercentPerBlock};
@@ -67,7 +67,6 @@ pub struct RelativeVecs<M: StorageMode = Rw> {
 
 impl RelativeVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -76,32 +75,28 @@ impl RelativeVecs {
     ) -> Result<Box<Self>> {
         let aggregate_version = version + Version::ONE;
         let supply_profitability_shares =
-            SupplyProfitabilityShares::forced_import(cache, db, aggregate_version, mappings)?;
+            SupplyProfitabilityShares::forced_import(db, aggregate_version, mappings)?;
         let unrealized_profit_to_own_mcap = Self::import_term_percent(
-            cache,
             db,
             "unrealized_profit_to_own_mcap",
             aggregate_version,
             mappings,
         )?;
         let unrealized_loss_to_own_mcap = Self::import_term_percent(
-            cache,
             db,
             "unrealized_loss_to_own_mcap",
             aggregate_version,
             mappings,
         )?;
         let gross_pnl_composition =
-            GrossPnlComposition::forced_import(cache, db, aggregate_version, mappings)?;
+            GrossPnlComposition::forced_import(db, aggregate_version, mappings)?;
         let invested_capital_in_profit_share = AggregatePercentPerBlock::forced_import(
-            cache,
             db,
             "invested_capital_in_profit_share",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_loss_share = AggregatePercentPerBlock::forced_import(
-            cache,
             db,
             "invested_capital_in_loss_share",
             aggregate_version,
@@ -158,7 +153,6 @@ impl RelativeVecs {
     }
 
     fn import_term_percent(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -166,7 +160,7 @@ impl RelativeVecs {
     ) -> Result<ByTerm<PercentPerBlock<PartsPerMillion32>>> {
         ByTerm::try_from_fn(|id| {
             let name = CohortContext::Utxo.metric_name(CohortId::Term(id), metric);
-            PercentPerBlock::forced_import(cache, db, &name, version + Version::ONE, mappings)
+            PercentPerBlock::forced_import(db, &name, version + Version::ONE, mappings)
         })
     }
 

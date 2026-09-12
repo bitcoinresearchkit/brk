@@ -91,17 +91,16 @@ transaction.
 
 Stored vectors accept a cache policy as their third type parameter:
 
-- `NoCache` (the default) has no cache allocation or read-side locking.
-- `Budgeted` shares a byte limit across sources, supplied in `ImportOptions`.
+- `NoCache` (the default) has no cache allocation or cache-side locking.
+- `Budgeted` shares one immutable, process-wide byte limit across sources.
 
 ```rust,no_run
-use vecdb::{Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, Version};
+use vecdb::{Budgeted, BytesVec, Database, ImportableVec, Version};
 
-static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 # fn example(db: &Database) -> vecdb::Result<()> {
-let values = BytesVec::<usize, u64, Budgeted>::import_with(
-    ImportOptions::new(db, "values", Version::ONE).with_cache_budget(&CACHE),
-)?;
+// Once at startup, before importing any budgeted source.
+Budgeted::init_global(64 * 1024 * 1024)?;
+let values = BytesVec::<usize, u64, Budgeted>::import(db, "values", Version::ONE)?;
 # Ok(())
 # }
 ```
@@ -112,16 +111,22 @@ range, sorted, and fold reads; there is no shared whole-vector snapshot API.
 Cache retention is always evictable. Algorithms that need a working set own
 ordinary read results and pass references through their computation context.
 Those buffers remain valid after cache eviction without pinning cache entries.
-Reads retain only requested ranges; adjacent small ranges merge in place.
+Reads retain only requested ranges, not physical decoder overread. Isolated
+values stay inline in a sorted span directory; uniquely owned tails can extend
+in place without copying existing history.
 When the shared budget is full, reclamation rotates through source owners and
-evicts all of each selected source's ranges. Busy sources are skipped, and a read
-stays uncached if one pass cannot free enough space.
+evicts all of each selected source's ranges. Recently used sources get one second
+chance, busy sources are skipped, and a read stays uncached if two bounded passes
+cannot free enough space.
 Source writes invalidate changed suffixes and preserve unchanged prefixes.
-`CacheBudget::clear` evicts retained data without changing source revisions.
-A zero-byte budget disables retention.
+Successful persisted writes can extend an already-retained tail, but do not warm
+cold caches. `Budgeted::global()?.clear()` evicts retained data without changing
+source data. Missing or repeated initialization is an error; a zero-byte
+budget disables retention. `NoCache` needs no initialization or global lookup.
 
-Budget charges follow buffer lifetimes, including buffers still borrowed by a
-fold after eviction. Caller-owned results and decoder scratch are outside this
+Global and per-source charges account for allocation capacity and follow buffer
+lifetimes, including buffers still borrowed by a fold after eviction.
+Caller-owned results and decoder scratch are outside this
 retention budget. Lazy readers use their stored sources' caches without retaining
 another copy of derived values or requiring separate cache invalidation.
 Cache protection covers an individual source operation, not a transaction across
@@ -160,9 +165,14 @@ Indexes implement `VecIndex`. Using domain-specific newtypes instead of
   storage.
 - [`examples/bench.rs`](examples/bench.rs) compares the available storage
   representations on a chosen workload.
+- [`benches/cached_ranges.rs`](benches/cached_ranges.rs) measures retained reads,
+  gap fills, and mixed-source budget pressure.
+- [`benches/cache_updates.rs`](benches/cache_updates.rs) compares cached and
+  native committed appends and last-value rewrites with sparse or full histories.
 
 ```bash
 cargo run -p vecdb --example zerocopy --features zerocopy
 cargo run -p vecdb --example pcodec --features pco
 cargo run --release -p vecdb --example bench --features pco,lz4,zstd,zerocopy
+cargo test -p vecdb --features pco,diagnostics --bench cached_ranges --bench cache_updates -- --ignored --nocapture --test-threads=1
 ```

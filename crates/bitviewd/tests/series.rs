@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::{sync::mpsc, thread, time::Duration};
 
 use bitview::{ComputePluginSet, ImportContext};
@@ -7,7 +8,6 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Index;
 use tempfile::tempdir;
-use vecdb::CacheBudget;
 
 #[test]
 fn series_reads_wait_for_source_and_bound_publications() {
@@ -20,12 +20,11 @@ fn series_reads_wait_for_source_and_bound_publications() {
 }
 
 fn check_publication_gates() {
+    init_cache();
     let directory = tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-    let plugins =
-        DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader)
-            .unwrap();
+    let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
     let query = Query::build(&plugins, None);
 
     for (name, index) in [
@@ -64,4 +63,6 @@ fn check_publication_gates() {
     }
 }
 
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

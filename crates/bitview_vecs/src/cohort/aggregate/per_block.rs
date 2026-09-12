@@ -4,7 +4,7 @@ use brk_types::Height;
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, PcoVecValue, Rw, StorageMode, WritableVec};
 
-use crate::StoredSeries;
+use crate::CachedSeries;
 
 /// Aggregate cohort views backed by one stored height source per cohort.
 #[derive(Deref, DerefMut, Traversable)]
@@ -14,7 +14,7 @@ pub struct AggregatePerBlock<V: Clone, T: PcoVecValue, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub series: UTXOAggregate<V>,
     #[traversable(hidden)]
-    pub stored: UTXOAggregate<StoredSeries<Height, T, M>>,
+    pub stored: UTXOAggregate<CachedSeries<Height, T, M>>,
 }
 
 impl<V: Clone, T: PcoVecValue> AggregatePerBlock<V, T> {

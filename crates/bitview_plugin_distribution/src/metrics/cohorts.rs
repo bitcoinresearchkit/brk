@@ -13,9 +13,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, CacheBudget, Database, ReadOnlyClone, ReadableBoxedVec, Rw, StorageMode,
-};
+use vecdb::{AnyStoredVec, Database, ReadOnlyClone, ReadableBoxedVec, Rw, StorageMode};
 
 use crate::{
     AllChainSources,
@@ -50,7 +48,6 @@ pub struct CohortMetrics<M: StorageMode = Rw> {
 impl CohortMetrics<Rw> {
     /// Import all cohort metrics from the database.
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -60,7 +57,7 @@ impl CohortMetrics<Rw> {
         let v = version + VERSION;
 
         // Supply must exist before either branch can build its shared views.
-        let supply = SupplyVecs::forced_import(cache, db, v, mappings, window_starts, spot_price)?;
+        let supply = SupplyVecs::forced_import(db, v, mappings, window_starts, spot_price)?;
         let all_chain_sources =
             AllChainSources::new(supply.total.all_supply(), supply.total.all_market_cap());
 
@@ -70,15 +67,12 @@ impl CohortMetrics<Rw> {
                 let outputs_activity = thread::Builder::new()
                     .stack_size(IMPORT_STACK_SIZE)
                     .spawn_scoped(scope, || -> Result<_> {
-                        let outputs =
-                            OutputsVecs::forced_import(cache, db, v, mappings, window_starts)?;
-                        let activity =
-                            ActivityVecs::forced_import(cache, db, v, mappings, window_starts)?;
+                        let outputs = OutputsVecs::forced_import(db, v, mappings, window_starts)?;
+                        let activity = ActivityVecs::forced_import(db, v, mappings, window_starts)?;
                         Ok((outputs, activity))
                     })?;
 
                 let realized = RealizedVecs::forced_import(
-                    cache,
                     db,
                     v,
                     mappings,
@@ -87,7 +81,7 @@ impl CohortMetrics<Rw> {
                     &all_chain_sources,
                 )?;
                 let unrealized =
-                    UnrealizedVecs::forced_import(cache, db, v, mappings, &realized.price.cohorts)?;
+                    UnrealizedVecs::forced_import(db, v, mappings, &realized.price.cohorts)?;
                 let relative_sources = UTXOAggregate::from_fn(|id| {
                     let cohort_id = id.cohort();
                     RelativeSource {
@@ -108,7 +102,6 @@ impl CohortMetrics<Rw> {
                     }
                 });
                 let relative = RelativeVecs::forced_import(
-                    cache,
                     db,
                     v,
                     mappings,
@@ -120,9 +113,9 @@ impl CohortMetrics<Rw> {
                     outputs_activity.join().unwrap()?,
                 ))
             })?;
-        let cost_basis = CostBasisVecs::forced_import(cache, db, v, mappings)?;
+        let cost_basis = CostBasisVecs::forced_import(db, v, mappings)?;
         let profitability =
-            ProfitabilityVecs::forced_import(cache, db, v, mappings, window_starts, spot_price)?;
+            ProfitabilityVecs::forced_import(db, v, mappings, window_starts, spot_price)?;
 
         Ok(Self {
             supply,

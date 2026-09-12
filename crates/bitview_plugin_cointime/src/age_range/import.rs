@@ -5,18 +5,17 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_vecs::{
     LazyPerBlock, LazySpotValuePerBlock, LazyWindowStartVec, PerBlockCumulativeRolling,
-    import_stored,
+    import_cached,
 };
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, Database, ReadableBoxedVec};
+use vecdb::{Database, ReadableBoxedVec};
 
 use super::{ActivitySeries, SupplyVecs, Vecs};
 
 const VERSION: Version = Version::new(4);
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     parent_version: Version,
     mappings: &MappingsVecs,
@@ -28,14 +27,7 @@ pub fn forced_import(
     let import_coindays = |metric: &str| {
         AgeRange::try_from_fn(|id| {
             let name = format!("{}_{metric}", CohortContext::Utxo.full_name(id.cohort()));
-            PerBlockCumulativeRolling::forced_import(
-                cache,
-                db,
-                &name,
-                version,
-                mappings,
-                window_starts,
-            )
+            PerBlockCumulativeRolling::forced_import(db, &name, version, mappings, window_starts)
         })
     };
     let coindays_consumed = import_coindays("coindays_consumed")?;
@@ -45,7 +37,7 @@ pub fn forced_import(
             "{}_wakefulness_bounded_source",
             CohortContext::Utxo.full_name(id.cohort())
         );
-        import_stored(cache, db, &name, version)
+        import_cached(db, &name, version)
     })?;
     let activity = ActivitySeries {
         wakefulness: AgeRangeId::series(CohortContext::Utxo, |id, name| {

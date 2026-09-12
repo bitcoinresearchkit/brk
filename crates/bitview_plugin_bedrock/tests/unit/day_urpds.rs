@@ -115,7 +115,7 @@ fn persisted_all_cost_basis_percentiles_match_in_memory_percentiles() {
     let names = DayUrpds::names();
     let urpds = DayUrpds::repeated([(100, 5), (200, 5)]);
     assert!(
-        DayUrpds::read_all_cost_basis_percentile_prices_if_exists(root.path(), &names, date)
+        DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, Cents::new(200))
             .unwrap()
             .is_none()
     );
@@ -127,25 +127,23 @@ fn persisted_all_cost_basis_percentiles_match_in_memory_percentiles() {
     )
     .unwrap();
     assert!(
-        DayUrpds::read_all_cost_basis_percentile_prices_if_exists(root.path(), &names, date)
-            .is_err()
+        DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, Cents::new(200)).is_err()
     );
     urpds.write(root.path(), &names, date).unwrap();
 
-    let expected = urpds.all_cost_basis_percentile_prices();
-    let actual =
-        DayUrpds::read_all_cost_basis_percentile_prices_if_exists(root.path(), &names, date)
-            .unwrap()
-            .expect("persisted pair");
+    let expected = urpds.cost_basis(Cents::new(200));
+    let actual = DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, Cents::new(200))
+        .unwrap()
+        .expect("persisted pair");
 
     assert_eq!(actual.cointime, expected.cointime);
     assert_eq!(actual.coinflow, expected.coinflow);
     assert_eq!(
-        actual.cointime.per_coin[PercentileId::Pct60 as usize],
+        actual.cointime.prices.per_coin[PercentileId::Pct60 as usize],
         Cents::new(200)
     );
     assert_eq!(
-        actual.cointime.per_dollar[PercentileId::Pct50 as usize],
+        actual.cointime.prices.per_dollar[PercentileId::Pct50 as usize],
         Cents::new(200)
     );
 }
@@ -166,4 +164,95 @@ fn historical_read_uses_packed_source_without_legacy_all_file() {
         .unwrap()
         .expect("packed source");
     assert!(urpds.raw.map.is_empty());
+}
+
+#[test]
+fn density_uses_mode_weights_and_backfills_at_the_represented_spot() {
+    let root = tempdir().unwrap();
+    let date = Date::new(2026, 9, 12);
+    let names = DayUrpds::names();
+    let mut weights = ModeWeights::from_fn(|_| None);
+    weights.cointime = Some(AgeRange::from_fn(|age| {
+        if age == AgeRangeId::Under1H { 1.0 } else { 0.5 }
+    }));
+    weights.coinflow = Some(AgeRange::from_fn(|age| {
+        if age == AgeRangeId::Under1H { 0.5 } else { 1.0 }
+    }));
+    let urpds = DayUrpds::from_age_entries(
+        [
+            (AgeRangeId::Under1H, 95),
+            (AgeRangeId::From5MTo6M, 105),
+            (AgeRangeId::From5MTo6M, 200),
+        ]
+        .map(|(age, price)| (age, CentsCompact::new(price), Sats::from(10_u64))),
+        &weights,
+    );
+    let spot = Cents::new(100);
+    let actual = urpds.cost_basis(spot);
+    let cointime = &actual.cointime.supply_density;
+    let coinflow = &actual.coinflow.supply_density;
+    assert!((f64::from(cointime.total) - 0.75).abs() < 1e-9);
+    assert!((f64::from(cointime.in_profit) - 0.5).abs() < 1e-9);
+    assert!((f64::from(cointime.in_loss) - 0.25).abs() < 1e-9);
+    assert!((f64::from(coinflow.total) - 0.6).abs() < 1e-9);
+    assert!((f64::from(coinflow.in_profit) - 0.2).abs() < 1e-9);
+    assert!((f64::from(coinflow.in_loss) - 0.4).abs() < 1e-9);
+    urpds.write(root.path(), &names, date).unwrap();
+    let saved = DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, spot)
+        .unwrap()
+        .unwrap();
+    assert_eq!(actual.cointime, saved.cointime);
+    assert_eq!(actual.coinflow, saved.coinflow);
+    let repriced = DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, Cents::new(200))
+        .unwrap()
+        .unwrap();
+    assert!((f64::from(repriced.cointime.supply_density.total) - 0.25).abs() < 1e-9);
+    assert_eq!(repriced.cointime.prices, actual.cointime.prices);
+
+    DayUrpds::repeated([(100, 10)])
+        .write(root.path(), &names, date)
+        .unwrap();
+    let rewritten = DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, spot)
+        .unwrap()
+        .unwrap();
+    assert_eq!(f64::from(rewritten.cointime.supply_density.in_profit), 1.0);
+    assert_eq!(f64::from(rewritten.coinflow.supply_density.in_loss), 0.0);
+}
+
+#[test]
+fn ten_percent_density_has_inclusive_boundaries_and_matches_saved_snapshots() {
+    let root = tempdir().unwrap();
+    let date = Date::new(2026, 9, 12);
+    let names = DayUrpds::names();
+    let urpds = DayUrpds::repeated([
+        (89, 10),
+        (90, 10),
+        (94, 10),
+        (95, 10),
+        (100, 20),
+        (105, 10),
+        (106, 10),
+        (110, 10),
+        (111, 10),
+    ]);
+    let data = urpds.cost_basis(Cents::new(100));
+    for mode in data.iter() {
+        assert_eq!(mode.supply_density.total.inner(), 400_000);
+        assert_eq!(mode.supply_density_10pct.total.inner(), 800_000);
+        assert_eq!(mode.supply_density_10pct.in_profit.inner(), 500_000);
+        assert_eq!(mode.supply_density_10pct.in_loss.inner(), 300_000);
+    }
+    urpds.write(root.path(), &names, date).unwrap();
+    let saved = DayUrpds::read_cost_basis_if_exists(root.path(), &names, date, Cents::new(100))
+        .unwrap()
+        .unwrap();
+    assert_eq!(saved.cointime, data.cointime);
+    assert_eq!(saved.coinflow, data.coinflow);
+    // Fractional lower boundary: 90% of 101 is 90.9, so the 90-cent bucket is excluded.
+    let fractional =
+        DayUrpds::repeated([(90, 10), (91, 10), (111, 10), (112, 10)]).cost_basis(Cents::new(101));
+    assert_eq!(
+        fractional.cointime.supply_density_10pct.total.inner(),
+        500_000
+    );
 }

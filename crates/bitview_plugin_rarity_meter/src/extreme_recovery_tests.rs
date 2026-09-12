@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use brk_types::StoredF32;
 use tempfile::tempdir;
 
@@ -17,6 +19,7 @@ fn check(extreme: &Extreme<StoredF32>, len: usize) {
 
 #[test]
 fn zero_append_truncation_survives_reopen_for_every_extreme_model() {
+    init_cache();
     let exit = Exit::new();
     for config in [REALIZED, COINS_IN_LOSS, SELLER_EXHAUSTION] {
         for starting_height in [3usize, 99] {
@@ -25,14 +28,8 @@ fn zero_append_truncation_survives_reopen_for_every_extreme_model() {
                 {
                     let db = Database::open(directory.path()).unwrap();
                     let indexes = common::indexes(&db);
-                    let mut extreme = Extreme::forced_import(
-                        &common::CACHE_BUDGET,
-                        &db,
-                        "extreme",
-                        Version::ONE,
-                        &indexes,
-                    )
-                    .unwrap();
+                    let mut extreme =
+                        Extreme::forced_import(&db, "extreme", Version::ONE, &indexes).unwrap();
                     check(&extreme, previous_len);
                     let mut source = common::stored::<Height, StoredF32>(&db, "source", []);
                     source.truncate_if_needed_at(len).unwrap();
@@ -49,14 +46,8 @@ fn zero_append_truncation_survives_reopen_for_every_extreme_model() {
                 }
                 let db = Database::open(directory.path()).unwrap();
                 let indexes = common::indexes(&db);
-                let extreme = Extreme::forced_import(
-                    &common::CACHE_BUDGET,
-                    &db,
-                    "extreme",
-                    Version::ONE,
-                    &indexes,
-                )
-                .unwrap();
+                let extreme =
+                    Extreme::forced_import(&db, "extreme", Version::ONE, &indexes).unwrap();
                 check(&extreme, len); // No compute or write after reopening.
             }
         }

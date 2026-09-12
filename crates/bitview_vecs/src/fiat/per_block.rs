@@ -3,7 +3,7 @@ use bitview_transforms::{CentsSignedToDollars, CentsUnsignedToDollars};
 use brk_error::Result;
 use brk_types::{Cents, CentsSigned, Dollars, Version};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Rw, UnaryTransform};
+use vecdb::{Database, Rw, UnaryTransform};
 
 use crate::{Fiat, IndexSources, LazyPerBlock, PerBlock};
 
@@ -26,13 +26,12 @@ pub type FiatPerBlock<C, M = Rw> = Fiat<PerBlock<C, M>, LazyPerBlock<Dollars, C>
 
 impl<C: FiatType> FiatPerBlock<C> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let cents = PerBlock::forced_import(cache, db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_resolutions::<C::ToDollars>(name, version, &cents);
         Ok(Self { usd, cents })
     }

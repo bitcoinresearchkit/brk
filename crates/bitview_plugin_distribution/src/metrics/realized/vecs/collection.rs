@@ -19,8 +19,8 @@ use brk_types::{
     PartsPerMillionSigned64, PriceRatio, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BinaryTransform, BytesVec, CacheBudget, Database, Ident, ImportableVec,
-    LazyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, BinaryTransform, BytesVec, Database, Ident, ImportableVec, LazyVec,
+    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::{
@@ -153,7 +153,6 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
 
 impl RealizedVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -163,7 +162,6 @@ impl RealizedVecs {
     ) -> Result<Box<Self>> {
         let aggregate_version = version + Version::ONE;
         let gross_pnl = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
-            cache,
             db,
             "realized_gross_pnl",
             aggregate_version,
@@ -171,7 +169,6 @@ impl RealizedVecs {
             window_starts,
         )?;
         let capitalized_price = AggregatePriceWithRatioPerBlock::forced_import(
-            cache,
             db,
             "capitalized_price",
             aggregate_version,
@@ -189,7 +186,6 @@ impl RealizedVecs {
         let capitalized_cap_raw =
             UTXOAgeSources::forced_import(db, "capitalized_cap_raw", version)?;
         let peak_regret = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
-            cache,
             db,
             "realized_peak_regret",
             aggregate_version,
@@ -197,7 +193,6 @@ impl RealizedVecs {
             window_starts,
         )?;
         let net_pnl_change_1m_to_rcap = AggregatePercentPerBlock::forced_import(
-            cache,
             db,
             "net_pnl_change_1m_to_rcap",
             aggregate_version,
@@ -205,7 +200,6 @@ impl RealizedVecs {
         )?;
         let sell_side_risk_ratio = UTXOAggregate::try_from_fn(|id| {
             PercentRollingWindows::forced_import(
-                cache,
                 db,
                 &id.metric_name("sell_side_risk_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
@@ -214,7 +208,6 @@ impl RealizedVecs {
         })?;
         let sopr_ratio_extended = UTXOAggregate::try_from_fn(|id| {
             RollingWindowsFrom1w::forced_import(
-                cache,
                 db,
                 &id.metric_name("sopr"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
@@ -223,17 +216,15 @@ impl RealizedVecs {
         })?;
         let profit_to_loss_ratio = UTXOAggregate::try_from_fn(|id| {
             RollingWindows::forced_import(
-                cache,
                 db,
                 &id.metric_name("realized_profit_to_loss_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
                 mappings,
             )
         })?;
-        let cap = RealizedCapByCohort::forced_import(cache, db, version, mappings, window_starts)?;
-        let price = RealizedPriceByCohort::forced_import(cache, db, version, mappings, spot_price)?;
+        let cap = RealizedCapByCohort::forced_import(db, version, mappings, window_starts)?;
+        let price = RealizedPriceByCohort::forced_import(db, version, mappings, spot_price)?;
         let profit = CumulativeRealizedByCohort::forced_import(
-            cache,
             db,
             "realized_profit",
             version + Version::ONE,
@@ -241,30 +232,22 @@ impl RealizedVecs {
             window_starts,
         )?;
         let loss = CumulativeRealizedByCohort::forced_import(
-            cache,
             db,
             "realized_loss",
             version + Version::ONE,
             mappings,
             window_starts,
         )?;
-        let net_pnl = CumulativeNetRealizedByCohort::forced_import(
-            cache,
-            db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let net_pnl =
+            CumulativeNetRealizedByCohort::forced_import(db, version, mappings, window_starts)?;
         let value_destroyed = CumulativeValueDestroyedByCohort::forced_import(
-            cache,
             db,
             version + Version::ONE,
             mappings,
             window_starts,
         )?;
-        let sopr = Sopr24hVecs::forced_import(cache, db, version, mappings)?;
-        let adjusted_sopr =
-            AdjustedSoprVecs::forced_import(cache, db, version, mappings, window_starts)?;
+        let sopr = Sopr24hVecs::forced_import(db, version, mappings)?;
+        let adjusted_sopr = AdjustedSoprVecs::forced_import(db, version, mappings, window_starts)?;
         let mvrv = price.cohorts.map_with_id(|cohort_id, price| {
             LazyPerBlock::from_lazy::<Ident, PriceRatio>(
                 &CohortContext::Utxo.metric_name(cohort_id, "mvrv"),

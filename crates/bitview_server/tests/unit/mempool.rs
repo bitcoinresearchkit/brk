@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::{
     net::{Ipv4Addr, TcpListener as StdListener},
     thread,
@@ -23,7 +24,6 @@ use tokio::{
     task::spawn_blocking,
     time::timeout,
 };
-use vecdb::CacheBudget;
 
 use super::server_routes::exchange_with_etag;
 use crate::{Server, ServerConfig};
@@ -135,6 +135,7 @@ async fn rpc_templates(node: TcpListener, transactions: Vec<Value>) {
 
 #[test]
 fn template_revalidation_skips_body_admission_but_validates_history_and_queries() {
+    init_cache();
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
         .spawn(|| {
@@ -147,11 +148,8 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
             )
             .unwrap();
             let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-            let plugins = DefaultPlugins::import(
-                ImportContext::new(directory.path(), &CACHE_BUDGET),
-                &reader,
-            )
-            .unwrap();
+            let plugins =
+                DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
             let mut mempool = Mempool::new(&client);
             let query = AsyncQuery::build(&plugins, Some(mempool.read_only_clone()));
             Builder::new_current_thread()
@@ -305,5 +303,3 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
         .join()
         .unwrap();
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

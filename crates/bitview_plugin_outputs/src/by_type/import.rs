@@ -1,15 +1,14 @@
 use bitview_cohort::ByType;
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CountTotal, LazyWindowStartVec, import_stored};
+use bitview_vecs::{CountTotal, LazyWindowStartVec, import_cached};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database};
+use vecdb::Database;
 
 use super::{SpendableOutputCount, Vecs, WithOutputTypes};
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -17,9 +16,13 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     let version = version + Version::TWO;
     let output_count_stored = ByType::try_new(|id| {
-        import_stored(cache, db, &format!("{}_output_count", id.name()), version)
+        import_cached(
+            db,
+            &format!("{}_output_count_cumulative", id.name()),
+            version,
+        )
     })?;
-    let output_count = WithOutputTypes::from_count_sources(
+    let output_count = WithOutputTypes::from_cumulative_sources(
         CountTotal::from_source(
             "output_count_bis",
             version,
@@ -40,8 +43,7 @@ pub fn forced_import(
         mappings,
     );
     let tx_count_stored = ByType::try_new(|id| {
-        import_stored(
-            cache,
+        import_cached(
             db,
             &format!("tx_count_with_{}_output_cumulative", id.name()),
             version,
@@ -68,13 +70,9 @@ pub fn forced_import(
         mappings,
     );
 
-    let op_return_count = output_count
-        .by_type
-        .unspendable
-        .op_return
-        .cumulative_source();
+    let op_return_count = &output_count.by_type.unspendable.op_return.cumulative.height;
     let spendable_output_count =
-        SpendableOutputCount::new(version, &op_return_count, mappings, window_starts);
+        SpendableOutputCount::new(version, op_return_count, mappings, window_starts);
 
     Ok(Vecs {
         output_count,

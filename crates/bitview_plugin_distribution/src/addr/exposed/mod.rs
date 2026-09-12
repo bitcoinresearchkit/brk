@@ -42,8 +42,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode,
+    AnyStoredVec, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
 };
 
 use super::{
@@ -73,19 +72,16 @@ pub struct ExposedAddrVecs<M: StorageMode = Rw> {
 
 impl ExposedAddrVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         spot_price: &ReadableBoxedVec<Height, Cents>,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
-        let count =
-            AddrCountFundedTotalVecs::forced_import(cache, db, "exposed", version, mappings)?;
-        let supply =
-            AddrSupplyVecs::forced_import(cache, db, "exposed", version, mappings, spot_price)?;
+        let count = AddrCountFundedTotalVecs::forced_import(db, "exposed", version, mappings)?;
+        let supply = AddrSupplyVecs::forced_import(db, "exposed", version, mappings, spot_price)?;
         let supply_share = AddrSupplyShareVecs::forced_import(
-            cache, db, "exposed", version, mappings, &supply, all_supply,
+            db, "exposed", version, mappings, &supply, all_supply,
         )?;
 
         Ok(Self {

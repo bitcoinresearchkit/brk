@@ -1,18 +1,18 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use bitview_cohort::{ByTerm, ProfitabilityRange, ProfitabilityRangeId, Term, UTXOAggregateId};
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{LazyWindowStartVec, import_stored};
+use bitview_vecs::{LazyWindowStartVec, import_cached};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::{Cents, CentsSats, Height, PartsPerMillionSigned32, Sats, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, Database, ReadableCloneableVec, ReadableVec};
+use vecdb::{Database, ReadableCloneableVec, ReadableVec};
 
 use super::ProfitabilityVecs;
-
-static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
 #[test]
 fn derived_values_preserve_profit_and_loss_polarity() {
@@ -51,14 +51,15 @@ fn derived_values_preserve_profit_and_loss_polarity() {
 // amounts, both terms, and all 23 former aggregate selections.
 #[test]
 fn stored_ranges_reconstruct_removed_thresholds() {
+    init_cache();
     let directory = tempdir().unwrap();
-    let context = ImportContext::new(directory.path(), &CACHE);
+    let context = ImportContext::new(directory.path());
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
     let indexer = Indexer::import(context, &reader).unwrap();
     let mappings = MappingsVecs::import(context, &indexer).unwrap();
     let db = Database::open(&directory.path().join("profitability")).unwrap();
-    let spot_source = import_stored::<Height, Cents>(&CACHE, &db, "spot", Version::ONE).unwrap();
+    let spot_source = import_cached::<Height, Cents>(&db, "spot", Version::ONE).unwrap();
     let starts = LazyWindowStartVec::days("window", Version::ONE, 1, &mappings.timestamp.monotonic);
     let windows = Windows {
         _24h: &starts,
@@ -67,7 +68,6 @@ fn stored_ranges_reconstruct_removed_thresholds() {
         _1y: &starts,
     };
     let mut vecs = ProfitabilityVecs::forced_import(
-        &CACHE,
         &db,
         Version::ONE,
         &mappings,

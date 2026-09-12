@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::LazyPriceWithRatioPerBlock;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode};
+use vecdb::{Database, ReadableBoxedVec, Rw, StorageMode};
 
 use crate::metrics::UTXOSources;
 
@@ -19,14 +19,13 @@ pub struct RealizedPriceByCohort<M: StorageMode = Rw> {
 
 impl RealizedPriceByCohort {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let stored = UTXOSources::forced_import(cache, db, "realized_price_cents", version)?;
+        let stored = UTXOSources::forced_import(db, "realized_price_cents", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "realized_price");
             LazyPriceWithRatioPerBlock::from_height_source(

@@ -3650,8 +3650,8 @@ class InMaxMinPerSupplyPattern:
 
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
-        self.in_loss: PerPattern2 = PerPattern2(client, _m(acc, 'cost_basis_in_loss_per'))
-        self.in_profit: PerPattern2 = PerPattern2(client, _m(acc, 'cost_basis_in_profit_per'))
+        self.in_loss: PerPattern = PerPattern(client, _m(acc, 'cost_basis_in_loss_per'))
+        self.in_profit: PerPattern = PerPattern(client, _m(acc, 'cost_basis_in_profit_per'))
         self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'cost_basis_max'))
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'cost_basis_min'))
         self.per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis_per_coin'))
@@ -4163,6 +4163,15 @@ class FloorLevelLossPattern:
         self.level: Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern = Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern(client, _m(acc, 'level'))
         self.loss_threshold: Pct95Pct98Pct99Pattern2 = Pct95Pct98Pct99Pattern2(client, _m(acc, 'loss_threshold'))
 
+class InTotalPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BitviewClient, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.in_loss: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, 'in_loss'))
+        self.in_profit: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, 'in_profit'))
+        self.total: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, acc)
+
 class PercentPpmRatioPattern2:
     """Pattern struct for repeated tree structure."""
 
@@ -4359,6 +4368,14 @@ class CentsUsdPattern5:
         self.cents: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'cents'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
 
+class CoinflowCointimePattern2:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BitviewClient, acc: str, disc: str):
+        """Create pattern node with accumulated series name."""
+        self.coinflow: InTotalPattern = InTotalPattern(client, _m(_m(acc, 'coinflow_supply_density'), disc))
+        self.cointime: InTotalPattern = InTotalPattern(client, _m(_m(acc, 'cointime_supply_density'), disc))
+
 class CoinflowCointimePattern:
     """Pattern struct for repeated tree structure."""
     pass
@@ -4471,7 +4488,7 @@ class LongShortPattern12:
         self.long: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _p('lth', acc))
         self.short: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _p('sth', acc))
 
-class PerPattern2:
+class PerPattern:
     """Pattern struct for repeated tree structure."""
 
     def __init__(self, client: BitviewClient, acc: str):
@@ -6330,12 +6347,21 @@ class SeriesTree_Bedrock_CostBasis_PerDollar:
         self.cointime: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'bedrock_cointime_cost_basis_per_dollar')
         self.coinflow: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'bedrock_coinflow_cost_basis_per_dollar')
 
+class SeriesTree_Bedrock_CostBasis_SupplyDensity:
+    """Series tree node."""
+
+    def __init__(self, client: BitviewClient, base_path: str = ''):
+        self.cointime: InTotalPattern = InTotalPattern(client, 'bedrock_cointime_supply_density')
+        self.coinflow: InTotalPattern = InTotalPattern(client, 'bedrock_coinflow_supply_density')
+
 class SeriesTree_Bedrock_CostBasis:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
         self.per_coin: SeriesTree_Bedrock_CostBasis_PerCoin = SeriesTree_Bedrock_CostBasis_PerCoin(client)
         self.per_dollar: SeriesTree_Bedrock_CostBasis_PerDollar = SeriesTree_Bedrock_CostBasis_PerDollar(client)
+        self.supply_density: SeriesTree_Bedrock_CostBasis_SupplyDensity = SeriesTree_Bedrock_CostBasis_SupplyDensity(client)
+        self.supply_density_10pct: CoinflowCointimePattern2 = CoinflowCointimePattern2(client, 'bedrock', '10pct')
 
 class SeriesTree_Bedrock_CapitalizedPrice:
     """Series tree node."""
@@ -10050,8 +10076,8 @@ class SeriesTree_Cohorts_CostBasis_All:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.in_profit: PerPattern2 = PerPattern2(client, 'cost_basis_in_profit_per')
-        self.in_loss: PerPattern2 = PerPattern2(client, 'cost_basis_in_loss_per')
+        self.in_profit: PerPattern = PerPattern(client, 'cost_basis_in_profit_per')
+        self.in_loss: PerPattern = PerPattern(client, 'cost_basis_in_loss_per')
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cost_basis_min')
         self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cost_basis_max')
         self.per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'cost_basis_per_coin')

@@ -7,7 +7,7 @@ use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling, RollingWindows
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, ReadableVec, Rw, StorageMode};
 
 use super::RealizedAggregateSources;
 
@@ -31,7 +31,6 @@ pub struct AdjustedSoprVecs<M: StorageMode = Rw> {
 
 impl AdjustedSoprVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -40,7 +39,6 @@ impl AdjustedSoprVecs {
         let source_version = version + SOURCE_VERSION;
         let ratio_version = source_version + RATIO_VERSION;
         let transfer_volume = Self::import_cumulative(
-            cache,
             db,
             "adj_value_created",
             source_version,
@@ -48,7 +46,6 @@ impl AdjustedSoprVecs {
             window_starts,
         )?;
         let value_destroyed = Self::import_cumulative(
-            cache,
             db,
             "adj_value_destroyed",
             source_version,
@@ -57,14 +54,12 @@ impl AdjustedSoprVecs {
         )?;
         let ratio = UTXOAllAndSth {
             all: RollingWindows::forced_import(
-                cache,
                 db,
                 "asopr",
                 Self::cohort_version(ratio_version, UTXOAllAndSthId::All),
                 mappings,
             )?,
             sth: RollingWindows::forced_import(
-                cache,
                 db,
                 &Self::cohort_metric_name(UTXOAllAndSthId::Sth, "asopr"),
                 Self::cohort_version(ratio_version, UTXOAllAndSthId::Sth),
@@ -80,7 +75,6 @@ impl AdjustedSoprVecs {
     }
 
     fn import_cumulative(
-        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -89,7 +83,6 @@ impl AdjustedSoprVecs {
     ) -> Result<UTXOAllAndSth<PerBlockCumulativeRolling<Cents>>> {
         UTXOAllAndSth::try_from_fn(|id| {
             PerBlockCumulativeRolling::forced_import(
-                cache,
                 db,
                 &Self::cohort_metric_name(id, metric),
                 Self::cohort_version(version, id) + Version::ONE,

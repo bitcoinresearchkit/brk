@@ -11,25 +11,22 @@ use vecdb::ZstdVec;
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
-    ReadableVec, StoredVec, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, Database, ImportableVec, ReadableVec, StoredVec, Version,
+    WritableVec,
 };
 
 fn check_source<V: StoredVec<I = usize, T = u64>>() {
     const LEN: usize = 12_345;
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(512 * 1024)));
-    let mut source =
-        V::import_with(ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(budget))
-            .unwrap();
+    let _serial = cache::TEST_LOCK.lock().unwrap();
+    let budget = init_cache();
+    let mut source = V::import(&db, "source", Version::ONE).unwrap();
     for i in 0..LEN {
         source.push(i as u64);
     }
     source.write().unwrap();
     let captured = source.read_only_clone();
-    let initial_revision = captured.data_revision();
-    assert!(initial_revision.is_some());
     assert_eq!(captured.collect_one_at(42), Some(42));
     assert!(!source.read_cached_into_at(0, LEN, &mut Vec::new()));
     let indices = [42, 42, 1023, 1024, 8191, 8192, LEN - 1, LEN];
@@ -41,15 +38,13 @@ fn check_source<V: StoredVec<I = usize, T = u64>>() {
     assert_eq!(source.collect(), expected);
     assert!(captured.read_cached_into_at(0, LEN, &mut Vec::new()));
     budget.clear();
-    assert_eq!(captured.data_revision(), initial_revision);
     assert!(!captured.read_cached_into_at(0, LEN, &mut Vec::new()));
     assert_eq!(captured.collect(), expected);
 
     source.push(LEN as u64);
     source.write().unwrap();
-    assert_eq!(captured.data_revision(), initial_revision);
     assert!(captured.read_cached_into_at(0, LEN, &mut Vec::new()));
-    assert!(!captured.read_cached_into_at(LEN, LEN + 1, &mut Vec::new()));
+    assert!(captured.read_cached_into_at(LEN, LEN + 1, &mut Vec::new()));
     assert_eq!(captured.collect_one_at(LEN), Some(LEN as u64));
 
     for from in [8193, 1023, 0] {
@@ -70,7 +65,6 @@ fn check_source<V: StoredVec<I = usize, T = u64>>() {
                 }
             })
             .collect();
-        assert_ne!(captured.data_revision(), initial_revision);
         assert_eq!(captured.collect(), expected);
         assert_eq!(
             source.fold_range_at(0, LEN + 1, 0u64, |sum, value| sum + value),
@@ -119,18 +113,20 @@ fn zerocopy_source_ranges() {
 #[cfg(feature = "pco")]
 #[test]
 fn stored_fold_keeps_its_generation_until_the_callback_finishes() {
+    let _serial = cache::TEST_LOCK.lock().unwrap();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(512 * 1024)));
-    let mut source = PcoVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
+    let budget = init_cache();
+    let mut source = PcoVec::<usize, u64, Budgeted>::import(&db, "source", Version::ONE).unwrap();
     for i in 0..10_000 {
         source.push(i);
     }
     source.write().unwrap();
     let reader = source.read_only_clone();
+    assert!(
+        !reader.read_cached_into_at(0, 1, &mut Vec::new()),
+        "writes must not warm a cold source"
+    );
     reader.collect();
     let (entered_tx, entered_rx) = mpsc::channel();
     let (release_tx, release_rx) = mpsc::channel();
@@ -175,3 +171,8 @@ fn stored_fold_keeps_its_generation_until_the_callback_finishes() {
     });
     assert_eq!(reader.collect_range_at(4_999, 5_002), [4_999, 99, 99]);
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod cache;
+use cache::init_cache;

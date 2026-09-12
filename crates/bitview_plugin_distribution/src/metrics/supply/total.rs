@@ -8,8 +8,8 @@ use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, Database, Ident, ReadableBoxedVec,
-    ReadableCloneableVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, Database, Ident, ReadableBoxedVec, ReadableCloneableVec, Rw,
+    StorageMode,
 };
 
 use crate::metrics::{AmountSources, UTXOSources};
@@ -29,13 +29,12 @@ pub struct SupplyTotal<M: StorageMode = Rw> {
 
 impl SupplyTotal {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let stored = UTXOSources::forced_import(cache, db, "supply_sats", version)?;
+        let stored = UTXOSources::forced_import(db, "supply_sats", version)?;
         let all_name = CohortContext::Utxo.metric_name(CohortId::All, "supply");
         let all_sats = stored.get(CohortId::All).expect("all supply source");
         let all_supply = all_sats.read_only_boxed_clone();
@@ -76,7 +75,6 @@ impl SupplyTotal {
             }
         });
         let addr_balance = AmountSources::forced_import(
-            cache,
             db,
             "addrs_supply_sats_by_balance_range",
             CohortContext::Addr,

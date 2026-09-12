@@ -10,8 +10,8 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, IndexVec, PcoVec,
-    ReadableBoxedVec, ReadableVec, Rw, StorageMode, Version,
+    Budgeted, Database, EagerVec, ImportableVec, IndexVec, PcoVec, ReadableBoxedVec, ReadableVec,
+    Rw, StorageMode, Version,
 };
 
 use super::{DatedResolutionVecs, ResolutionVecs};
@@ -56,13 +56,10 @@ pub struct Timestamps<M: StorageMode = Rw> {
 
 impl Timestamps {
     pub fn forced_import_monotonic(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
     ) -> Result<EagerVec<PcoVec<Height, Timestamp, Budgeted>>> {
-        Ok(EagerVec::forced_import_with(
-            ImportOptions::new(db, "timestamp_monotonic", version).with_cache_budget(cache),
-        )?)
+        Ok(EagerVec::forced_import(db, "timestamp_monotonic", version)?)
     }
 
     #[allow(clippy::too_many_arguments)]

@@ -1,10 +1,11 @@
+use crate::test_cache::init_cache;
 use bitview_collections::PerResolution;
 use bitview_vecs::{IndexSources, LazyPreviousDeltaVec, RangeMapVec};
 use brk_types::{Height, Version};
 use rangeindex::SharedRangeMap;
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
-    PcoVecValue, ReadableCloneableVec, VecIndex, WritableVec,
+    AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
+    ReadableCloneableVec, VecIndex, WritableVec,
 };
 
 pub fn stored<I: VecIndex, T: PcoVecValue>(
@@ -12,10 +13,8 @@ pub fn stored<I: VecIndex, T: PcoVecValue>(
     name: &str,
     values: impl IntoIterator<Item = T>,
 ) -> EagerVec<PcoVec<I, T, Budgeted>> {
-    let mut vec = EagerVec::forced_import_with(
-        ImportOptions::new(db, name, Version::ONE).with_cache_budget(&CACHE_BUDGET),
-    )
-    .unwrap();
+    init_cache();
+    let mut vec = EagerVec::forced_import(db, name, Version::ONE).unwrap();
     for value in values {
         vec.push(value);
     }
@@ -80,6 +79,3 @@ pub fn indexes(db: &Database) -> IndexSources {
         year10_date: empty!("year10_date").read_only_boxed_clone(),
     }
 }
-
-#[allow(dead_code)]
-pub static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

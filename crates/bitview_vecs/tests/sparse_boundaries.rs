@@ -80,3 +80,7 @@ fn resident_sparse_reads() {
         );
     }
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

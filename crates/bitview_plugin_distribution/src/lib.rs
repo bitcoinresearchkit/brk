@@ -29,3 +29,8 @@ const STORAGE: PluginStorage = PluginStorage::new(
     Version::new(41 + ORACLE_VERSION),
 );
 pub const ID: PluginId = STORAGE.id();
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/common/cache.rs"]
+mod test_cache;

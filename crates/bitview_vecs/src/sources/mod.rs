@@ -13,5 +13,5 @@ pub use lazy_window_start_vec::LazyWindowStartVec;
 pub use lookback::Lookback;
 pub use range_map::RangeMapVec;
 pub use range_map_lookup::RangeMapLookupVec;
-pub use stored::{StoredSeries, import_stored};
+pub use stored::{CachedSeries, import_cached};
 pub use window_starts::WindowStarts;

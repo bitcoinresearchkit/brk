@@ -7,9 +7,10 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use color_eyre::{Result, install};
 use serde_json::to_string_pretty;
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     install()?;
 
     let tmp = env::temp_dir().join("bitview_tree_gen");
@@ -17,7 +18,7 @@ pub fn main() -> Result<()> {
 
     let client = Client::new("http://127.0.0.1:1", Auth::None)?;
     let reader = Reader::new_without_rlimit(tmp.join("blocks"), &client);
-    let context = ImportContext::new(&tmp, &CACHE_BUDGET);
+    let context = ImportContext::new(&tmp);
     let plugins = DefaultPlugins::import(context, &reader)?;
     let tree = plugins.to_tree_node();
 
@@ -31,5 +32,3 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

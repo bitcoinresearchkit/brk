@@ -1,10 +1,10 @@
 use bitview_cohort::SpendableType;
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CountTotal, LazyWindowStartVec, import_stored};
+use bitview_vecs::{CountTotal, LazyWindowStartVec, import_cached};
 use brk_error::Result;
 use brk_types::{Height, StoredU64, Version};
-use vecdb::{CacheBudget, Database};
+use vecdb::Database;
 
 use super::{Vecs, WithInputTypes};
 
@@ -14,7 +14,6 @@ fn without_coinbase(height: Height, total: StoredU64) -> StoredU64 {
 
 impl Vecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -22,9 +21,13 @@ impl Vecs {
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let input_count_stored = SpendableType::try_new(|id| {
-            import_stored(cache, db, &format!("{}_prevout_count", id.name()), version)
+            import_cached(
+                db,
+                &format!("{}_prevout_count_cumulative", id.name()),
+                version,
+            )
         })?;
-        let input_count = WithInputTypes::from_count_sources(
+        let input_count = WithInputTypes::from_cumulative_sources(
             CountTotal::from_source(
                 "input_count_bis",
                 version,
@@ -45,8 +48,7 @@ impl Vecs {
             mappings,
         );
         let tx_count_stored = SpendableType::try_new(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("tx_count_with_{}_prevout_cumulative", id.name()),
                 version,

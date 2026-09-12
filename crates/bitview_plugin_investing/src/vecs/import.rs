@@ -1,11 +1,12 @@
 use bitview_collections::{ByDcaCagr, ByDcaPeriod};
+use bitview_plugin::ImportContext;
 use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_transforms::RatioDiffCents;
 use bitview_vecs::{
     LazyIndexedVec, LazyPercentPerBlock, LazyPreviousDeltaVec, LazySinceDayVec, LazyWindowVec,
-    Price,
+    Price, import_cached,
 };
 use brk_error::{Error, Result};
 use brk_types::{Cents, Date, Day1, Height, PartsPerMillionSigned64, Sats};
@@ -19,19 +20,19 @@ use crate::{
 
 impl Vecs {
     pub fn import(
+        context: ImportContext<'_>,
         mappings: &MappingsVecs,
         blocks: &BlocksVecs,
         prices: &PriceVecs,
     ) -> Result<Self> {
+        let db = STORAGE.open_database(context, 256)?;
         let version = STORAGE.schema_version();
+        let sats_cumulative = import_cached(&db, "dca_sats_cumulative", version)?;
 
         let height_days = mappings.height_day1.clone();
-        let dca_sats = DcaSats::new(
-            prices.split.close.usd.day1.read_only_boxed_clone(),
-            height_days.clone(),
-        );
-        let sats_cumulative = dca_sats.read_only_boxed_clone();
-        let sats_per_day = LazyPreviousDeltaVec::new("dca_sats_per_day", version, &sats_cumulative);
+        let dca_sats = DcaSats::new(sats_cumulative.read_only_boxed_clone(), height_days.clone());
+        let height_sats = dca_sats.read_only_boxed_clone();
+        let sats_per_day = LazyPreviousDeltaVec::new("dca_sats_per_day", version, &height_sats);
 
         let window_starts = ByDcaPeriod::try_new(|_, days| {
             Ok::<_, Error>(blocks.lookback.start_vec(days as usize))
@@ -44,7 +45,7 @@ impl Vecs {
                 let source = LazyWindowVec::<Height, Sats, Sats>::new(
                     &format!("{metric_name}_sats_source"),
                     version,
-                    &sats_cumulative,
+                    &height_sats,
                     &(**window_starts),
                     true,
                     |current, before, _| current.checked_sub(before).unwrap_or_default(),
@@ -144,7 +145,7 @@ impl Vecs {
             let source = LazySinceDayVec::new(
                 &format!("{metric_name}_sats_source"),
                 version,
-                &sats_cumulative,
+                &height_sats,
                 &mappings.first_height.day1,
                 day,
                 |current, before| current.checked_sub(before).unwrap_or_default(),
@@ -196,7 +197,9 @@ impl Vecs {
                 ))
             })?;
 
-        Ok(Self {
+        let this = Self {
+            db,
+            sats_cumulative,
             sats_per_day,
             period: PeriodVecs {
                 dca_stack,
@@ -211,6 +214,8 @@ impl Vecs {
                 dca_cost_basis: class_cost_basis,
                 dca_return: class_return,
             },
-        })
+        };
+        STORAGE.finalize_database(&this.db)?;
+        Ok(this)
     }
 }

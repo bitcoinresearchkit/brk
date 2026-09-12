@@ -35,6 +35,8 @@ views. Its field types retain integer versus fractional sats and each sampling
 policy. `SpotPrice`, `OhlcPrice`, and `SplitPrice` own reusable price construction;
 plugins retain provider policy. Investment-specific stacks retain the existing
 `LazySpotValuePerBlock` instead of redeclaring its four unit fields.
+Opening-price views batch first-price lookups (or the preceding close for empty
+periods) directly against the shared spot source; they do not build full candles.
 
 `UTXOCoreSources` owns native age/epoch/class/entry collections.
 `UTXOTypedSources` composes that core with output types; `UTXOSources` adds
@@ -56,10 +58,11 @@ provider, calendar, percentile-selection, and period-selection policy.
 
 ## Ownership
 
-Source owners select optional, budgeted range retention. Constructors that
-create budgeted caches receive an explicit shared `CacheBudget`; this crate
-owns neither a global budget nor its limit/invalidation lifecycle. Application
-composition passes the budget through plugin import resources.
+Source owners select optional, budgeted range retention. The application initializes
+vecdb's process-wide budget once before importing sources; constructors do not
+forward budget arguments. `CachedSeries` makes the opt-in explicit. Stored height
+sources and daily sources without a stored height counterpart can retain selected
+ranges; transaction-index vectors stay uncached.
 
 Views borrow cloneable readers at construction and retain read-only clones;
 they do not create another cache for each resolution or metric. Read retention
@@ -68,20 +71,17 @@ passed through its computation context, not held alive by a cache policy.
 
 Date, first-height, and lookback readers derive their results directly from
 monotonic stored sources. Period lookups seek to the requested boundary before
-scanning. SMA readers share compact prefix checkpoints, not cached result vectors;
-source revisions invalidate checkpoints after rewrites.
-
-`CumulativeCountVec` reconstructs cumulative `u64` counts through bounded reads
-of its `u16` source and one prefix checkpoint per 256 blocks. It implements the ordinary
-reader interface, so rolling and ratio views use the same composition as other
-cumulative sources. Ratio readers request only the needed ranges from both
-operands, including on a cold budgeted cache. The owning count source
-invalidates its block cache after changes.
+scanning. SMA readers share one stored cumulative-price source. Per-type input
+and output counts store cumulative `u64` totals, with block counts derived by
+subtraction. Neither needs reader-owned prefix checkpoints or revision tokens.
+Rolling and ratio readers request only the needed source ranges, including on
+a cold budgeted cache. Ordinary stored-vector recomputation and source-owned
+invalidation handle appends and rewrites.
 
 Writer-only cumulative checkpoints use `StorageMode::WriteOnly`, so read-only
 handles contain no unused checkpoint payload. Exposing mutable storage invalidates
-their writer checkpoint. Count-total owners must also invalidate transformed
-denominators when their sources are rewritten without changing length.
+their writer checkpoint. Count-total and transformed-denominator views read
+their sources directly and need no separate invalidation after rewrites.
 
 ## Verification
 

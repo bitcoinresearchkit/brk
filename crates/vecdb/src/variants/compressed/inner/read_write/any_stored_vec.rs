@@ -194,6 +194,9 @@ where
                 pages.push_raw(starting_page_index, total_bytes)?;
                 this.base.update_stored_len(stored_len + pushed_len);
                 pages.flush()?;
+                if let Some(cache) = C::cache(&this.cache) {
+                    cache.extend_tail(stored_len, &taken);
+                }
                 return Ok(true);
             }
 
@@ -233,6 +236,10 @@ where
 
             this.base.update_stored_len(stored_len + pushed_len);
             pages.flush()?;
+
+            if let Some(cache) = C::cache(&this.cache) {
+                cache.extend_tail(stored_len, &values[stored_len - rewrite_from..]);
+            }
 
             Ok(true)
         })

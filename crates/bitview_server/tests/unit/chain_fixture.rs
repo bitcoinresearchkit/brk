@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use std::{
     fs,
     future::Future,
@@ -33,7 +34,6 @@ use tokio::{
     spawn,
     task::JoinHandle,
 };
-use vecdb::CacheBudget;
 
 use super::chain_rpc::reply;
 use crate::{AppState, Server, ServerConfig};
@@ -60,7 +60,7 @@ impl Drop for ChainFixture {
 }
 
 impl ChainFixture {
-    async fn new(first: Block, cache_budget: &'static CacheBudget) -> Self {
+    async fn new(first: Block) -> Self {
         let directory = tempdir().unwrap();
         let blocks = directory.path().join("blocks");
         fs::create_dir(&blocks).unwrap();
@@ -134,15 +134,13 @@ impl ChainFixture {
             }
         });
         let reader = Reader::new_without_rlimit(blocks.clone(), &client);
-        let mut indexer =
-            Indexer::import(ImportContext::new(directory.path(), cache_budget), &reader).unwrap();
+        let mut indexer = Indexer::import(ImportContext::new(directory.path()), &reader).unwrap();
         indexer.checked_index(&Exit::default()).unwrap();
         indexer.finish_update().unwrap();
         assert!(indexer.safe_lengths().last_height().is_some());
         drop(indexer);
         let plugins =
-            DefaultPlugins::import(ImportContext::new(directory.path(), cache_budget), &reader)
-                .unwrap();
+            DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
         assert!(plugins.indexer().safe_lengths().last_height().is_some());
         let query = AsyncQuery::build(&plugins, None);
         let server = Server::bind(
@@ -255,14 +253,7 @@ pub fn run_genesis<F: Future<Output = ()>>(
     first: Block,
     inspect: impl FnOnce(ChainFixture) -> F + Send + 'static,
 ) {
-    run_genesis_with_budget(first, &CACHE_BUDGET, inspect);
-}
-
-pub fn run_genesis_with_budget<F: Future<Output = ()>>(
-    first: Block,
-    cache_budget: &'static CacheBudget,
-    inspect: impl FnOnce(ChainFixture) -> F + Send + 'static,
-) {
+    init_cache();
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
         .spawn(move || {
@@ -271,11 +262,9 @@ pub fn run_genesis_with_budget<F: Future<Output = ()>>(
                 .enable_all()
                 .build()
                 .unwrap()
-                .block_on(async { inspect(ChainFixture::new(first, cache_budget).await).await });
+                .block_on(async { inspect(ChainFixture::new(first).await).await });
         })
         .unwrap()
         .join()
         .unwrap();
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

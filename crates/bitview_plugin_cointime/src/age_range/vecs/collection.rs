@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{BoundedRatio, Height, StoredF64};
 use vecdb::{Rw, StorageMode};
 
-use bitview_vecs::{LazySpotValuePerBlock, PerBlockCumulativeRolling, StoredSeries};
+use bitview_vecs::{CachedSeries, LazySpotValuePerBlock, PerBlockCumulativeRolling};
 
 use super::{ActivitySeries, SupplyVecs};
 
@@ -25,6 +25,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// 4,294,967,294; cumulative coin-day inputs remain full precision.
     pub activity: ActivitySeries,
     #[traversable(hidden)]
-    pub activity_sources: AgeRange<StoredSeries<Height, BoundedRatio, M>>,
+    pub activity_sources: AgeRange<CachedSeries<Height, BoundedRatio, M>>,
     pub supply: SupplyVecs<AgeRange<LazySpotValuePerBlock>>,
 }

@@ -13,6 +13,8 @@ mod chain_fixture;
 #[cfg(any(feature = "chain", feature = "price"))]
 mod chain_rpc;
 #[cfg(feature = "chain")]
+mod cumulative_sources;
+#[cfg(feature = "chain")]
 mod genesis_routes;
 #[cfg(feature = "chain")]
 mod header_integrity;

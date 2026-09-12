@@ -5,12 +5,12 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_transforms::BoundedToF64;
 use bitview_vecs::{
-    LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, PerBlock,
-    StoredSeries, import_stored,
+    CachedSeries, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
+    LazySpotValuePerBlock, PerBlock, import_cached,
 };
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, Database, PcoVecValue, ReadableBoxedVec};
+use vecdb::{Database, PcoVecValue, ReadableBoxedVec};
 
 use super::Vecs;
 use crate::{
@@ -19,43 +19,39 @@ use crate::{
 };
 
 impl AggregateSources {
-    fn forced_import(cache: &'static CacheBudget, db: &Database, version: Version) -> Result<Self> {
+    fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             supply: MobilityId::try_from_fn(|side| {
                 import_aggregate(
-                    cache,
                     db,
                     &format!("coinflow_{}_supply_sats", side.name()),
                     version,
                 )
             })?,
             supply_in_loss_share: import_aggregate(
-                cache,
                 db,
                 "coinflow_supply_in_loss_share_bounded",
                 version,
             )?,
             horizon: HorizonId::try_from_fn(|h| {
                 import_aggregate(
-                    cache,
                     db,
                     &format!("coinflow_{}_supply_in_loss_share_bounded", h.name()),
                     version,
                 )
             })?,
-            cap: import_aggregate(cache, db, "coinflow_cap_cents", version)?,
-            price: import_aggregate(cache, db, "coinflow_price_cents", version)?,
+            cap: import_aggregate(db, "coinflow_cap_cents", version)?,
+            price: import_aggregate(db, "coinflow_price_cents", version)?,
         })
     }
 }
 
 fn import_aggregate<T: PcoVecValue>(
-    cache: &'static CacheBudget,
     db: &Database,
     metric: &str,
     version: Version,
-) -> Result<UTXOAggregate<StoredSeries<Height, T>>> {
-    UTXOAggregate::try_from_fn(|id| import_stored(cache, db, &id.metric_name(metric), version))
+) -> Result<UTXOAggregate<CachedSeries<Height, T>>> {
+    UTXOAggregate::try_from_fn(|id| import_cached(db, &id.metric_name(metric), version))
 }
 
 impl AggregateVecs {
@@ -132,7 +128,7 @@ impl Vecs {
         distribution: &DistributionVecs,
     ) -> Result<Self> {
         let database = STORAGE.open_database(context, 250_000)?;
-        let cache = context.cache_budget();
+
         let db = &database;
         let version = STORAGE.schema_version() + Version::ONE;
         let spot_price = prices.spot.cents.height.read_only_boxed_clone();
@@ -141,14 +137,14 @@ impl Vecs {
                 "{}_spending_rate",
                 CohortContext::Utxo.full_name(id.cohort())
             );
-            PerBlock::forced_import(cache, db, &name, version, mappings)
+            PerBlock::forced_import(db, &name, version, mappings)
         })?;
         let mobility_source = AgeRange::try_from_fn(|id| {
             let name = format!(
                 "{}_mobility_bounded_source",
                 CohortContext::Utxo.full_name(id.cohort())
             );
-            import_stored(cache, db, &name, version)
+            import_cached(db, &name, version)
         })?;
         let spending_exposure = SpendingExposureSeries {
             age_range: AgeRange::try_from_fn(|id| {
@@ -156,7 +152,7 @@ impl Vecs {
                     "{}_spending_exposure",
                     CohortContext::Utxo.full_name(id.cohort())
                 );
-                PerBlock::forced_import(cache, db, &name, version, mappings)
+                PerBlock::forced_import(db, &name, version, mappings)
             })?,
             mobility: AgeRangeId::series(CohortContext::Utxo, |id, name| {
                 LazyPerBlock::from_height_source::<BoundedToF64>(
@@ -199,7 +195,7 @@ impl Vecs {
             immobile: supply_for(MobilityId::Immobile),
         };
 
-        let aggregate_sources = AggregateSources::forced_import(cache, db, version)?;
+        let aggregate_sources = AggregateSources::forced_import(db, version)?;
         let all = AggregateVecs::new(
             UTXOAggregateId::All,
             version,

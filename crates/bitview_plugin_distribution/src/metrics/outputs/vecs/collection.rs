@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use super::{SpentOutputCount, UnspentOutputCount};
 
@@ -19,27 +19,14 @@ pub struct OutputsVecs<M: StorageMode = Rw> {
 
 impl OutputsVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Box<Self>> {
         Ok(Box::new(Self {
-            unspent_count: UnspentOutputCount::forced_import(
-                cache,
-                db,
-                version,
-                mappings,
-                window_starts,
-            )?,
-            spent_count: SpentOutputCount::forced_import(
-                cache,
-                db,
-                version,
-                mappings,
-                window_starts,
-            )?,
+            unspent_count: UnspentOutputCount::forced_import(db, version, mappings, window_starts)?,
+            spent_count: SpentOutputCount::forced_import(db, version, mappings, window_starts)?,
         }))
     }
 

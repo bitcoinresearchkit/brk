@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use rawdb::Region;
 
-use crate::{AnyStoredVec, Result, VecIndex, VecValue, cache::CachePolicy};
+use crate::{Result, VecIndex, VecValue, cache::CachePolicy};
 
 use super::{RawStrategy, ReadWriteRawVec};
 
@@ -18,10 +18,7 @@ where
         from: usize,
         write: impl FnOnce(&mut Self) -> Result<R>,
     ) -> Result<R> {
-        match C::cache(&self.cache).cloned() {
-            Some(cache) => cache.update(from, from < self.stored_len(), || write(self)),
-            None => write(self),
-        }
+        C::update(self.cache.clone(), from, || write(self))
     }
 
     pub(super) fn load_cache_ranges(

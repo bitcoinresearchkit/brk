@@ -10,7 +10,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Dollars, Height, SatsFract, Version};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Ident, ReadableCloneableVec, UnaryTransform};
+use vecdb::{Database, Ident, ReadableCloneableVec, UnaryTransform};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
 
@@ -28,13 +28,12 @@ pub struct Price<C, U = LazyPerBlock<Dollars, Cents>, S = LazyPerBlock<SatsFract
 impl Price<PerBlock<Cents>> {
     /// Import from database: stored cents, lazy USD + sats.
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let cents = PerBlock::forced_import(cache, db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(name, version, &cents);
         Ok(Self::from_cents_and_usd(name, version, cents, usd))
     }

@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{IndexSources, PerBlock};
 
@@ -17,7 +17,6 @@ pub struct RollingWindowsFrom1w<T: NumericValue + JsonSchema, M: StorageMode = R
 
 impl<T: NumericValue + JsonSchema> RollingWindowsFrom1w<T> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -25,7 +24,6 @@ impl<T: NumericValue + JsonSchema> RollingWindowsFrom1w<T> {
     ) -> Result<Self> {
         Ok(Self(WindowsFrom1w::try_from_fn(|suffix| {
             PerBlock::forced_import(
-                cache,
                 db,
                 &format!("{name}_{suffix}"),
                 version + Version::ONE,

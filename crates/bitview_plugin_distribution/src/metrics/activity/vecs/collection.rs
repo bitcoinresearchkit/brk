@@ -7,7 +7,7 @@ use bitview_vecs::{LazyPerBlock, LazyWindowStartVec, RollingWindows};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredF32, StoredF64, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode};
 
 use super::{
     ActivitySources, CoindaysDestroyedByCohort, CoreCumulativeValueByCohort,
@@ -45,7 +45,6 @@ pub struct ActivityVecs<M: StorageMode = Rw> {
 
 impl ActivityVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -54,7 +53,6 @@ impl ActivityVecs {
         let aggregate_version = version;
         let version = version + Version::ONE;
         let transfer_volume = Box::new(CumulativeValueByCohort::forced_import(
-            cache,
             db,
             "transfer_volume",
             version,
@@ -62,9 +60,8 @@ impl ActivityVecs {
             window_starts,
         )?);
         let coindays_destroyed =
-            CoindaysDestroyedByCohort::forced_import(cache, db, version, mappings, window_starts)?;
+            CoindaysDestroyedByCohort::forced_import(db, version, mappings, window_starts)?;
         let transfer_volume_in_profit = Box::new(CoreCumulativeValueByCohort::forced_import(
-            cache,
             db,
             "transfer_volume_in_profit",
             version,
@@ -72,7 +69,6 @@ impl ActivityVecs {
             window_starts,
         )?);
         let transfer_volume_in_loss = Box::new(CoreCumulativeValueByCohort::forced_import(
-            cache,
             db,
             "transfer_volume_in_loss",
             version,
@@ -99,7 +95,6 @@ impl ActivityVecs {
         });
         let dormancy = UTXOAggregate::try_from_fn(|id| {
             RollingWindows::forced_import(
-                cache,
                 db,
                 &id.metric_name("dormancy"),
                 Self::aggregate_version(aggregate_version, id),

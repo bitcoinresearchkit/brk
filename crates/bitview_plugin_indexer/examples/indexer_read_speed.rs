@@ -11,7 +11,7 @@ use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Sats;
-use vecdb::{CacheBudget, ReadableVec};
+use vecdb::{Budgeted, ReadableVec};
 
 fn run_benchmark(indexer: &Indexer) -> (Sats, Duration, usize) {
     let start = Instant::now();
@@ -28,6 +28,7 @@ fn run_benchmark(indexer: &Indexer) -> (Sats, Duration, usize) {
 }
 
 fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     init(Some(Path::new(".log")))?;
 
     let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".bitview");
@@ -44,7 +45,7 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let context = ImportContext::new(&outputs_dir);
     let indexer = Indexer::import(context, &reader)?;
     println!("Indexer loaded.\n");
 
@@ -116,5 +117,3 @@ fn main() -> Result<()> {
     println!();
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

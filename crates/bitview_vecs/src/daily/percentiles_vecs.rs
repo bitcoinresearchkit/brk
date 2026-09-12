@@ -3,9 +3,9 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Day1, PERCENTILES_LEN, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode, WritableVec};
 
-use crate::{DailyMappings, LazyDailyPrice, StoredSeries, import_stored};
+use crate::{CachedSeries, DailyMappings, LazyDailyPrice, import_cached};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct DailyPercentilesVecs<M: StorageMode = Rw> {
@@ -14,12 +14,11 @@ pub struct DailyPercentilesVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub prices: ByPercentile<LazyDailyPrice>,
     #[traversable(hidden)]
-    pub stored: ByPercentile<StoredSeries<Day1, Cents, M>>,
+    pub stored: ByPercentile<CachedSeries<Day1, Cents, M>>,
 }
 
 impl DailyPercentilesVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -27,8 +26,7 @@ impl DailyPercentilesVecs {
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let stored = ByPercentile::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{name}_pct{:02}_cents", id.percentile()),
                 version,

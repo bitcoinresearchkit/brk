@@ -6,12 +6,11 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::{CacheBudget, Database};
+use vecdb::Database;
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -21,7 +20,6 @@ pub fn forced_import(
     let v = version + Version::TWO;
     Ok(Vecs {
         transfer_volume: ValuePerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             "transfer_volume_bis",
             version,

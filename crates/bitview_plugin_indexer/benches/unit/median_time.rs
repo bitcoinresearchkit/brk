@@ -1,18 +1,20 @@
+use crate::test_cache::init_cache;
 use std::{hint::black_box, time::Instant};
 
 use brk_types::Version;
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CacheBudget, Database, Stamp};
+use vecdb::{AnyStoredVec, Database, Stamp};
 
 use super::*;
 
 #[test]
 #[ignore = "manual median-time source read benchmark"]
 fn benchmark_median_time_reads() {
+    init_cache();
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
-    let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+
+    let mut blocks = BlocksVecs::forced_import(&db, Version::ONE).unwrap();
     let end = 1_000_000;
     for height in 0..end {
         blocks.timestamp.push(Timestamp::from(
@@ -28,7 +30,7 @@ fn benchmark_median_time_reads() {
     db.flush().unwrap();
 
     for warm in [false, true] {
-        CACHE.clear();
+        init_cache().clear();
         if warm {
             blocks.timestamp.collect();
         }

@@ -6,8 +6,7 @@ use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    BinaryTransform, Budgeted, CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw,
-    StorageMode, VecValue,
+    BinaryTransform, Budgeted, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode, VecValue,
 };
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
@@ -21,19 +20,12 @@ pub struct PercentPerBlock<B: FixedRatio, M: StorageMode = Rw>(
 
 impl<B: FixedRatio> PercentPerBlock<B> {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let ppm = PerBlock::forced_import(
-            cache,
-            db,
-            &format!("{name}_{}", B::SUFFIX),
-            version,
-            indexes,
-        )?;
+        let ppm = PerBlock::forced_import(db, &format!("{name}_{}", B::SUFFIX), version, indexes)?;
 
         let ratio =
             LazyPerBlock::from_resolutions::<B::ToRatio>(&format!("{name}_ratio"), version, &ppm);

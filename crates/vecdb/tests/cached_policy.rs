@@ -1,18 +1,16 @@
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, NoCache,
-    ReadableCloneableVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, Database, ImportableVec, NoCache, ReadableCloneableVec,
+    ReadableVec, Version, WritableVec,
 };
 
 #[test]
 fn stored_policies_share_retained_ranges_through_clones() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(4096)));
-    let mut source = BytesVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "budgeted", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
+    let budget = Budgeted::init_global(4096).unwrap();
+    let mut source =
+        BytesVec::<usize, u64, Budgeted>::import(&db, "budgeted", Version::ONE).unwrap();
     for value in 10..30 {
         source.push(value);
     }
@@ -33,10 +31,8 @@ fn stored_policies_share_retained_ranges_through_clones() {
         );
     }
     assert!(budget.used() > 0 && budget.used() <= budget.limit());
-    let revision = read_only.data_revision();
     budget.clear();
     assert_eq!(budget.used(), 0);
-    assert_eq!(read_only.data_revision(), revision);
     assert!(!boxed.read_cached_into_at(2, 4, &mut Vec::new()));
     assert_eq!(boxed.collect_range_dyn(2, 4), [12, 13]);
 
@@ -48,28 +44,4 @@ fn stored_policies_share_retained_ranges_through_clones() {
     assert_eq!(working_values, [12, 13]);
     assert_eq!(source.collect_range_at(2, 4), working_values);
     assert_eq!(size_of::<NoCache>(), 0);
-}
-
-#[test]
-fn no_cache_is_the_default_and_zero_budget_disables_retention() {
-    let directory = tempdir().unwrap();
-    let db = Database::open(directory.path()).unwrap();
-    let mut plain = BytesVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
-    plain.push(7);
-    plain.write().unwrap();
-    assert_eq!(plain.collect(), [7]);
-    assert_eq!(plain.data_revision(), None);
-    assert!(!plain.read_cached_into_at(0, 1, &mut Vec::new()));
-    assert!(BytesVec::<usize, u64, Budgeted>::import(&db, "missing_budget", Version::ONE).is_err());
-    let budget = Box::leak(Box::new(CacheBudget::new(0)));
-    let mut disabled = BytesVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "disabled", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
-    disabled.push(8);
-    disabled.write().unwrap();
-    assert_eq!(disabled.collect(), [8]);
-    assert_eq!(disabled.data_revision(), None);
-    assert!(!disabled.read_cached_into_at(0, 1, &mut Vec::new()));
-    assert_eq!(budget.used(), 0);
 }

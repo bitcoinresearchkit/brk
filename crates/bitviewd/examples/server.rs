@@ -12,9 +12,10 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use tokio::{runtime::Builder, spawn};
 use tracing::{error, info};
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -26,7 +27,7 @@ pub fn main() -> Result<()> {
     )?;
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let context = ImportContext::new(&outputs_dir);
     let plugins = DefaultPlugins::import(context, &reader)?;
 
     let mut mempool = Mempool::new(&client);
@@ -73,5 +74,3 @@ pub fn main() -> Result<()> {
         Ok(()) as Result<()>
     })
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

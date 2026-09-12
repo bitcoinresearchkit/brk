@@ -220,3 +220,8 @@ pub fn finish_openapi<S: Clone + Send + Sync + 'static>(
 #[cfg(test)]
 #[path = "../tests/unit/mod.rs"]
 mod tests;
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/common/cache.rs"]
+mod test_cache;

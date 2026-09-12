@@ -3,9 +3,9 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Height, PERCENTILES_LEN, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
 
-use crate::{IndexSources, LazyPerBlock, Price, StoredSeries, import_stored};
+use crate::{CachedSeries, IndexSources, LazyPerBlock, Price, import_cached};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct PercentilesVecs<M: StorageMode = Rw> {
@@ -14,12 +14,11 @@ pub struct PercentilesVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub prices: ByPercentile<Price<LazyPerBlock<Cents>>>,
     #[traversable(hidden)]
-    pub stored: ByPercentile<StoredSeries<Height, Cents, M>>,
+    pub stored: ByPercentile<CachedSeries<Height, Cents, M>>,
 }
 
 impl PercentilesVecs {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         prefix: &str,
         version: Version,
@@ -27,8 +26,7 @@ impl PercentilesVecs {
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let stored = ByPercentile::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &format!("{prefix}_pct{:02}_cents", id.percentile()),
                 version,

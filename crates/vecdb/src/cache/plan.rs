@@ -2,7 +2,10 @@ use std::ops::Range;
 
 use super::{Request, Value};
 
-fn containing<T: Clone>(blocks: &[(usize, Value<T>)], index: usize) -> Option<(usize, &Value<T>)> {
+pub(super) fn containing<T: Clone>(
+    blocks: &[(usize, Value<T>)],
+    index: usize,
+) -> Option<(usize, &Value<T>)> {
     let at = blocks
         .partition_point(|(start, _)| *start <= index)
         .checked_sub(1)?;

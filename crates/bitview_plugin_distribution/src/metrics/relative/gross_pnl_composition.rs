@@ -1,11 +1,11 @@
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPercentPerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazyPercentPerBlock, import_cached};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use super::{RelativeSource, public_loss_share, public_profit_share, share_views};
 
@@ -31,20 +31,14 @@ pub struct GrossPnlComposition<M: StorageMode = Rw> {
     pub net_unrealized_pnl_to_own_gross_pnl:
         UTXOAggregate<LazyPercentPerBlock<PartsPerMillionSigned32>>,
     #[traversable(hidden)]
-    pub profit_share_source: UTXOAggregate<StoredSeries<Height, PartsPerMillion32, M>>,
+    pub profit_share_source: UTXOAggregate<CachedSeries<Height, PartsPerMillion32, M>>,
 }
 
 impl GrossPnlComposition {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = UTXOAggregate::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &id.metric_name("unrealized_profit_to_own_gross_pnl_ppm"),
                 version + Version::ONE,

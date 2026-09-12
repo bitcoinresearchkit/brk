@@ -56,15 +56,12 @@ mod tests {
     use std::path::Path;
 
     use brk_types::Version;
-    use vecdb::CacheBudget;
 
     use super::*;
 
-    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
-
     #[test]
     fn identity_version_and_paths_share_one_descriptor() {
-        let context = ImportContext::new(Path::new("data"), &CACHE_BUDGET);
+        let context = ImportContext::new(Path::new("data"));
         let storage = PluginStorage::new(PluginId::new("example"), Version::new(3));
 
         assert_eq!(storage.id(), PluginId::new("example"));

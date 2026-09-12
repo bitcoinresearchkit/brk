@@ -82,7 +82,6 @@ impl Vecs {
                 major_map.insert(
                     pool.slug,
                     major::Vecs::forced_import(
-                        context.cache_budget(),
                         &db,
                         pool.slug,
                         pool_heights.clone(),

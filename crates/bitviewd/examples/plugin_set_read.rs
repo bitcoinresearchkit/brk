@@ -7,9 +7,10 @@ use brk_error::Result;
 use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use vecdb::{AnySerializableVec, AnyVec, CacheBudget};
+use vecdb::{AnySerializableVec, AnyVec, Budgeted};
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     init(None)?;
 
     let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".bitview");
@@ -20,7 +21,7 @@ pub fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let context = ImportContext::new(&outputs_dir);
 
     let plugins = DefaultPlugins::import(context, &reader)?;
     let distribution = plugins.distribution();
@@ -63,5 +64,3 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

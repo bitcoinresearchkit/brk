@@ -18,7 +18,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tracing::info;
-use vecdb::{CacheBudget, ReadOnlyClone};
+use vecdb::{Budgeted, ReadOnlyClone};
 
 pub use bitview_query::QueryPluginSet;
 pub use bitview_runtime::{
@@ -62,8 +62,8 @@ where
     } = config;
     let reader = Reader::new(blocks_path, &client);
     let outputs_path = server.data_path.clone();
-    static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);
-    let import_context = ImportContext::new(&outputs_path, &CACHE_BUDGET);
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
+    let import_context = ImportContext::new(&outputs_path);
     let update_context = UpdateContext::new(&exit);
 
     client.wait_for_synced_node()?;

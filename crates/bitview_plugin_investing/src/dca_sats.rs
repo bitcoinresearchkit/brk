@@ -1,33 +1,27 @@
 use std::convert::Infallible;
 
-use brk_types::{Day1, Dollars, Height, Sats, Version};
+use brk_types::{Day1, Height, Sats, Version};
 use vecdb::{
     AnyVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex,
     short_type_name,
 };
 
-use super::DCA_AMOUNT;
-
-/// Cumulative daily purchases projected onto the monotonic height-to-day mapping.
+/// Stored daily totals projected onto the monotonic height-to-day mapping.
 #[derive(Clone)]
 pub struct DcaSats {
-    daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
+    daily_sats: ReadableBoxedVec<Day1, Sats>,
     days: ReadableBoxedVec<Height, Day1>,
 }
 
 impl DcaSats {
     pub fn new(
-        daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
+        daily_sats: ReadableBoxedVec<Day1, Sats>,
         days: impl ReadableVec<Height, Day1> + Clone + 'static,
     ) -> Self {
         Self {
-            daily_close,
+            daily_sats,
             days: ReadableBoxedVec::new(days),
         }
-    }
-
-    fn sats_at_price(price: Dollars) -> Sats {
-        Sats::from_dollars_at_price(DCA_AMOUNT, price)
     }
 
     fn try_for_each_value<E>(
@@ -44,25 +38,11 @@ impl DcaSats {
     }
 
     fn daily_values(&self, days: &[Day1]) -> Vec<Sats> {
-        let Some(last) = self.daily_close.len().checked_sub(1) else {
+        let Some(last) = self.daily_sats.len().checked_sub(1) else {
             return vec![Sats::ZERO; days.len()];
         };
-        let to = days.last().map_or(0, |day| day.to_usize().min(last) + 1);
-        let mut values = Vec::with_capacity(days.len());
-        let mut cumulative = Sats::ZERO;
-        let mut day = 0;
-        // One forward pass serves every requested day, including duplicates.
-        self.daily_close.for_each_range_dyn_at(0, to, &mut |price| {
-            cumulative += Self::sats_at_price(price.unwrap_or_default());
-            while days
-                .get(values.len())
-                .is_some_and(|requested| requested.to_usize().min(last) == day)
-            {
-                values.push(cumulative);
-            }
-            day += 1;
-        });
-        values
+        let indices: Vec<_> = days.iter().map(|day| day.to_usize().min(last)).collect();
+        self.daily_sats.read_sorted_at(&indices)
     }
 
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Sats)) {
@@ -79,7 +59,7 @@ impl DcaSats {
 
 impl AnyVec for DcaSats {
     fn version(&self) -> Version {
-        self.days.version() + self.daily_close.version()
+        self.days.version() + self.daily_sats.version()
     }
 
     fn name(&self) -> &str {
@@ -153,12 +133,13 @@ impl ReadableVec<Height, Sats> for DcaSats {
 
     fn collect_one_at(&self, index: usize) -> Option<Sats> {
         let day = self.days.collect_one_at(index)?.to_usize();
-        Some(self.daily_close.fold_range_at(
-            0,
-            day.saturating_add(1).min(self.daily_close.len()),
-            Sats::ZERO,
-            |sum, price| sum + Self::sats_at_price(price.unwrap_or_default()),
-        ))
+        Some(
+            self.daily_sats
+                .len()
+                .checked_sub(1)
+                .and_then(|last| self.daily_sats.collect_one_at(day.min(last)))
+                .unwrap_or_default(),
+        )
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Sats>) {
@@ -189,6 +170,7 @@ mod tests {
     #[derive(Clone)]
     struct MemoryVec<I, T> {
         values: Arc<RwLock<Vec<T>>>,
+        reads: Arc<RwLock<Vec<(usize, usize)>>>,
         index: PhantomData<fn() -> I>,
     }
 
@@ -196,6 +178,7 @@ mod tests {
         fn new(values: impl IntoIterator<Item = T>) -> Self {
             Self {
                 values: Arc::new(RwLock::new(values.into_iter().collect())),
+                reads: Arc::default(),
                 index: PhantomData,
             }
         }
@@ -242,6 +225,7 @@ mod tests {
 
     impl<I: VecIndex, T: VecValue> ReadableVec<I, T> for MemoryVec<I, T> {
         fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
+            self.reads.write().push((from, to));
             let values = self.values.read();
             let to = to.min(values.len());
             if from < to {
@@ -250,6 +234,7 @@ mod tests {
         }
 
         fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(T)) {
+            self.reads.write().push((from, to));
             let values = self.values.read();
             let to = to.min(values.len());
             for value in &values[from.min(to)..to] {
@@ -264,6 +249,7 @@ mod tests {
             init: B,
             mut fold: F,
         ) -> B {
+            self.reads.write().push((from, to));
             let values = self.values.read();
             let to = to.min(values.len());
             values[from.min(to)..to]
@@ -279,6 +265,7 @@ mod tests {
             init: B,
             mut fold: F,
         ) -> Result<B, E> {
+            self.reads.write().push((from, to));
             let values = self.values.read();
             let to = to.min(values.len());
             values[from.min(to)..to]
@@ -290,11 +277,9 @@ mod tests {
 
     #[test]
     fn shared_day_mapping_preserves_purchases_through_reorg_and_publication() {
-        let prices = MemoryVec::<Day1, _>::new([
-            Some(Dollars::mint(100.0)),
-            None,
-            Some(Dollars::mint(200.0)),
-        ]);
+        let first = Sats::from(100_000_000_u64);
+        let third = Sats::from(150_000_000_u64);
+        let totals = MemoryVec::<Day1, _>::new([first, first, third]);
         let domain = MemoryVec::<Height, _>::new([Day1::default(); 5]);
         let metadata = LazyVec::init(
             "day1",
@@ -304,9 +289,7 @@ mod tests {
         );
         let starts = SharedRangeMap::new([0usize, 2, 3, 4].map(Height::from).to_vec());
         let days = RangeMapLookupVec::new(&starts, &metadata);
-        let cumulative = DcaSats::new(prices.read_only_boxed_clone(), days).clone();
-        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
-        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
+        let cumulative = DcaSats::new(totals.read_only_boxed_clone(), days).clone();
         assert_eq!(cumulative.collect(), [first, first, first, third, third]);
         starts.update_at(1, [1usize, 4, 4].map(Height::from));
         assert_eq!(cumulative.collect(), [first, first, first, first, third]);
@@ -323,25 +306,23 @@ mod tests {
     }
 
     #[test]
-    fn daily_purchases_are_cumulative_and_follow_same_length_rewrites() {
-        let prices = MemoryVec::<Day1, Option<Dollars>>::new([
-            Some(Dollars::mint(100.0)),
-            None,
-            Some(Dollars::mint(200.0)),
-        ]);
+    fn daily_totals_follow_same_length_rewrites() {
+        let first = Sats::from(100_000_000_u64);
+        let third = Sats::from(150_000_000_u64);
+        let totals = MemoryVec::<Day1, Sats>::new([first, first, third]);
         let days = MemoryVec::<Height, Day1>::new([Day1::from(0), Day1::from(1), Day1::from(2)]);
         let cumulative = DcaSats::new(
-            ReadableBoxedVec::new(prices.clone()),
+            ReadableBoxedVec::new(totals.clone()),
             days.read_only_boxed_clone(),
         );
 
-        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
-        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
         assert_eq!(cumulative.collect().as_slice(), &[first, first, third]);
 
-        prices.replace(0, Some(Dollars::mint(50.0)));
-        let replaced = DcaSats::sats_at_price(Dollars::mint(50.0));
-        let third = replaced + DcaSats::sats_at_price(Dollars::mint(200.0));
+        let replaced = Sats::from(200_000_000_u64);
+        let third = Sats::from(250_000_000_u64);
+        totals.replace(0, replaced);
+        totals.replace(1, replaced);
+        totals.replace(2, third);
         assert_eq!(
             cumulative.collect().as_slice(),
             &[replaced, replaced, third]
@@ -350,11 +331,9 @@ mod tests {
 
     #[test]
     fn height_source_maps_days_and_carries_the_latest_available_total() {
-        let prices = MemoryVec::<Day1, Option<Dollars>>::new([
-            Some(Dollars::mint(100.0)),
-            None,
-            Some(Dollars::mint(200.0)),
-        ]);
+        let first = Sats::from(100_000_000_u64);
+        let third = Sats::from(150_000_000_u64);
+        let totals = MemoryVec::<Day1, Sats>::new([first, first, third]);
         let days = MemoryVec::<Height, Day1>::new([
             Day1::from(0),
             Day1::from(0),
@@ -362,16 +341,44 @@ mod tests {
             Day1::from(2),
             Day1::from(3),
         ]);
-        let cumulative = DcaSats::new(ReadableBoxedVec::new(prices), days.read_only_boxed_clone());
-
-        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
-        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
+        let cumulative = DcaSats::new(ReadableBoxedVec::new(totals), days.read_only_boxed_clone());
         assert_eq!(cumulative.collect(), [first, first, first, third, third]);
         assert_eq!(cumulative.collect_one_at(3), Some(third));
         assert_eq!(cumulative.collect_one_at(5), None);
         assert_eq!(
             cumulative.read_sorted_at(&[0, 2, 2, 4, 5]),
             [first, first, first, third],
+        );
+    }
+
+    #[test]
+    fn empty_daily_source_maps_to_zero() {
+        let totals = MemoryVec::<Day1, Sats>::new([]);
+        let days = MemoryVec::<Height, Day1>::new([Day1::from(0), Day1::from(2)]);
+        let cumulative = DcaSats::new(totals.read_only_boxed_clone(), days);
+        assert_eq!(cumulative.collect(), [Sats::ZERO; 2]);
+        assert_eq!(cumulative.collect_one_at(1), Some(Sats::ZERO));
+        assert_eq!(cumulative.collect_one_at(2), None);
+        assert_eq!(cumulative.read_sorted_at(&[0, 1, 1, 2]), [Sats::ZERO; 3]);
+    }
+
+    #[test]
+    fn late_height_reads_only_the_selected_daily_chunk() {
+        let totals = MemoryVec::<Day1, Sats>::new((1..=10_000_u64).map(Sats::from));
+        let days = MemoryVec::<Height, Day1>::new([Day1::from(9999); 2]);
+        let cumulative = DcaSats::new(totals.read_only_boxed_clone(), days);
+        let latest = Sats::from(10_000_u64);
+        assert_eq!(cumulative.collect_one_at(1), Some(latest));
+        assert_eq!(cumulative.collect(), [latest; 2]);
+        assert_eq!(cumulative.read_sorted_at(&[0, 1, 1]), [latest; 3]);
+        let reads = totals.reads.read();
+        let chunk_start = 9999 / totals.cursor_chunk_size() * totals.cursor_chunk_size();
+        assert!(!reads.is_empty());
+        assert!(
+            reads
+                .iter()
+                .all(|&(from, to)| from >= chunk_start && to == 10_000),
+            "unexpected historical reads: {reads:?}"
         );
     }
 }

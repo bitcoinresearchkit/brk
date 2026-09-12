@@ -1,7 +1,7 @@
 use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Lengths;
 use bitview_traversable::Traversable;
-use bitview_vecs::{IndexSources, LazyRatioPerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, IndexSources, LazyRatioPerBlock, import_cached};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
@@ -9,8 +9,7 @@ use brk_types::{
     Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::{
@@ -39,7 +38,7 @@ pub struct Component<M: StorageMode = Rw> {
     /// 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99, 99.5, and 99.9
     /// percent.
     #[traversable(hidden)]
-    pub ratios: RarityPercentiles<StoredSeries<Height, PartsPerMillion32, M>>,
+    pub ratios: RarityPercentiles<CachedSeries<Height, PartsPerMillion32, M>>,
 
     block_decay_pct: M::WriteOnly<BlockDecayPercentiles>,
 }
@@ -47,7 +46,6 @@ pub struct Component<M: StorageMode = Rw> {
 const VERSION: Version = Version::new(12);
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     name: &str,
     version: Version,
@@ -57,12 +55,7 @@ pub fn forced_import(
     let version = version + VERSION;
     let component_price = ComponentPrice::new(name, version, price_source);
     let ratios = RarityPercentiles::try_from_fn(|id| {
-        import_stored(
-            cache,
-            db,
-            &format!("{name}_ratio_{}_ppm", id.suffix()),
-            version,
-        )
+        import_cached(db, &format!("{name}_ratio_{}_ppm", id.suffix()), version)
     })?;
     let bands = RarityPercentiles::from_fn(|id| {
         let suffix = id.suffix();

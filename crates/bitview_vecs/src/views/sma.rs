@@ -8,6 +8,8 @@ pub type LazySmaVec = LazyDeltaVec<Height, StoredU64, Cents, SmaAverage>;
 
 #[cfg(test)]
 mod tests {
+    use crate::test_cache::init_cache;
+
     use std::{
         env, process,
         time::{SystemTime, UNIX_EPOCH},
@@ -15,17 +17,15 @@ mod tests {
 
     use brk_types::Version;
     use vecdb::{
-        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-        PcoVec, ReadableCloneableVec, ReadableVec, WritableVec,
+        AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
+        ReadableVec, WritableVec,
     };
 
     use super::*;
-    use crate::SmaPrefixSumVec;
-
-    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
     #[test]
     fn computes_rolling_average_from_one_shared_prefix_source() {
+        init_cache();
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -33,14 +33,10 @@ mod tests {
         let path = env::temp_dir().join(format!("brk-lazy-sma-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
-        let mut prices: EagerVec<PcoVec<Height, Cents, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
-        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "starts", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+        let mut prices: EagerVec<PcoVec<Height, Cents, Budgeted>> =
+            EagerVec::forced_import(&db, "prices", Version::ONE).unwrap();
+        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> =
+            EagerVec::forced_import(&db, "starts", Version::ONE).unwrap();
 
         for value in [100, 200, 300, 400] {
             prices.push(Cents::new(value));
@@ -51,7 +47,14 @@ mod tests {
         prices.write().unwrap();
         starts.write().unwrap();
 
-        let prefix_sum = SmaPrefixSumVec::new("prefix", Version::ONE, &prices);
+        let mut prefix_sum: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
+            EagerVec::forced_import(&db, "prefix", Version::ONE).unwrap();
+        let mut sum = 0;
+        for price in prices.collect() {
+            sum += price.inner();
+            prefix_sum.push(StoredU64::from(sum));
+        }
+        prefix_sum.write().unwrap();
         let sma = LazySmaVec::new(
             "sma",
             Version::ONE,

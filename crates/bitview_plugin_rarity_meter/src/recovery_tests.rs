@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use std::{array, ops::Range};
 
 use bitview_plugin_indexer::Lengths;
@@ -26,9 +28,10 @@ struct Pipeline {
 
 impl Pipeline {
     fn import(db: &Database) -> Self {
+        init_cache();
         let indexes = common::indexes(db);
-        let cache = &common::CACHE_BUDGET;
-        let references = ReferencePrices::forced_import(cache, db, Version::ONE, &indexes).unwrap();
+
+        let references = ReferencePrices::forced_import(db, Version::ONE, &indexes).unwrap();
         let prices = [
             &references.under_4m,
             &references.under_6m,
@@ -37,7 +40,6 @@ impl Pipeline {
         ];
         let components = array::from_fn(|index| {
             component::forced_import(
-                cache,
                 db,
                 &format!("component_{index}"),
                 Version::ONE,
@@ -46,7 +48,7 @@ impl Pipeline {
             )
             .unwrap()
         });
-        let meter = |name| inner::forced_import(cache, db, name, Version::ONE, &indexes).unwrap();
+        let meter = |name| inner::forced_import(db, name, Version::ONE, &indexes).unwrap();
         Self {
             caps: array::from_fn(|index| {
                 BytesVec::forced_import(db, &format!("cap_{index}"), Version::ONE).unwrap()
@@ -230,19 +232,15 @@ fn shortened_sources_recover_through_components_and_all_meters() {
 
 #[test]
 fn shortened_component_rebuilds_percentile_state_before_appending() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let cache = &common::CACHE_BUDGET;
+
     let exit = Exit::new();
-    let mut reference = reference_price::ReferencePrice::forced_import(
-        cache,
-        &db,
-        "reference",
-        Version::ONE,
-        &indexes,
-    )
-    .unwrap();
+    let mut reference =
+        reference_price::ReferencePrice::forced_import(&db, "reference", Version::ONE, &indexes)
+            .unwrap();
     let mut spot = common::stored(
         &db,
         "spot",
@@ -255,7 +253,6 @@ fn shortened_component_rebuilds_percentile_state_before_appending() {
     }
     reference.cents.height.write().unwrap();
     let mut component = component::forced_import(
-        cache,
         &db,
         "component",
         Version::ONE,

@@ -8,7 +8,7 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{Bytes, Height, PartsPerMillion32, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyVec, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{AnyVec, Database, ReadOnlyClone, ReadableCloneableVec, Rw, StorageMode};
 
 use super::breakdown::BlockMetrics;
 
@@ -37,7 +37,6 @@ pub struct Total<M: StorageMode = Rw> {
 impl Total {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         prefix: &str,
         version: Version,
@@ -47,7 +46,6 @@ impl Total {
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let data_bytes = PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             &format!("{prefix}_data_bytes"),
             version,
@@ -55,7 +53,6 @@ impl Total {
             window_starts,
         )?;
         let tx_count = PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             &format!("{prefix}_tx_count"),
             version,
@@ -63,7 +60,6 @@ impl Total {
             window_starts,
         )?;
         let tx_vsize = PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             &format!("{prefix}_tx_vsize"),
             version,
@@ -71,7 +67,6 @@ impl Total {
             window_starts,
         )?;
         let fees = PerBlockCumulativeRolling::forced_import(
-            cache,
             db,
             &format!("{prefix}_fees"),
             version,

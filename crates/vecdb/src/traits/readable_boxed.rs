@@ -106,10 +106,6 @@ where
     I: VecIndex,
     T: VecValue,
 {
-    fn data_revision(&self) -> Option<u64> {
-        self.0.data_revision()
-    }
-
     fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
         self.0.read_cached_into_at(from, to, out)
     }

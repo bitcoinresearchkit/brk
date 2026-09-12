@@ -4,18 +4,17 @@ use bitview_transforms::WeightToVSize;
 use bitview_vecs::{LazyPerTxDistributionTransformed, TxDerivedDistribution};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database, LazyVec, ReadableCloneableVec};
+use vecdb::{Database, LazyVec, ReadableCloneableVec};
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     indexer: &Indexer,
     mappings: &MappingsVecs,
 ) -> Result<Vecs> {
-    let weight = TxDerivedDistribution::forced_import(cache, db, "tx_weight", version, mappings)?;
+    let weight = TxDerivedDistribution::forced_import(db, "tx_weight", version, mappings)?;
 
     let tx_index_to_vsize = LazyVec::transformed::<WeightToVSize>(
         "tx_vsize",

@@ -1,12 +1,12 @@
 use std::{slice, sync::Arc};
 
-use super::{Buffer, CacheBudget};
+use super::{Account, Buffer};
 
 /// No allocation or reference count for isolated cached values.
 #[derive(Clone, Debug)]
 pub(super) enum Value<T> {
     One(T),
-    Many(Arc<Buffer<T>>),
+    Many(Arc<Buffer<T>>, usize),
 }
 
 impl<T: Clone> Value<T> {
@@ -15,71 +15,131 @@ impl<T: Clone> Value<T> {
         if values.len() == 1 {
             Self::One(values.pop().unwrap())
         } else {
-            Self::Many(Arc::new(Buffer::new(values)))
+            let len = values.len();
+            Self::Many(Arc::new(Buffer::new(values)), len)
         }
     }
 
     pub(super) fn slice(&self) -> &[T] {
         match self {
             Self::One(value) => slice::from_ref(value),
-            Self::Many(buffer) => &buffer.values,
+            Self::Many(buffer, len) => &buffer.values[..*len],
         }
     }
 
     pub(super) fn len(&self) -> usize {
-        self.slice().len()
-    }
-
-    pub(super) fn get(&self, index: usize) -> Option<T> {
         match self {
-            Self::One(value) => (index == 0).then(|| value.clone()),
-            Self::Many(buffer) => buffer.values.get(index).cloned(),
+            Self::One(_) => 1,
+            Self::Many(_, len) => *len,
         }
     }
 
-    pub(super) fn clipped(&self, from: usize, to: usize) -> Self {
-        Self::from_vec(self.slice()[from..to].to_vec())
+    pub(super) fn get(&self, index: usize) -> Option<T> {
+        self.slice().get(index).cloned()
     }
 
     pub(super) fn allocation_bytes(&self) -> Option<usize> {
         match self {
             Self::One(_) => Some(0),
-            Self::Many(buffer) => buffer.bytes(),
+            Self::Many(buffer, _) => buffer.bytes(),
         }
     }
 
-    pub(super) fn admit(&mut self, budget: &'static CacheBudget) -> bool {
+    pub(super) fn admit(&mut self, account: &Arc<Account>) -> bool {
         match self {
             Self::One(_) => true,
-            Self::Many(buffer) if buffer.is_charged() => true,
-            Self::Many(buffer) => Arc::get_mut(buffer).is_some_and(|buffer| buffer.admit(budget)),
+            Self::Many(buffer, _) if buffer.is_charged() => true,
+            Self::Many(buffer, _) => {
+                Arc::get_mut(buffer).is_some_and(|buffer| buffer.admit(account))
+            }
         }
     }
 
-    pub(super) fn mutable(&mut self) -> &mut Buffer<T> {
-        if !matches!(self, Self::Many(buffer) if Arc::strong_count(buffer) == 1) {
-            *self = Self::Many(Arc::new(Buffer::new(self.slice().to_vec())));
-        }
+    /// Extend only a uniquely owned tail; never copy an existing range to join neighbors.
+    pub(super) fn try_append(
+        &mut self,
+        values: &[T],
+        limit: usize,
+        account: &Arc<Account>,
+    ) -> bool {
+        let Some(len) = self
+            .len()
+            .checked_add(values.len())
+            .filter(|len| *len <= limit)
+        else {
+            return false;
+        };
         match self {
-            Self::Many(buffer) => Arc::get_mut(buffer).expect("cache buffer is privately owned"),
-            Self::One(_) => unreachable!(),
+            Self::One(value) => {
+                let mut buffer = Buffer::new(Vec::new());
+                if !buffer.admit(account) || !buffer.reserve(len, limit) {
+                    return false;
+                }
+                buffer.values.push(value.clone());
+                buffer.values.extend_from_slice(values);
+                *self = Self::Many(Arc::new(buffer), len);
+            }
+            Self::Many(buffer, valid) => {
+                let Some(buffer) = Arc::get_mut(buffer) else {
+                    return false;
+                };
+                buffer.values.truncate(*valid);
+                if !buffer.reserve(len, limit) {
+                    return false;
+                }
+                buffer.values.extend_from_slice(values);
+                *valid = len;
+            }
+        }
+        true
+    }
+
+    /// Keep the prefix and its allocation, even if a reader still owns the old view.
+    pub(super) fn truncate(&mut self, len: usize) {
+        assert!(len > 0 && len <= self.len());
+        if let Self::Many(_, valid) = self {
+            *valid = len;
         }
     }
 
-    pub(super) fn truncate(mut self, len: usize) -> Self {
-        assert!(len > 0 && len <= self.len());
-        if len == self.len() {
-            return self;
+    /// Bounded reverse point fills must not leave one span per adjacent value.
+    pub(super) fn try_prepend(
+        &mut self,
+        values: &[T],
+        limit: usize,
+        account: &Arc<Account>,
+    ) -> bool {
+        let Some(len) = self
+            .len()
+            .checked_add(values.len())
+            .filter(|len| *len <= limit)
+        else {
+            return false;
+        };
+        match self {
+            Self::One(value) => {
+                let mut prefix = values.to_vec();
+                prefix.push(value.clone());
+                let mut joined = Self::from_vec(prefix);
+                if !joined.admit(account) {
+                    return false;
+                }
+                *self = joined;
+            }
+            Self::Many(buffer, valid) => {
+                let Some(buffer) = Arc::get_mut(buffer) else {
+                    return false;
+                };
+                // Clone before modifying the retained prefix, in case T::clone panics.
+                let prefix = values.to_vec();
+                if !buffer.reserve(len, limit) {
+                    return false;
+                }
+                buffer.values.truncate(*valid);
+                buffer.values.splice(..0, prefix);
+                *valid = len;
+            }
         }
-        if len == 1 {
-            return Self::One(self.slice()[0].clone());
-        }
-        if let Self::Many(buffer) = &mut self
-            && let Some(buffer) = Arc::get_mut(buffer)
-        {
-            buffer.truncate(len);
-            return self;
-        }
-        self.clipped(0, len)
+        true
     }
 }

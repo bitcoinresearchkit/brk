@@ -1,7 +1,12 @@
 use std::{
+    env,
     hint::black_box,
+    sync::LazyLock,
     time::{Duration, Instant},
 };
+
+#[cfg(all(feature = "pco", feature = "diagnostics"))]
+use std::process::Command;
 
 use tempfile::tempdir;
 #[cfg(feature = "pco")]
@@ -9,11 +14,16 @@ use vecdb::PcoVec;
 #[cfg(all(feature = "pco", feature = "diagnostics"))]
 use vecdb::diagnostics;
 use vecdb::{
-    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
-    ReadableVec, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportableVec, ReadableVec, Version,
+    WritableVec,
 };
 
-static BUDGET: CacheBudget = CacheBudget::new(32 * 1024 * 1024);
+static BUDGET: LazyLock<&CacheBudget> = LazyLock::new(|| {
+    let bytes = env::var("VECDB_CACHE_BYTES")
+        .map(|bytes| bytes.parse().unwrap())
+        .unwrap_or(32 * 1024 * 1024);
+    Budgeted::init_global(bytes).unwrap()
+});
 
 fn median(mut read: impl FnMut(), iterations: u32) -> Duration {
     let mut samples = Vec::with_capacity(15);
@@ -31,12 +41,11 @@ fn median(mut read: impl FnMut(), iterations: u32) -> Duration {
 #[test]
 #[ignore = "synthetic local storage benchmark"]
 fn bounded_hash_ranges() {
+    LazyLock::force(&BUDGET);
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut values = BytesVec::<usize, [u8; 32], Budgeted>::import_with(
-        ImportOptions::new(&db, "hashes", Version::ONE).with_cache_budget(&BUDGET),
-    )
-    .unwrap();
+    let mut values =
+        BytesVec::<usize, [u8; 32], Budgeted>::import(&db, "hashes", Version::ONE).unwrap();
     for i in 0..1_000_000 {
         values.push([i as u8; 32]);
     }
@@ -68,13 +77,11 @@ fn bounded_hash_ranges() {
 #[ignore = "synthetic local storage benchmark"]
 #[cfg(feature = "pco")]
 fn compressed_source_cache() {
+    LazyLock::force(&BUDGET);
     const N: usize = 1_000_000;
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut cached = PcoVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "cached", Version::ONE).with_cache_budget(&BUDGET),
-    )
-    .unwrap();
+    let mut cached = PcoVec::<usize, u64, Budgeted>::import(&db, "cached", Version::ONE).unwrap();
     let mut plain = PcoVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
     for i in 0..N {
         let price = 1_000_000 + (i as u64 * 13) % 100_000;
@@ -136,13 +143,11 @@ fn compressed_source_cache() {
 #[test]
 #[ignore = "synthetic local storage benchmark"]
 fn incremental_range_fills() {
+    LazyLock::force(&BUDGET);
     const N: usize = 16_384;
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut values = BytesVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "values", Version::ONE).with_cache_budget(&BUDGET),
-    )
-    .unwrap();
+    let mut values = BytesVec::<usize, u64, Budgeted>::import(&db, "values", Version::ONE).unwrap();
     for index in 0..N {
         values.push(index as u64);
     }
@@ -188,14 +193,48 @@ fn incremental_range_fills() {
 
 #[test]
 #[ignore = "synthetic local storage benchmark"]
+fn batched_older_gaps() {
+    LazyLock::force(&BUDGET);
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut values = BytesVec::<usize, u64, Budgeted>::import(&db, "gaps", Version::ONE).unwrap();
+    for index in 0..65_536_u64 {
+        values.push(index);
+    }
+    values.write().unwrap();
+    for (existing, added) in [(9, 2), (6_000, 1_000), (4_096, 2_048), (16_384, 8_192)] {
+        let retained: Vec<_> = (0..existing).map(|i| i * 4).collect();
+        let missing: Vec<_> = (0..added).map(|i| i * 4 + 2).collect();
+        let expected: Vec<_> = missing.iter().map(|&i| i as u64).collect();
+        let mut times = Vec::new();
+        for _ in 0..15 {
+            BUDGET.clear();
+            values.read_sorted_at(&retained);
+            let start = Instant::now();
+            let out = values.read_sorted_at(black_box(&missing));
+            times.push(start.elapsed());
+            assert_eq!(out, expected);
+            for &index in &missing {
+                assert!(values.read_cached_into_at(index, index + 1, &mut Vec::new()));
+            }
+        }
+        times.sort_unstable();
+        eprintln!(
+            "older gaps existing={existing} added={added}: {:?}, retained={}",
+            times[7],
+            BUDGET.used()
+        );
+    }
+}
+
+#[test]
+#[ignore = "synthetic local storage benchmark"]
 fn partial_hits_and_raw_fills() {
+    LazyLock::force(&BUDGET);
     const N: usize = 1_000_001;
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut cached = BytesVec::<usize, u64, Budgeted>::import_with(
-        ImportOptions::new(&db, "cached", Version::ONE).with_cache_budget(&BUDGET),
-    )
-    .unwrap();
+    let mut cached = BytesVec::<usize, u64, Budgeted>::import(&db, "cached", Version::ONE).unwrap();
     let mut plain = BytesVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
     for index in 0..N as u64 {
         cached.push(index);
@@ -242,18 +281,37 @@ fn partial_hits_and_raw_fills() {
 #[ignore = "synthetic local storage benchmark"]
 #[cfg(all(feature = "pco", feature = "diagnostics"))]
 fn mixed_source_reclamation() {
-    static PRESSURE: CacheBudget = CacheBudget::new(256 * 1024);
-    static SERVER: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);
+    if env::var_os("VECDB_CACHE_BYTES").is_none() {
+        for bytes in [256 * 1024usize, 2 * 1024 * 1024 * 1024] {
+            assert!(
+                Command::new(env::current_exe().unwrap())
+                    .args([
+                        "--exact",
+                        "mixed_source_reclamation",
+                        "--ignored",
+                        "--nocapture",
+                        "--test-threads=1"
+                    ])
+                    .env("VECDB_CACHE_BYTES", bytes.to_string())
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+        }
+        return;
+    }
     const REQUESTS: usize = 4096;
 
-    for budget in [&PRESSURE, &SERVER] {
+    let budget = *BUDGET;
+    {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let sources: Vec<_> = (0..8)
             .map(|source| {
-                let mut values = PcoVec::<usize, u64, Budgeted>::import_with(
-                    ImportOptions::new(&db, &format!("source_{source}"), Version::ONE)
-                        .with_cache_budget(budget),
+                let mut values = PcoVec::<usize, u64, Budgeted>::import(
+                    &db,
+                    &format!("source_{source}"),
+                    Version::ONE,
                 )
                 .unwrap();
                 for index in 0..16_384 {

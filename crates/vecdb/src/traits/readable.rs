@@ -51,13 +51,6 @@ pub const READ_CHUNK_SIZE: usize = 4096;
 /// For maximum throughput on stored vecs, prefer `fold_range` / `for_each_range`
 /// with static dispatch (`&impl ReadableVec` or concrete type).
 pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
-    /// Token for reusing derived prefixes. Changes when existing values can
-    /// change, but not on append or cache eviction. `None` disables reuse.
-    /// This is not a read guard: related reads still need publication protection.
-    fn data_revision(&self) -> Option<u64> {
-        None
-    }
-
     /// Append a complete retained range without source reads or cache fills.
     /// On a miss (including unavailable bounds), leave `out` unchanged.
     fn read_cached_into_at(&self, _from: usize, _to: usize, _out: &mut Vec<T>) -> bool {

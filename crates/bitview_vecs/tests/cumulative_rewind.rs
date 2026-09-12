@@ -1,3 +1,4 @@
+use crate::test_cache::init_cache;
 use bitview_collections::Windows;
 use bitview_vecs::PerBlockCumulativeRolling;
 use brk_types::{Height, StoredU64, Version};
@@ -8,6 +9,7 @@ mod common;
 
 #[test]
 fn mutable_checkpoint_access_invalidates_same_length_cumulative_state() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
@@ -19,7 +21,6 @@ fn mutable_checkpoint_access_invalidates_same_length_cumulative_state() {
         _1y: &starts,
     };
     let mut values = PerBlockCumulativeRolling::<StoredU64>::forced_import(
-        &common::CACHE_BUDGET,
         &db,
         "values",
         Version::ONE,
@@ -43,3 +44,7 @@ fn mutable_checkpoint_access_invalidates_same_length_cumulative_state() {
     );
     assert_eq!(values.block.collect(), [2_u64, 10, 1].map(StoredU64::from));
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

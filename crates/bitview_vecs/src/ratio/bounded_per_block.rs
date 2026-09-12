@@ -2,7 +2,7 @@ use bitview_transforms::BoundedToF64;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{BoundedRatio, StoredF64, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
 
@@ -17,14 +17,12 @@ pub struct BoundedRatioPerBlock<M: StorageMode = Rw> {
 
 impl BoundedRatioPerBlock {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let bounded =
-            PerBlock::forced_import(cache, db, &format!("{name}_bounded"), version, indexes)?;
+        let bounded = PerBlock::forced_import(db, &format!("{name}_bounded"), version, indexes)?;
         let ratio = LazyPerBlock::from_resolutions::<BoundedToF64>(name, version, &bounded);
         Ok(Self { bounded, ratio })
     }

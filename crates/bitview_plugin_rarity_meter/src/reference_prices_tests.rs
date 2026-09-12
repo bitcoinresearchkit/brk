@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use std::{array, ops::Range};
 
 use bitview_cohort::{AgeRange, AgeRangeId, CohortId, Term, UTXOAggregate};
@@ -136,11 +138,11 @@ fn check(prices: &ReferencePrices, spot: &[Cents], rows: &[usize]) {
 
 #[test]
 fn reference_prices_keep_the_standard_price_and_ratio_schema() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let prices =
-        ReferencePrices::forced_import(&common::CACHE_BUDGET, &db, Version::ONE, &indexes).unwrap();
+    let prices = ReferencePrices::forced_import(&db, Version::ONE, &indexes).unwrap();
     for (name, price) in [
         ("under_4m", &prices.under_4m),
         ("under_6m", &prices.under_6m),
@@ -170,6 +172,7 @@ fn reference_prices_keep_the_standard_price_and_ratio_schema() {
 
 #[test]
 fn exact_reference_prices_survive_append_reorg_shortening_and_reopen() {
+    init_cache();
     let directory = tempdir().unwrap();
     let spot_values = [Cents::new(18_000_000_000); 5];
     {
@@ -178,9 +181,7 @@ fn exact_reference_prices_survive_append_reorg_shortening_and_reopen() {
         let spot = common::stored(&db, "spot", spot_values);
         let mut caps = UTXOAgeSources::forced_import(&db, "cap_raw", Version::ONE).unwrap();
         let mut supplies = array::from_fn(|i| common::stored(&db, &format!("supply_{i}"), []));
-        let mut prices =
-            ReferencePrices::forced_import(&common::CACHE_BUDGET, &db, Version::ONE, &indexes)
-                .unwrap();
+        let mut prices = ReferencePrices::forced_import(&db, Version::ONE, &indexes).unwrap();
         let exit = Exit::new();
         append(&mut caps, &mut supplies, 0..3);
         compute(&mut prices, Height::ZERO, &caps, &supplies, &spot, &exit).unwrap();
@@ -232,13 +233,13 @@ fn exact_reference_prices_survive_append_reorg_shortening_and_reopen() {
     }
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let prices =
-        ReferencePrices::forced_import(&common::CACHE_BUDGET, &db, Version::ONE, &indexes).unwrap();
+    let prices = ReferencePrices::forced_import(&db, Version::ONE, &indexes).unwrap();
     check(&prices, &spot_values, &[0, 1, 7]);
 }
 
 #[test]
 fn changed_raw_input_versions_rebuild_prices_and_ratios_from_zero() {
+    init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
@@ -246,8 +247,7 @@ fn changed_raw_input_versions_rebuild_prices_and_ratios_from_zero() {
     let mut spot = common::stored(&db, "spot", spot_values);
     let mut caps = UTXOAgeSources::forced_import(&db, "cap_raw", Version::ONE).unwrap();
     let mut supplies = array::from_fn(|i| common::stored(&db, &format!("supply_{i}"), []));
-    let mut prices =
-        ReferencePrices::forced_import(&common::CACHE_BUDGET, &db, Version::ONE, &indexes).unwrap();
+    let mut prices = ReferencePrices::forced_import(&db, Version::ONE, &indexes).unwrap();
     let exit = Exit::new();
     append(&mut caps, &mut supplies, 1..3);
     compute(&mut prices, Height::ZERO, &caps, &supplies, &spot, &exit).unwrap();

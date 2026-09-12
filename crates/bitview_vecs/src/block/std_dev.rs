@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Lengths, StoredF32, Version};
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, Lookback, PerBlock};
 
@@ -18,7 +18,6 @@ pub struct StdDevPerBlock<M: StorageMode = Rw> {
 
 impl StdDevPerBlock {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         period: &str,
@@ -33,8 +32,8 @@ impl StdDevPerBlock {
             format!("_{period}")
         };
 
-        let sma = PerBlock::forced_import(cache, db, &format!("{name}_sma{p}"), version, indexes)?;
-        let sd = PerBlock::forced_import(cache, db, &format!("{name}_sd{p}"), version, indexes)?;
+        let sma = PerBlock::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
+        let sd = PerBlock::forced_import(db, &format!("{name}_sd{p}"), version, indexes)?;
 
         Ok(Self { days, sma, sd })
     }

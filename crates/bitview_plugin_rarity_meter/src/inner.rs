@@ -5,9 +5,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, RARITY_PERCENTILES_LEN, RarityPercentileId, StoredI8, Version};
 use std::ops::Range;
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableVec, Rw, StorageMode, WritableVec};
 
 use super::{COMPUTE_BATCH_SIZE, Component, component};
 
@@ -40,7 +38,6 @@ pub struct RarityMeterInner<M: StorageMode = Rw> {
 const VERSION: Version = Version::TWO;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     prefix: &str,
     version: Version,
@@ -49,7 +46,6 @@ pub fn forced_import(
     let version = version + VERSION;
     let prices = RarityPercentiles::try_from_fn(|id| {
         Price::forced_import(
-            cache,
             db,
             &format!("{prefix}_{}", id.price_suffix()),
             version,
@@ -59,8 +55,8 @@ pub fn forced_import(
 
     Ok(RarityMeterInner {
         prices,
-        index: PerBlock::forced_import(cache, db, &format!("{prefix}_index"), version, mappings)?,
-        score: PerBlock::forced_import(cache, db, &format!("{prefix}_score"), version, mappings)?,
+        index: PerBlock::forced_import(db, &format!("{prefix}_index"), version, mappings)?,
+        score: PerBlock::forced_import(db, &format!("{prefix}_score"), version, mappings)?,
     })
 }
 

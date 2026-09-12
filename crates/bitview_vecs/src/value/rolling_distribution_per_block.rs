@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, ValuePerBlock, WindowStarts};
 
@@ -21,7 +21,6 @@ pub struct RollingDistributionValuePerBlock<M: StorageMode = Rw>(
 
 impl RollingDistributionValuePerBlock {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -30,7 +29,6 @@ impl RollingDistributionValuePerBlock {
         Ok(Self(DistributionStats::try_from_fn(|stat_suffix| {
             Windows::try_from_fn(|window_suffix| {
                 ValuePerBlock::forced_import(
-                    cache,
                     db,
                     &format!("{name}_{stat_suffix}_{window_suffix}"),
                     version,

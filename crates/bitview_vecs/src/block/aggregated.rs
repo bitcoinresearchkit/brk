@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::Height;
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, Ident, ReadableCloneableVec, Rw, StorageMode, Version};
+use vecdb::{Database, Ident, ReadableCloneableVec, Rw, StorageMode, Version};
 
 use crate::{IndexSources, LazyPerBlock, LazyPreviousDeltaVec, RollingComplete, WindowStarts};
 
@@ -28,7 +28,6 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import<V>(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -47,7 +46,6 @@ where
             indexes,
         );
         let rolling = RollingComplete::forced_import(
-            cache,
             db,
             name,
             version,

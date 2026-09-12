@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyFiatPerBlockCumulativeWithSumsAndDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{CentsSigned, PartsPerMillionSigned64, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOCoreSources;
 
@@ -25,7 +25,6 @@ pub struct CumulativeNetRealizedByCohort<M: StorageMode = Rw> {
 
 impl CumulativeNetRealizedByCohort {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -33,7 +32,6 @@ impl CumulativeNetRealizedByCohort {
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = CumulativeUTXOCoreSources::forced_import(
-            cache,
             db,
             "net_realized_pnl_cumulative_cents",
             version,

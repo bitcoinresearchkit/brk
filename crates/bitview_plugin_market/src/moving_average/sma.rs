@@ -2,8 +2,8 @@ use bitview_plugin_blocks::LookbackVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::CentsTimesTenths;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, LazySmaVec, Price, SmaPrefixSumVec};
-use brk_types::{Cents, Height, Version};
+use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, LazySmaVec, Price};
+use brk_types::{Cents, Height, StoredU64, Version};
 use vecdb::ReadableCloneableVec;
 
 #[derive(Clone, Traversable)]
@@ -61,9 +61,9 @@ impl SmaVecs {
         mappings: &MappingsVecs,
         lookback: &LookbackVecs,
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
+        prefix_sum: &impl ReadableCloneableVec<Height, StoredU64>,
     ) -> Self {
         let version = version + VERSION;
-        let prefix_sum = SmaPrefixSumVec::new("price_sma_prefix_sum", version, spot_price);
 
         macro_rules! sma {
             ($name:literal, $days:expr) => {

@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlockWithDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::{AmountSources, UTXOSources};
 
@@ -26,13 +26,12 @@ pub struct UnspentOutputCount<M: StorageMode = Rw> {
 
 impl UnspentOutputCount {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
-        let stored = UTXOSources::forced_import(cache, db, "utxo_count", version)?;
+        let stored = UTXOSources::forced_import(db, "utxo_count", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "utxo_count");
             LazyPerBlockWithDeltas::from_height_source(
@@ -45,7 +44,6 @@ impl UnspentOutputCount {
             )
         });
         let addr_balance = AmountSources::forced_import(
-            cache,
             db,
             "addrs_utxo_count_by_balance_range",
             CohortContext::Addr,

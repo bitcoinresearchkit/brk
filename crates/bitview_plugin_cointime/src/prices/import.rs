@@ -3,12 +3,11 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
 use brk_error::Result;
 use brk_types::{Bitcoin, Cents, Height, Version};
-use vecdb::{CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec};
+use vecdb::{Database, ReadableBoxedVec, ReadableCloneableVec};
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -18,7 +17,7 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     macro_rules! import {
         ($name:expr) => {
-            PriceWithRatioPerBlock::forced_import(cache, db, $name, version, mappings, spot_price)?
+            PriceWithRatioPerBlock::forced_import(db, $name, version, mappings, spot_price)?
         };
     }
 

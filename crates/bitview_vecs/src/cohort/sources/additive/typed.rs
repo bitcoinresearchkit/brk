@@ -7,12 +7,10 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, PcoVecValue, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, PcoVecValue, Rw, StorageMode, WritableVec};
 
 use super::UTXOCoreSources;
-use crate::{StoredSeries, import_stored};
+use crate::{CachedSeries, import_cached};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct UTXOTypedSources<T: PcoVecValue, M: StorageMode = Rw> {
@@ -21,21 +19,15 @@ pub struct UTXOTypedSources<T: PcoVecValue, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: UTXOCoreSources<T, M>,
     #[traversable(rename = "type")]
-    pub type_: SpendableType<StoredSeries<Height, T, M>>,
+    pub type_: SpendableType<CachedSeries<Height, T, M>>,
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOTypedSources<T> {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            core: UTXOCoreSources::forced_import(cache, db, name, version)?,
+            core: UTXOCoreSources::forced_import(db, name, version)?,
             type_: SpendableType::try_new(|cohort_id| {
-                import_stored(
-                    cache,
+                import_cached(
                     db,
                     &CohortContext::Utxo.metric_name(cohort_id, name),
                     version + Version::TWO,
@@ -44,7 +36,7 @@ impl<T: PcoVecValue + AddAssign> UTXOTypedSources<T> {
         })
     }
 
-    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+    pub fn get(&self, cohort_id: CohortId) -> Option<&CachedSeries<Height, T>> {
         match cohort_id {
             CohortId::Type(output_type) => {
                 SpendableTypeId::from_output_type(output_type).map(|id| id.select(&self.type_))

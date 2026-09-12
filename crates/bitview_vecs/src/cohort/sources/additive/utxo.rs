@@ -8,12 +8,11 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, Database, PcoVecValue, ReadableVec, Rw, StorageMode,
-    WritableVec,
+    AnyStoredVec, AnyVec, Database, PcoVecValue, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::UTXOTypedSources;
-use crate::{StoredSeries, import_stored};
+use crate::{CachedSeries, import_cached};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct UTXOSources<T: PcoVecValue, M: StorageMode = Rw> {
@@ -21,21 +20,15 @@ pub struct UTXOSources<T: PcoVecValue, M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub typed: UTXOTypedSources<T, M>,
-    pub amount: AmountRange<StoredSeries<Height, T, M>>,
+    pub amount: AmountRange<CachedSeries<Height, T, M>>,
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            typed: UTXOTypedSources::forced_import(cache, db, name, version)?,
+            typed: UTXOTypedSources::forced_import(db, name, version)?,
             amount: AmountRange::try_new(|cohort_id| {
-                import_stored(
-                    cache,
+                import_cached(
                     db,
                     &CohortContext::Utxo.metric_name(cohort_id, name),
                     version + Version::TWO,
@@ -44,7 +37,7 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
         })
     }
 
-    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+    pub fn get(&self, cohort_id: CohortId) -> Option<&CachedSeries<Height, T>> {
         match cohort_id {
             CohortId::Amount(id) => Some(id.select(&self.amount)),
             _ => self.typed.get(cohort_id),

@@ -12,9 +12,10 @@ use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use color_eyre::{Result, install};
-use vecdb::CacheBudget;
+use vecdb::Budgeted;
 
 pub fn main() -> Result<()> {
+    Budgeted::init_global(2 * 1024 * 1024 * 1024)?;
     install()?;
 
     init(Some(Path::new(".log")))?;
@@ -34,7 +35,7 @@ pub fn main() -> Result<()> {
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
-    let import_context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
+    let import_context = ImportContext::new(&outputs_dir);
     let update_context = UpdateContext::new(&exit);
 
     let mut plugins = bootstrap(
@@ -50,5 +51,3 @@ pub fn main() -> Result<()> {
         sleep(Duration::from_secs(10));
     }
 }
-
-static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

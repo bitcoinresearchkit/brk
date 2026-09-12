@@ -1,6 +1,6 @@
 use crate::{
-    AnyStoredVec, Budgeted, Bytes, BytesVec, CacheBudget, Database, Error, ImportOptions,
-    ImportableVec, RawIoSource, RawMmapSource, ReadableVec, Result, VecValue, Version, WritableVec,
+    AnyStoredVec, Budgeted, Bytes, BytesVec, Database, Error, ImportableVec, RawIoSource,
+    RawMmapSource, ReadableVec, Result, VecValue, Version, WritableVec,
 };
 use tempfile::tempdir;
 
@@ -26,11 +26,12 @@ impl Bytes for HeapValue {
 fn check_bulk_reads<T: Bytes + VecValue + Eq>(values: Vec<T>) {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(1024 * 1024)));
-    let mut cached = BytesVec::<usize, T, Budgeted>::import_with(
-        ImportOptions::new(&db, "cached", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        Budgeted::init_global(1024 * 1024).unwrap();
+    });
+    let budget = Budgeted::global().unwrap();
+    let mut cached = BytesVec::<usize, T, Budgeted>::import(&db, "cached", Version::ONE).unwrap();
     let mut plain = BytesVec::<usize, T>::import(&db, "plain", Version::ONE).unwrap();
     for value in &values {
         cached.push(value.clone());
@@ -82,3 +83,4 @@ fn non_native_bulk_reads_decode_owned_values() {
             .collect(),
     );
 }
+use std::sync::Once;

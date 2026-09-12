@@ -1,14 +1,12 @@
 //! Full-window storage/grouping/serialization cost, not an HTTP latency claim.
 
+use crate::test_cache::init_cache;
 use std::{hint::black_box, time::Instant};
 
 use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, StoredU64, Version, Weight};
 use serde_json::to_vec;
 use tempfile::tempdir;
-use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec,
-    WritableVec,
-};
+use vecdb::{AnyStoredVec, Budgeted, Database, ImportableVec, PcoVec, WritableVec};
 
 use super::*;
 use crate::RepresentationId;
@@ -16,6 +14,7 @@ use crate::RepresentationId;
 #[test]
 #[ignore = "one-million-row persisted mining data path; warm OS storage, excludes HTTP and plugin lookup"]
 fn benchmark_full_history_storage() {
+    init_cache();
     const ROWS: u32 = 1_000_000;
     let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
@@ -39,11 +38,10 @@ fn benchmark_full_history_storage() {
     // Reopen so persisted compressed sources, not pending write buffers, feed
     // the production window reader. Timestamp retention matches the indexer.
     drop((times, sizes, weights));
-    static CACHE: CacheBudget = CacheBudget::new(16 * 1024 * 1024);
-    let times = PcoVec::<Height, Timestamp, Budgeted>::forced_import_with(
-        ImportOptions::new(&database, "timestamps", Version::ONE).with_cache_budget(&CACHE),
-    )
-    .unwrap();
+
+    let times =
+        PcoVec::<Height, Timestamp, Budgeted>::forced_import(&database, "timestamps", Version::ONE)
+            .unwrap();
     let sizes: PcoVec<Height, StoredU64> =
         PcoVec::forced_import(&database, "sizes", Version::ONE).unwrap();
     let weights: PcoVec<Height, Weight> =
@@ -54,7 +52,7 @@ fn benchmark_full_history_storage() {
         let mut samples = Vec::new();
         for round in 0..24 {
             if !resident_times {
-                CACHE.clear();
+                init_cache().clear();
             }
             let started = Instant::now();
             let timestamps = times.collect_range(Height::ZERO, Height::new(ROWS));

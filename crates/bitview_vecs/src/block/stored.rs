@@ -4,40 +4,34 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    BinaryTransform, Budgeted, CacheBudget, CachePolicy, Database, EagerVec, ImportOptions,
-    ImportableVec, PcoVec, PcoVecValue, ReadableVec, Rw, StorageMode, VecValue,
-};
+use vecdb::{BinaryTransform, Database, PcoVecValue, ReadableVec, Rw, StorageMode, VecValue};
 
-use crate::{IndexSources, Resolutions};
+use crate::{CachedSeries, IndexSources, Resolutions, import_cached};
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct PerBlock<T, M: StorageMode = Rw, S: CachePolicy = Budgeted>
+pub struct PerBlock<T, M: StorageMode = Rw>
 where
     T: PcoVecValue + PartialOrd + JsonSchema,
 {
-    pub height: M::Stored<EagerVec<PcoVec<Height, T, S>>>,
+    pub height: CachedSeries<Height, T, M>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
     pub resolutions: Box<Resolutions<T>>,
 }
 
-impl<T, S: CachePolicy> PerBlock<T, Rw, S>
+impl<T> PerBlock<T>
 where
     T: PcoVecValue + PartialOrd + JsonSchema + 'static,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         indexes: &IndexSources,
     ) -> Result<Self> {
-        let height = EagerVec::<PcoVec<Height, T, S>>::forced_import_with(
-            ImportOptions::new(db, name, version).with_cache_budget(cache),
-        )?;
+        let height = import_cached(db, name, version)?;
 
         let resolutions = Resolutions::from_source(name, &height, version, indexes);
 

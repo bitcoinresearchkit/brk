@@ -7,14 +7,14 @@ use bitview_plugin_outputs::ByTypeVecs;
 use bitview_transforms::RatioU64;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CountPerBlockRollingAverage, CumulativeCountVec, LazyPercentCumulativeRolling,
-    LazyWindowStartVec, PerBlockCumulativeRolling, PerBlockRollingAverage,
+    CountPerBlockRollingAverage, LazyPercentCumulativeRolling, LazyWindowStartVec,
+    PerBlockCumulativeRolling, PerBlockRollingAverage,
 };
 use brk_error::Result;
 use brk_exit::Exit;
-use brk_types::{PartsPerMillion32, StoredF32, StoredU32, StoredU64, Version};
+use brk_types::{Height, PartsPerMillion32, StoredF32, StoredU32, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableCloneableVec, Rw, StorageMode, WritableVec};
 
 use super::state::AddrTypeToAddrEventCount;
 
@@ -102,7 +102,7 @@ impl AddrEventsVecs {
         window_starts: &Windows<&LazyWindowStartVec>,
         all: LazyPercentCumulativeRolling<PartsPerMillion32>,
         numerators: &ByAddrType<PerBlockCumulativeRolling<StoredU64>>,
-        denominators: &ByAddrType<CumulativeCountVec>,
+        denominators: &ByAddrType<impl ReadableCloneableVec<Height, StoredU64>>,
     ) -> WithAddrTypes<LazyPercentCumulativeRolling<PartsPerMillion32>> {
         let by_addr_type = AddrTypeId::series(|id, type_name| {
             LazyPercentCumulativeRolling::from_cumulative_ratio_with_numerator::<
@@ -122,7 +122,6 @@ impl AddrEventsVecs {
     }
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -134,7 +133,6 @@ impl AddrEventsVecs {
         let import_count = |name: &str| -> Result<_> {
             let import = |name: &str| {
                 PerBlockCumulativeRolling::forced_import(
-                    cache,
                     db,
                     name,
                     version + Version::ONE,
@@ -202,7 +200,6 @@ impl AddrEventsVecs {
         );
 
         let active_reused_addr_count = CountPerBlockRollingAverage::forced_import(
-            cache,
             db,
             &format!("active_{name}_addr_count"),
             version,
@@ -210,7 +207,6 @@ impl AddrEventsVecs {
             window_starts,
         )?;
         let active_reused_addr_share = PerBlockRollingAverage::forced_import(
-            cache,
             db,
             &format!("active_{name}_addr_share"),
             version,

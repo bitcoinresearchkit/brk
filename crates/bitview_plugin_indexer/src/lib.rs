@@ -263,11 +263,7 @@ impl Indexer {
 
         let try_import = || -> Result<Self> {
             let i = Instant::now();
-            let vecs = Vecs::forced_import(
-                context.cache_budget(),
-                &plugin_path,
-                STORAGE.schema_version(),
-            )?;
+            let vecs = Vecs::forced_import(&plugin_path, STORAGE.schema_version())?;
             info!("Loaded indexer vectors in {:.2?}", i.elapsed());
 
             let i = Instant::now();
@@ -655,6 +651,8 @@ impl ComputePlugin for Indexer {
 
 #[cfg(test)]
 mod import_tests {
+    use crate::test_cache::init_cache;
+
     use std::path::PathBuf;
 
     use bitcoin::{Network, blockdata::constants};
@@ -662,14 +660,12 @@ mod import_tests {
     use brk_types::BlockHashPrefix;
     use fjall::Error as FjallError;
     use tempfile::tempdir;
-    use vecdb::CacheBudget;
 
     use super::*;
 
-    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
-
     fn plugin_data_path(outputs_dir: &Path) -> PathBuf {
-        STORAGE.path(ImportContext::new(outputs_dir, &CACHE_BUDGET))
+        init_cache();
+        STORAGE.path(ImportContext::new(outputs_dir))
     }
 
     fn empty_reader(path: &Path) -> Reader {
@@ -722,13 +718,11 @@ mod import_tests {
 
     #[test]
     fn empty_import_writes_identity_marker() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let reader = empty_reader(dir.path());
 
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
 
         assert!(matches!(
             read_xor_marker(&plugin_data_path(dir.path()))?,
@@ -739,20 +733,15 @@ mod import_tests {
 
     #[test]
     fn malformed_xor_marker_recreates_the_index() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
         fs::write(plugin.join("xor.dat"), [0_u8; 3])?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
 
         assert!(!plugin.join("stale").exists());
         assert!(matches!(
@@ -764,57 +753,51 @@ mod import_tests {
 
     #[test]
     fn malformed_source_xor_never_deletes_data() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
         fs::write(plugin.join("stale"), b"stale")?;
         fs::create_dir_all(dir.path().join("blocks"))?;
         fs::write(dir.path().join("blocks/xor.dat"), [0_u8; 3])?;
         let reader = empty_reader(dir.path());
 
-        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
 
     #[test]
     fn xor_marker_io_error_never_deletes_data() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let marker = plugin.join("xor.dat");
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
         fs::remove_file(&marker)?;
         fs::create_dir(&marker)?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
 
     #[test]
     fn checkpoint_io_error_never_deletes_data() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let checkpoint = plugin.join("stores/height");
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(
-            ImportContext::new(dir.path(), &CACHE_BUDGET),
-            &reader,
-        )?);
+        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
         fs::remove_file(&checkpoint)?;
         fs::create_dir(&checkpoint)?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
@@ -848,13 +831,13 @@ mod import_tests {
 
     #[test]
     fn invalid_checkpoint_drops_handles_and_recreates_entire_index() -> Result<()> {
+        init_cache();
         let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
 
         {
-            let mut indexer =
-                Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader)?;
+            let mut indexer = Indexer::import(ImportContext::new(dir.path()), &reader)?;
             indexer
                 .stores
                 .insert_block_height(BlockHashPrefix::from(1_u64), Height::ZERO);
@@ -864,7 +847,7 @@ mod import_tests {
         }
         fs::write(plugin.join("stale"), b"stale")?;
 
-        let indexer = Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader)?;
+        let indexer = Indexer::import(ImportContext::new(dir.path()), &reader)?;
 
         assert!(!plugin.join("stale").exists());
         assert_eq!(indexer.vecs().next_height(), Height::ZERO);
@@ -872,3 +855,8 @@ mod import_tests {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/common/cache.rs"]
+mod test_cache;

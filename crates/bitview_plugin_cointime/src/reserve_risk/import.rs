@@ -2,23 +2,18 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyIndexedVec, LazyPerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Dollars, Height, StoredF64, Version};
-use vecdb::{
-    CacheBudget, Database, EagerVec, Ident, ImportOptions, ImportableVec, ReadableBoxedVec,
-};
+use vecdb::{Database, EagerVec, Ident, ImportableVec, ReadableBoxedVec};
 
 use super::Vecs;
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
     spot_price: &ReadableBoxedVec<Height, Cents>,
 ) -> Result<Vecs> {
     let v1 = version + Version::ONE;
-    let hodl_bank = EagerVec::forced_import_with(
-        ImportOptions::new(db, "hodl_bank", v1).with_cache_budget(cache),
-    )?;
+    let hodl_bank = EagerVec::forced_import(db, "hodl_bank", v1)?;
     let value_source = LazyIndexedVec::new(
         "reserve_risk_source",
         v1,

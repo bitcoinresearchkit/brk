@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{StoredF64, Version};
-use vecdb::{CacheBudget, Database, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOCoreSources;
 
@@ -19,18 +19,13 @@ pub struct CoindaysDestroyedByCohort<M: StorageMode = Rw> {
 
 impl CoindaysDestroyedByCohort {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
-        let stored = CumulativeUTXOCoreSources::forced_import(
-            cache,
-            db,
-            "coindays_destroyed_cumulative",
-            version,
-        )?;
+        let stored =
+            CumulativeUTXOCoreSources::forced_import(db, "coindays_destroyed_cumulative", version)?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "coindays_destroyed");
             let source = stored

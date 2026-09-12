@@ -1,4 +1,6 @@
-use super::{CacheBudget, Charge};
+use std::sync::Arc;
+
+use super::{Account, Charge};
 
 #[derive(Debug)]
 pub(super) struct Buffer<T> {
@@ -22,12 +24,12 @@ impl<T> Buffer<T> {
             .checked_add(size_of::<Self>() + 2 * size_of::<usize>())
     }
 
-    pub(super) fn admit(&mut self, budget: &'static CacheBudget) -> bool {
+    pub(super) fn admit(&mut self, account: &Arc<Account>) -> bool {
         if self.charge.is_none() {
             let Some(bytes) = self.bytes() else {
                 return false;
             };
-            self.charge = budget.reserve(bytes);
+            self.charge = account.reserve(bytes);
         }
         self.charge.is_some()
     }
@@ -55,16 +57,5 @@ impl<T> Buffer<T> {
         self.values.reserve_exact(capacity - self.values.len());
         debug_assert_eq!(self.values.capacity(), capacity);
         true
-    }
-
-    pub(super) fn truncate(&mut self, len: usize) {
-        self.values.truncate(len);
-        if len < self.values.capacity().div_ceil(4) {
-            self.values.shrink_to_fit();
-            let bytes = self.bytes().expect("cache buffer size overflow");
-            if let Some(charge) = &mut self.charge {
-                charge.shrink_to(bytes);
-            }
-        }
     }
 }

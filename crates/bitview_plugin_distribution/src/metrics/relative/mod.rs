@@ -1,7 +1,7 @@
 use bitview_cohort::{CohortContext, UTXOAggregate};
 use bitview_compute::FixedRatio;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{LazyPercentPerBlock, StoredSeries};
+use bitview_vecs::{CachedSeries, LazyPercentPerBlock};
 use brk_types::{Height, PartsPerMillion32, Version};
 use vecdb::LazyVec;
 
@@ -32,7 +32,7 @@ fn public_loss_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMill
 }
 
 fn share_views<B: FixedRatio>(
-    sources: &UTXOAggregate<StoredSeries<Height, PartsPerMillion32>>,
+    sources: &UTXOAggregate<CachedSeries<Height, PartsPerMillion32>>,
     metric: &str,
     version: Version,
     compute: fn(Height, PartsPerMillion32) -> B,

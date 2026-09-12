@@ -19,58 +19,15 @@ impl Vecs {
         let db = STORAGE.open_database(context, 10_000_000)?;
         let version = STORAGE.schema_version();
 
-        let count = count::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let features = features::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let size = size::forced_import(context.cache_budget(), &db, version, indexer, mappings)?;
-        let fees = fees::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let patterns = patterns::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let policy = policy::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let sigops = sigops::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
-        let versions = versions::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            window_starts,
-        )?;
+        let count = count::forced_import(&db, version, mappings, window_starts)?;
+        let features = features::forced_import(&db, version, mappings, window_starts)?;
+        let size = size::forced_import(&db, version, indexer, mappings)?;
+        let fees = fees::forced_import(&db, version, mappings, window_starts)?;
+        let patterns = patterns::forced_import(&db, version, mappings, window_starts)?;
+        let policy = policy::forced_import(&db, version, mappings, window_starts)?;
+        let sigops = sigops::forced_import(&db, version, mappings, window_starts)?;
+        let versions = versions::forced_import(&db, version, mappings, window_starts)?;
         let volume = volume::forced_import(
-            context.cache_budget(),
             &db,
             version,
             mappings,

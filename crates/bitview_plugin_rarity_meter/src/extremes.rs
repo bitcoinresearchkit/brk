@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, Dollars, Height, StoredF32, Version};
-use vecdb::{CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 use super::extreme::Extreme;
 
@@ -55,43 +55,17 @@ pub struct Extremes<M: StorageMode = Rw> {
 }
 
 pub fn forced_import(
-    cache: &'static CacheBudget,
     db: &Database,
     parent_version: Version,
     mappings: &MappingsVecs,
 ) -> Result<Extremes> {
     let version = parent_version + VERSION;
     Ok(Extremes {
-        coins_in_loss: Extreme::forced_import(
-            cache,
-            db,
-            "rarity_meter_coins_in_loss",
-            version,
-            mappings,
-        )?,
-        profit_taking: Extreme::forced_import(
-            cache,
-            db,
-            "rarity_meter_profit_taking",
-            version,
-            mappings,
-        )?,
-        capitulation: Extreme::forced_import(
-            cache,
-            db,
-            "rarity_meter_capitulation",
-            version,
-            mappings,
-        )?,
-        peak_regret: Extreme::forced_import(
-            cache,
-            db,
-            "rarity_meter_peak_regret",
-            version,
-            mappings,
-        )?,
+        coins_in_loss: Extreme::forced_import(db, "rarity_meter_coins_in_loss", version, mappings)?,
+        profit_taking: Extreme::forced_import(db, "rarity_meter_profit_taking", version, mappings)?,
+        capitulation: Extreme::forced_import(db, "rarity_meter_capitulation", version, mappings)?,
+        peak_regret: Extreme::forced_import(db, "rarity_meter_peak_regret", version, mappings)?,
         seller_exhaustion: Extreme::forced_import(
-            cache,
             db,
             "rarity_meter_seller_exhaustion",
             version,

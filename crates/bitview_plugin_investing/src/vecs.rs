@@ -1,14 +1,21 @@
+mod compute;
 mod import;
 
 use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
-use brk_types::{Height, Sats};
+use brk_types::{Day1, Height, Sats};
+use vecdb::{Database, Rw, StorageMode};
 
 use super::{STORAGE, class_vecs::ClassVecs, period_vecs::PeriodVecs};
-use bitview_vecs::LazyPreviousDeltaVec;
+use bitview_vecs::{CachedSeries, LazyPreviousDeltaVec};
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    #[traversable(skip)]
+    db: Database,
+    /// Shared cumulative daily purchases, including the represented day's close.
+    #[traversable(hidden)]
+    pub sats_cumulative: CachedSeries<Day1, Sats, M>,
     /// Satoshis purchased by investing 100 USD at each UTC daily close newly
     /// crossed at this block. It is zero within a day, includes every
     /// intervening daily purchase when block time skips days, and treats a
@@ -18,7 +25,10 @@ pub struct Vecs {
     pub class: ClassVecs,
 }
 
-impl Plugin for Vecs {
+impl<M: StorageMode> Plugin for Vecs<M>
+where
+    Self: Traversable + Send + Sync,
+{
     fn storage(&self) -> PluginStorage {
         STORAGE
     }

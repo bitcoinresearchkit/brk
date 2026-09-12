@@ -1,13 +1,12 @@
 use bitview_cohort::{ByAddrType, ByType, SpendableType};
 use bitview_collections::Windows;
 use bitview_traversable::Traversable;
-use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
+use brk_types::{Height, PartsPerMillion32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::ReadableCloneableVec;
+use vecdb::{LazyVec, ReadableCloneableVec};
 
 use crate::{
-    CountTotal, CumulativeCountVec, IndexSources, LazyCountPerBlockCumulativeRolling,
-    LazyPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
+    CountTotal, IndexSources, LazyPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
 };
 
 /// A shared total plus a typed count breakdown. The group determines membership;
@@ -29,51 +28,15 @@ pub type OutputTypeCounts<V> = TypeCounts<ByType<V>>;
 // group's concrete fields or changing its iteration order.
 macro_rules! impl_type_counts {
     ($group:ident) => {
-        impl TypeCounts<$group<LazyCountPerBlockCumulativeRolling>> {
-            pub fn from_count_sources(
-                total: CountTotal,
-                per_type_name: impl Fn(&str) -> String,
-                version: Version,
-                sources: &$group<impl ReadableCloneableVec<Height, StoredU16>>,
-                indexes: &IndexSources,
-                windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
-            ) -> Self {
-                let by_type = sources.map_with_id(|id, source| {
-                    LazyCountPerBlockCumulativeRolling::from_height_source(
-                        &per_type_name(id.name()),
-                        version,
-                        source,
-                        indexes,
-                        windows,
-                    )
-                });
-                Self { total, by_type }
-            }
-
-            pub fn lazy_shares(
+        impl TypeCounts<$group<LazyPerBlockCumulativeRolling<StoredU64>>> {
+            pub fn addr_type_counts(
                 &self,
-                version: Version,
-                name: impl Fn(&str) -> String,
-                windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
-                indexes: &IndexSources,
-            ) -> $group<LazyPercentCumulativeRolling<PartsPerMillion32>> {
-                self.by_type.map_with_id(|id, source| {
-                    self.total.lazy_share(
-                        &name(id.name()),
-                        version,
-                        &source.cumulative_source(),
-                        windows,
-                        indexes,
-                    )
+            ) -> ByAddrType<LazyVec<Height, StoredU64, Height, StoredU64>> {
+                ByAddrType::from_fn(|id| {
+                    self.by_type.get(id.output_type()).cumulative.height.clone()
                 })
             }
 
-            pub fn addr_type_counts(&self) -> ByAddrType<CumulativeCountVec> {
-                ByAddrType::from_fn(|id| self.by_type.get(id.output_type()).cumulative_source())
-            }
-        }
-
-        impl TypeCounts<$group<LazyPerBlockCumulativeRolling<StoredU64>>> {
             pub fn from_cumulative_sources(
                 total: CountTotal,
                 per_type_name: impl Fn(&str) -> String,

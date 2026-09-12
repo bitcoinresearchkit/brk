@@ -1,76 +1,99 @@
-use std::{
-    collections::BTreeMap,
-    ops::{Deref, DerefMut},
-};
+use std::{ops::Deref, sync::Arc};
 
-use super::{Charge, Value};
+use super::{Account, Charge, Value};
 
+/// Sorted, non-overlapping retained spans. Single values live inline.
 #[derive(Debug)]
 pub(super) struct Table<T> {
-    entries: BTreeMap<usize, Value<T>>,
-    pub(super) charge: Option<Charge>,
+    pub(super) entries: Vec<(usize, Value<T>)>,
+    charge: Option<Charge>,
 }
 
-impl<T> Table<T> {
+impl<T: Clone> Table<T> {
     pub(super) fn new() -> Self {
         Self {
-            entries: BTreeMap::new(),
+            entries: Vec::new(),
             charge: None,
         }
     }
 
-    // One conservative formula for std's tree metadata, including inline values.
-    // This is a budget allowance, not allocator/RSS instrumentation.
-    pub(super) fn entry_bytes() -> usize {
-        2 * size_of::<(usize, Value<T>)>() + 32
+    pub(super) fn charge_for(capacity: usize) -> usize {
+        capacity
+            .checked_mul(size_of::<(usize, Value<T>)>())
+            .expect("cache directory overflow")
     }
 
-    pub(super) fn root_bytes() -> usize {
-        16 * size_of::<(usize, Value<T>)>() + 128
+    pub(super) fn first(&self, from: usize) -> usize {
+        self.entries
+            .partition_point(|(at, value)| *at + value.len() <= from)
     }
 
-    pub(super) fn charge_for(len: usize) -> usize {
-        if len == 0 {
-            0
-        } else {
-            Self::root_bytes()
-                .checked_add(
-                    Self::entry_bytes()
-                        .checked_mul(len)
-                        .expect("cache directory overflow"),
-                )
-                .expect("cache directory overflow")
+    pub(super) fn at(&self, index: usize) -> Option<(usize, &Value<T>)> {
+        let at = self
+            .entries
+            .partition_point(|(at, _)| *at <= index)
+            .checked_sub(1)?;
+        let (start, value) = &self.entries[at];
+        (index - start < value.len()).then_some((*start, value))
+    }
+
+    pub(super) fn reserve(&mut self, len: usize, account: &Arc<Account>) -> bool {
+        if len <= self.entries.capacity() {
+            return true;
         }
-    }
-
-    pub(super) fn shrink_charge(&mut self) {
-        if self.entries.is_empty() {
-            self.entries = BTreeMap::new();
-            self.charge = None;
-        } else if let Some(charge) = &mut self.charge {
-            charge.shrink_to(Self::charge_for(self.entries.len()));
-        }
-    }
-
-    pub(super) fn add_charge(&mut self, charge: Charge) {
+        let capacity = len.checked_next_power_of_two().unwrap_or(len);
+        let bytes = Self::charge_for(capacity - self.entries.capacity());
+        let Some(charge) = account.reserve(bytes) else {
+            return false;
+        };
+        self.entries.reserve_exact(capacity - self.entries.len());
+        debug_assert_eq!(self.entries.capacity(), capacity);
         if let Some(current) = &mut self.charge {
             current.merge(charge);
         } else {
             self.charge = Some(charge);
         }
-        self.shrink_charge();
+        true
+    }
+
+    /// Merge backward into spare capacity, moving each entry at most once.
+    pub(super) fn insert(&mut self, mut offers: Vec<(usize, Value<T>)>, account: &Arc<Account>) {
+        if offers.is_empty() {
+            return;
+        }
+        let at = self
+            .entries
+            .partition_point(|(start, _)| *start < offers[0].0);
+        let len = self.entries.len() + offers.len();
+        if !self.reserve(len, account) {
+            return;
+        }
+        if at == self.entries.len() || offers.len() == 1 {
+            self.entries.splice(at..at, offers);
+        } else {
+            let mut end = len;
+            while let Some((start, _)) = offers.last() {
+                let value = if self.entries.last().is_some_and(|(at, _)| at > start) {
+                    self.entries.pop().unwrap()
+                } else {
+                    offers.pop().unwrap()
+                };
+                end -= 1;
+                let offset = end - self.entries.len();
+                self.entries.spare_capacity_mut()[offset].write(value);
+            }
+            // SAFETY: reserve(len) provided the capacity. Each pop transfers one
+            // owned entry into the next uninitialized suffix slot; no allocation,
+            // cloning, or user code runs during the merge. With offers exhausted,
+            // the untouched prefix and initialized suffix cover exactly 0..len.
+            unsafe { self.entries.set_len(len) };
+        }
     }
 }
 
 impl<T> Deref for Table<T> {
-    type Target = BTreeMap<usize, Value<T>>;
+    type Target = [(usize, Value<T>)];
     fn deref(&self) -> &Self::Target {
         &self.entries
-    }
-}
-
-impl<T> DerefMut for Table<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.entries
     }
 }

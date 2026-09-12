@@ -3,8 +3,7 @@ use brk_error::Result;
 use brk_types::{Height, OutPoint, OutputType, TxInIndex, TxIndex, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec, Rw, Stamp,
-    StorageMode, WritableVec,
+    AnyStoredVec, Budgeted, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
 #[derive(Traversable)]
@@ -41,13 +40,9 @@ pub struct InputsVecs<M: StorageMode = Rw> {
 }
 
 impl InputsVecs {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (first_txin_index, outpoint, txout_index, tx_index, output_type, type_index) = parallel_import! {
-            first_txin_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_txin_index", version).with_cache_budget(cache)),
+            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             outpoint = PcoVec::forced_import(db, "outpoint", version),
             txout_index = PcoVec::forced_import(db, "txout_index", version),
             tx_index = PcoVec::forced_import(db, "tx_index", version),
@@ -107,19 +102,20 @@ impl InputsVecs {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_cache::init_cache;
+
     use brk_types::{Version, Vout};
     use tempfile::tempdir;
     use vecdb::{AnyVec, ReadableVec};
 
     use super::*;
 
-    static CACHE: CacheBudget = CacheBudget::new(1 << 20);
-
     #[test]
     fn rollback_keeps_all_input_facts_aligned() {
+        init_cache();
         let dir = tempdir().unwrap();
         let db = Database::open(dir.path()).unwrap();
-        let mut inputs = InputsVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+        let mut inputs = InputsVecs::forced_import(&db, Version::ONE).unwrap();
 
         for txin_index in [0_usize, 2, 4] {
             inputs.first_txin_index.push(TxInIndex::from(txin_index));
@@ -185,7 +181,7 @@ mod tests {
         drop(db);
 
         let db = Database::open(dir.path()).unwrap();
-        let inputs = InputsVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
+        let inputs = InputsVecs::forced_import(&db, Version::ONE).unwrap();
         assert_eq!(inputs.first_txin_index.len(), 1);
         assert!(inputs.iter_any().skip(1).all(|vec| vec.len() == 2));
         assert_eq!(

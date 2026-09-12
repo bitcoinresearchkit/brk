@@ -1,12 +1,13 @@
 #![cfg(feature = "diagnostics")]
 
+use crate::test_cache::init_cache;
 use bitview_vecs::LazyOhlcVec;
 use brk_types::{Cents, Day1, Height, OHLCCents, Version};
 use rangeindex::SharedRangeMap;
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
-    ReadableVec, WritableVec, diagnostics,
+    AnyStoredVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
+    diagnostics,
 };
 
 fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
@@ -15,13 +16,12 @@ fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
 
 #[test]
 fn cold_candles_batch_their_price_span_and_warm_reads_reuse_it() {
+    let budget = init_cache();
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let budget = Box::leak(Box::new(CacheBudget::new(512 * 1024)));
-    let mut prices = EagerVec::<PcoVec<Height, Cents, Budgeted>>::import_with(
-        ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(budget),
-    )
-    .unwrap();
+
+    let mut prices =
+        EagerVec::<PcoVec<Height, Cents, Budgeted>>::import(&db, "prices", Version::ONE).unwrap();
     let mut boundaries = Vec::new();
     for i in 0..32_768usize {
         prices.push(Cents::from(100 + i as u64));
@@ -68,3 +68,7 @@ fn cold_candles_batch_their_price_span_and_warm_reads_reuse_it() {
         "sparse candles do not read the intervening days"
     );
 }
+
+#[allow(dead_code)]
+#[path = "common/cache.rs"]
+mod test_cache;

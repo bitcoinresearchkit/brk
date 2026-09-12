@@ -23,3 +23,6 @@ brk_types = { workspace = true, features = ["storage"] }
 derive_more = { workspace = true }
 rayon = { workspace = true }
 vecdb = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

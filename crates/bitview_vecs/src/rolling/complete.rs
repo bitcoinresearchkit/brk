@@ -9,7 +9,7 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, RollingDistribution, WindowStarts};
 
@@ -32,7 +32,6 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
-        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -41,7 +40,7 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let rolling = RollingTotals::new(name, version, cumulative, window_starts, indexes);
-        let distribution = RollingDistribution::forced_import(cache, db, name, version, indexes)?;
+        let distribution = RollingDistribution::forced_import(db, name, version, indexes)?;
 
         Ok(Self {
             rolling,

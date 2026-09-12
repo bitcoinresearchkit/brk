@@ -4,7 +4,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use rawdb::Region;
 
-use crate::{AnyStoredVec, CompressedIoSource, Result, VecIndex, VecValue, cache::CachePolicy};
+use crate::{CompressedIoSource, Result, VecIndex, VecValue, cache::CachePolicy};
 
 use super::{CompressionStrategy, Pages, ReadWriteCompressedVec};
 
@@ -20,10 +20,7 @@ where
         from: usize,
         write: impl FnOnce(&mut Self) -> Result<R>,
     ) -> Result<R> {
-        match C::cache(&self.cache).cloned() {
-            Some(cache) => cache.update(from, from < self.stored_len(), || write(self)),
-            None => write(self),
-        }
+        C::update(self.cache.clone(), from, || write(self))
     }
 
     /// Decode each missing physical page once. Adjacent pages become one owned

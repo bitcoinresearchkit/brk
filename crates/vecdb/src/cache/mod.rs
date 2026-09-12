@@ -1,5 +1,6 @@
 //! Source-owned range retention. Cache buffers never escape a read operation.
 
+mod account;
 mod budget;
 mod budgeted;
 mod buffer;
@@ -9,7 +10,7 @@ mod none;
 mod plan;
 mod policy;
 mod request;
-mod shared;
+mod source;
 mod table;
 mod value;
 
@@ -18,45 +19,57 @@ pub use budgeted::Budgeted;
 pub use none::NoCache;
 pub use policy::CachePolicy;
 
+use account::Account;
 use buffer::Buffer;
 use charge::Charge;
 pub(crate) use request::Request;
-use shared::Shared;
 use table::Table;
 use value::Value;
 
 use std::{
+    mem,
     ops::Range,
     result::Result as FoldResult,
-    sync::{Arc, atomic::Ordering::Relaxed},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering::Relaxed},
+    },
 };
 
+use parking_lot::{Mutex, RwLock};
+
 use crate::{READ_CHUNK_SIZE, Result, VecValue};
+use budget::Reclaim;
 
 /// One cache shared by a source and all of its read-only views.
 #[derive(Debug)]
 pub struct Cache<T: VecValue> {
-    shared: Arc<Shared<T>>,
-}
-
-impl<T: VecValue> Clone for Cache<T> {
-    fn clone(&self) -> Self {
-        Self {
-            shared: self.shared.clone(),
-        }
-    }
+    gate: RwLock<()>,
+    fill: Mutex<()>,
+    table: RwLock<Table<T>>,
+    account: Arc<Account>,
+    healthy: AtomicBool,
+    recently_used: AtomicBool,
 }
 
 impl<T: VecValue> Cache<T> {
-    pub(crate) fn new(budget: &'static CacheBudget) -> Self {
-        let shared = Arc::new(Shared::new(budget));
-        let reclaim: Arc<dyn budget::Reclaim> = shared.clone();
+    fn new(budget: &'static CacheBudget) -> Arc<Self> {
+        let cache = Arc::new(Self {
+            gate: RwLock::new(()),
+            fill: Mutex::new(()),
+            table: RwLock::new(Table::new()),
+            account: Account::new(budget),
+            healthy: AtomicBool::new(true),
+            recently_used: AtomicBool::new(false),
+        });
+        let reclaim: Arc<dyn Reclaim> = cache.clone();
         budget.register(Arc::downgrade(&reclaim));
-        Self { shared }
+        cache
     }
 
-    pub(crate) fn revision(&self) -> u64 {
-        self.shared.revision.load(Relaxed)
+    /// Accounted bytes, including buffers still borrowed after eviction.
+    pub fn used(&self) -> usize {
+        self.account.used()
     }
 
     pub(crate) fn try_read_range(
@@ -66,37 +79,28 @@ impl<T: VecValue> Cache<T> {
         len: impl FnOnce() -> usize,
         out: &mut Vec<T>,
     ) -> bool {
-        let Some(_gate) = self.shared.gate.try_read_recursive() else {
+        let Some(_gate) = self.gate.try_read_recursive() else {
             return false;
         };
-        self.shared.healthy.load(Relaxed)
-            && from <= to
-            && to <= len()
-            && self.shared.copy_range(from, to, out)
+        self.recently_used.store(true, Relaxed);
+        self.healthy.load(Relaxed) && from <= to && to <= len() && self.copy_range(from, to, out)
     }
 
     pub(crate) fn read_scope<R>(&self, read: impl FnOnce() -> R) -> R {
-        let _gate = self.shared.gate.read_recursive();
-        assert!(self.shared.healthy.load(Relaxed), "unpublished source");
+        let _gate = self.gate.read_recursive();
+        assert!(self.healthy.load(Relaxed), "unpublished source");
+        self.recently_used.store(true, Relaxed);
         read()
     }
 
     /// A failed source write stays closed until a successful repair/update.
-    pub(crate) fn update<R>(
-        &self,
-        from: usize,
-        replaces: bool,
-        write: impl FnOnce() -> Result<R>,
-    ) -> Result<R> {
-        let _gate = self.shared.gate.write();
-        self.shared.healthy.store(false, Relaxed);
-        if replaces {
-            self.shared.revision.fetch_add(1, Relaxed);
-        }
-        self.shared.invalidate_from(from);
+    pub(crate) fn update<R>(&self, from: usize, write: impl FnOnce() -> Result<R>) -> Result<R> {
+        let _gate = self.gate.write();
+        self.healthy.store(false, Relaxed);
+        self.invalidate_from(from);
         let result = write();
         if result.is_ok() {
-            self.shared.healthy.store(true, Relaxed);
+            self.healthy.store(true, Relaxed);
         }
         result
     }
@@ -118,8 +122,8 @@ impl<T: VecValue> Cache<T> {
         load: impl FnMut(&[Range<usize>]) -> Vec<(usize, Vec<T>)>,
     ) -> T {
         {
-            let table = self.shared.table.read();
-            if let Some((&start, values)) = table.range(..=index).next_back()
+            let table = self.table.read();
+            if let Some((start, values)) = table.at(index)
                 && let Some(value) = values.get(index - start)
             {
                 return value;
@@ -131,35 +135,13 @@ impl<T: VecValue> Cache<T> {
             .expect("source must cover a valid requested index")
     }
 
-    #[inline]
-    pub(crate) fn try_fold<B, E>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        load: impl FnMut(&[Range<usize>]) -> Vec<(usize, Vec<T>)>,
-        mut fold: impl FnMut(B, T) -> FoldResult<B, E>,
-    ) -> FoldResult<B, E> {
-        let mut acc = Some(init);
-        self.try_for_each_chunk(from, to, load, |_, values| {
-            acc = Some(
-                values
-                    .iter()
-                    .cloned()
-                    .try_fold(acc.take().unwrap(), &mut fold)?,
-            );
-            Ok(())
-        })?;
-        Ok(acc.unwrap())
-    }
-
     fn admissible(&self, request: Request<'_>) -> bool {
         match request {
             Request::Range(from, to) => to
                 .saturating_sub(from)
                 .checked_mul(size_of::<T>())
                 .and_then(|bytes| bytes.checked_add(Table::<T>::charge_for(1)))
-                .is_some_and(|bytes| bytes <= self.shared.budget.limit()),
+                .is_some_and(|bytes| bytes <= self.account.budget.limit()),
             _ => true,
         }
     }
@@ -171,11 +153,11 @@ impl<T: VecValue> Cache<T> {
         mut load: impl FnMut(&[Range<usize>]) -> Vec<(usize, Vec<T>)>,
         retain: bool,
     ) {
-        let Some(request) = self.shared.copy_prefix(request, out) else {
+        let Some(request) = self.copy_prefix(request, out) else {
             return;
         };
-        let _fill = self.shared.fill.lock();
-        let cached = self.shared.borrowed(request);
+        let _fill = self.fill.lock();
+        let cached = self.borrowed(request);
         let missing = plan::missing(request, &cached);
         if missing.is_empty() {
             plan::copy(request, &cached, &[], out);
@@ -203,23 +185,28 @@ impl<T: VecValue> Cache<T> {
             missing
                 .into_iter()
                 .map(|range| {
-                    let mut values = Vec::with_capacity(range.len());
-                    plan::copy(
-                        Request::Range(range.start, range.end),
-                        &[],
-                        &loaded,
-                        &mut values,
-                    );
-                    (range.start, Value::from_vec(values))
+                    let value = if range.len() == 1 {
+                        let (start, values) = plan::containing(&loaded, range.start)
+                            .expect("source loader must cover every cache miss");
+                        Value::One(values.slice()[range.start - start].clone())
+                    } else {
+                        let mut values = Vec::with_capacity(range.len());
+                        plan::copy(
+                            Request::Range(range.start, range.end),
+                            &[],
+                            &loaded,
+                            &mut values,
+                        );
+                        Value::from_vec(values)
+                    };
+                    (range.start, value)
                 })
                 .collect()
         };
         // Drop temporary reader handles before merging, so an unleased cached
         // buffer can extend in place without copy-on-write.
         drop(cached);
-        for (start, values) in offers {
-            self.shared.insert(start, values);
-        }
+        self.insert(offers);
     }
 
     pub(crate) fn try_for_each_chunk<E>(
@@ -232,7 +219,7 @@ impl<T: VecValue> Cache<T> {
         if from >= to {
             return Ok(());
         }
-        let cached = self.shared.borrowed(Request::Range(from, to));
+        let cached = self.borrowed(Request::Range(from, to));
         let retain = self.admissible(Request::Range(from, to));
         let mut at = from;
         let mut scratch = Vec::new();
@@ -259,6 +246,24 @@ impl<T: VecValue> Cache<T> {
             at = end;
         }
         Ok(())
+    }
+}
+
+impl<T: VecValue> Reclaim for Cache<T> {
+    fn try_clear(&self) {
+        if self.used() == 0 || self.recently_used.swap(false, Relaxed) {
+            return;
+        }
+        let old = self
+            .table
+            .try_write()
+            .map(|mut table| mem::replace(&mut *table, Table::new()));
+        drop(old);
+    }
+
+    fn clear(&self) {
+        let old = mem::replace(&mut *self.table.write(), Table::new());
+        drop(old);
     }
 }
 

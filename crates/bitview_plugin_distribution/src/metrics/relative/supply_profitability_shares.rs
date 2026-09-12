@@ -2,11 +2,11 @@ use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPercentPerBlock, StoredSeries, import_stored};
+use bitview_vecs::{CachedSeries, LazyPercentPerBlock, import_cached};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode};
 
 use super::{RelativeSource, public_loss_share, public_profit_share, share_views};
 
@@ -26,20 +26,14 @@ pub struct SupplyProfitabilityShares<M: StorageMode = Rw> {
     /// cohort has no unspent supply.
     pub supply_in_loss_share: UTXOAggregate<LazyPercentPerBlock<PartsPerMillion32>>,
     #[traversable(hidden)]
-    pub profit_share_source: UTXOAggregate<StoredSeries<Height, PartsPerMillion32, M>>,
+    pub profit_share_source: UTXOAggregate<CachedSeries<Height, PartsPerMillion32, M>>,
 }
 
 impl SupplyProfitabilityShares {
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        version: Version,
-        mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = UTXOAggregate::try_from_fn(|id| {
-            import_stored(
-                cache,
+            import_cached(
                 db,
                 &id.metric_name("supply_in_profit_share_ppm"),
                 version + Version::ONE,

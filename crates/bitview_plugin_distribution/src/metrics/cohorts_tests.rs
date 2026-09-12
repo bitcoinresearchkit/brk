@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::test_cache::init_cache;
 use std::thread;
 
 use bitview_cohort::{AgeRangeId, AmountRangeId};
@@ -5,17 +7,15 @@ use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{LazyWindowStartVec, import_stored};
+use bitview_vecs::{LazyWindowStartVec, import_cached};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::{Cents, CentsSats, CentsSquaredSats, Height, Sats, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, Database, ReadableCloneableVec, ReadableVec, WritableVec};
+use vecdb::{Database, ReadableCloneableVec, ReadableVec, WritableVec};
 
 use super::{CohortMetrics, IMPORT_STACK_SIZE};
 use crate::state::{RealizedOps, UTXOStates};
-
-static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
 fn capitals(band: usize) -> (CentsSats, CentsSquaredSats) {
     let price = 100_001 + band as u128 * 7;
@@ -37,14 +37,15 @@ fn block_writes_keep_every_raw_cap_and_include_them_in_resume_checks() {
 }
 
 fn check_block_writes() {
+    init_cache();
     let directory = tempdir().unwrap();
-    let context = ImportContext::new(directory.path(), &CACHE);
+    let context = ImportContext::new(directory.path());
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
     let indexer = Indexer::import(context, &reader).unwrap();
     let mappings = MappingsVecs::import(context, &indexer).unwrap();
     let db = Database::open(&directory.path().join("cohorts")).unwrap();
-    let spot = import_stored::<Height, Cents>(&CACHE, &db, "spot", Version::ONE).unwrap();
+    let spot = import_cached::<Height, Cents>(&db, "spot", Version::ONE).unwrap();
     let starts = LazyWindowStartVec::days(
         "test_window",
         Version::ONE,
@@ -58,7 +59,6 @@ fn check_block_writes() {
         _1y: &starts,
     };
     let mut cohorts = CohortMetrics::forced_import(
-        &CACHE,
         &db,
         Version::ONE,
         &mappings,

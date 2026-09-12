@@ -1,11 +1,12 @@
+use crate::test_cache::init_cache;
 use std::{hint::black_box, time::Instant};
 
 use brk_types::{Height, Timestamp};
 use parking_lot::RwLock;
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
-    PcoVec, ReadableVec, StoredVec, Version, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
+    StoredVec, Version, WritableVec,
 };
 
 /// Storage-level comparison, not an HTTP/query benchmark. Mirrors the lookup
@@ -13,13 +14,12 @@ use vecdb::{
 #[test]
 #[ignore = "million-row timestamp storage comparison; temporary local data only"]
 fn benchmark_timestamp_lookup() {
+    init_cache();
     const LEN: usize = 1_000_000;
     let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
-    let mut stored: EagerVec<PcoVec<Height, Timestamp, Budgeted>> = EagerVec::import_with(
-        ImportOptions::new(&database, "timestamps", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut stored: EagerVec<PcoVec<Height, Timestamp, Budgeted>> =
+        EagerVec::import(&database, "timestamps", Version::ONE).unwrap();
     for index in 0..LEN {
         // Duplicates exercise first-equal semantics.
         stored.push(Timestamp::new(1_200_000_000 + (index / 2) as u32 * 600));
@@ -92,5 +92,3 @@ fn benchmark_timestamp_lookup() {
         times[0][10], times[1][10], times[2][10]
     );
 }
-
-static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
