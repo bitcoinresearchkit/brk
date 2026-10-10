@@ -4140,13 +4140,13 @@
         }
       }
 
-      /* Where it's from, as tabs across the editor (the one chosen underlined), what it shows under them: Bitview's colors,
-         inset; the surface edge to edge, its hex closing the editor; a fading one's own. */
+      /* Where it's from, as tabs across the editor (the one chosen as every segmented choice shows it), what it shows
+         under them: Bitview's colors, inset; the surface edge to edge, its hex closing the editor; a fading one's own. */
       .color-editor .color-source {
         display: flex;
         width: 100%;
-        gap: 0;
-        padding: 0;
+        gap: 1px;
+        padding: 4px;
 
         /* (Its focus inside it, and the surface's: the editor clips what reaches its edge.) */
         button:focus-visible,
@@ -4155,29 +4155,11 @@
         }
 
         button {
-          position: relative;
           flex: 1;
-          height: 32px;
-          border-radius: 0;
-
-          &[aria-pressed="true"] {
-            background: none;
-            box-shadow: none;
-
-            &::after {
-              content: "";
-              position: absolute;
-              right: 12px;
-              bottom: 0;
-              left: 12px;
-              height: 2px;
-              border-radius: 1px;
-              background: var(--ink);
-            }
-          }
+          height: 26px;
 
           @media (pointer: coarse) {
-            height: 40px;
+            height: 34px;
           }
         }
       }
@@ -5873,12 +5855,21 @@
         position: relative;
         display: block;
 
+        /* Waiting for its drawing: a light sweeping across, moved (not repainted: the compositor runs it, off the page's
+           thread, though a strip's cards out of sight wait on for as long as they're there). */
+        &.pending {
+          overflow: hidden;
+          border-radius: var(--radius-sm);
+        }
+
         &.pending::after {
           content: "";
           position: absolute;
-          inset: 0;
-          border-radius: var(--radius-sm);
-          background: linear-gradient(100deg, transparent 30%, var(--sweep) 50%, transparent 70%) 0 0 / 200% 100%;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 200%;
+          background: linear-gradient(100deg, transparent 30%, var(--sweep) 50%, transparent 70%);
           animation: sweep 1.4s linear infinite;
         }
       }
@@ -5895,11 +5886,11 @@
 
       @keyframes sweep {
         from {
-          background-position: 150% 0;
+          transform: translateX(-75%);
         }
 
         to {
-          background-position: -50% 0;
+          transform: translateX(25%);
         }
       }
 
