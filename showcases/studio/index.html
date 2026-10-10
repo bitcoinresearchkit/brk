@@ -9024,8 +9024,20 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * A cloud spans two layers or more, or one and an edge; a trend line, two layers or more: else what to do.
        * @param {{ from?: string[], type?: string }} layer
        */
-      const fromShort = (layer) => ((edges) => ((layers) => (layer.type === "trend" ? (layers > 1 ? "" : TREND_SHORT) : layers && layers + edges > 1 ? "" : CLOUD_SHORT))((layer.from?.length ?? 0) - edges))(edgesOf(layer).length);
-      const CLOUD_SHORT = "Select two layers, or a layer and an edge", TREND_SHORT = "Select two layers";
+      /**
+       * What a layer made from layers lacks, said (none: nothing): a cloud, two layers or a layer and an edge; a trend, two
+       * layers and a third on the chart, outside them, to flip it (one rule: where it's offered, added, drawn).
+       * @param {{ type?: string, from?: string[], id?: string }} layer @param {Chart} [doc]
+       */
+      const fromShort = (layer, doc = chart) => {
+        const edges = edgesOf(layer).length, layers = (layer.from?.length ?? 0) - edges;
+        if (layer.type !== "trend") return layers && layers + edges > 1 ? "" : CLOUD_SHORT;
+        if (layers < 2) return TREND_SHORT;
+        return doc?.layers.some((other) => !other.from && !layer.from?.includes(other.id)) ? "" : TREND_FLIP;
+      };
+      const CLOUD_SHORT = "Select two layers, or a layer and an edge", TREND_SHORT = "Select two layers", TREND_FLIP = "Needs a third layer, a price, to flip it";
+      /** A trend's room on the chart: three layers not made from layers (two it rides, one to flip it), else why not. */
+      const trendShort = () => (chart.layers.filter((layer) => !layer.from).length >= 3 ? "" : "Needs three layers: two it rides, a third to flip it");
       /** How a cloud is filled, said. @param {{ from?: string[] }} layer */
       const cloudSays = (layer) => ({ "": "At each date, from the lowest of them to the highest", top: "At each date, from the lowest of them up to the pane's top", bottom: "At each date, from the pane's bottom up to the highest of them" })[edgesOf(layer).join()];
       /**
@@ -10611,7 +10623,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             const inputs = all.filter((result) => result?.shown), edges = edgesOf(layer).length;
             if (!inputs.length || inputs.length + edges < 2) {
               /** @type {Result} */
-              const short = { unit: inputs[0]?.unit ?? "number", error: fromShort(layer) || (edges ? "Needs a layer with data" : "Needs two layers with data") };
+              const short = { unit: inputs[0]?.unit ?? "number", error: fromShort(layer, doc) || (edges ? "Needs a layer with data" : "Needs two layers with data") };
               results.set(layer.id, short);
               return short;
             }
@@ -10934,6 +10946,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let drawnPanes = "";
       /** The range tabs light the chart's preset only while the view still shows it. */
       let presetShown = true;
+      /** Whether the range preset shows, its button lit with it (a link's range, an interval stepped, a view kept). */
+      const setPresetShown = (/** @type {boolean} */ shown) => {
+        presetShown = shown;
+        renderRanges();
+      };
 
       /** Whether what's drawn is this chart with all its data. */
       const settled = () => Boolean(resolved) && drawnChart === chart.id && drawnVersion === drawVersion;
@@ -10986,7 +11003,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const reveal = first && doc.layers.length > 0 && !reduced.matches && !fromHome;
         build(structuredClone(chart), result, refit);
         drawnChart = doc.id;
-        drawnDoc = doc;
         drawnVersion = version;
         for (const wake of [...drawnWaiters]) wake();
         renderLayers();
@@ -11042,6 +11058,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         return true;
       }
       function build(doc, data, refit) {
+        // (What the live price paints its colors from: this, whatever builds it, a restyle and a preview too.)
+        drawnDoc = doc;
         // (Another chart, another interval: the keys' crosshair lets go of a date it may not have.)
         if (drawnChart !== doc.id || drawnIndex !== doc.index) keyAway();
         const sameView = !refit && drawnIndex === doc.index && drawnRange === doc.range && drawnChart === doc.id;
@@ -11280,10 +11298,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const back = left && data.times.length > 1 ? viewOn(left, doc.index, data.times) : null;
         if (back && back.to - back.from >= 1) {
           view.timeScale().setVisibleLogicalRange(within(back, "to"));
-          presetShown = false;
+          setPresetShown(false);
         } else if (!visible || presetShown) {
           applyRange(doc, data);
-          presetShown = true;
+          setPresetShown(true);
         }
         else if (shift && (glidingTo ?? logical)) {
           const range = /** @type {{ from: number, to: number }} */ (glidingTo ?? logical);
@@ -12413,10 +12431,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         valuesSoon();
         // (Mid-resize, a preset showing still is: the new width's layout puts it back, see relayout.)
         const shown = view.timeScale().width() !== laidWidth ? presetShown : showsPreset();
-        if (shown !== presetShown) {
-          presetShown = shown;
-          renderRanges();
-        }
+        if (shown !== presetShown) setPresetShown(shown);
         prefetch();
         keepView();
         rest();
@@ -15565,6 +15580,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function leaveHome(show = () => {}, before = null, push = true) {
         if (!home) return void show();
+        navigations++;
         home = false;
         prefs.home = false;
         savePrefs();
@@ -16253,8 +16269,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         renderCharts();
         toast(copies.length === 1 ? `Duplicated “${titleOf(docs[0])}”` : `Duplicated ${copies.length} charts`, { label: "Undo", run: () => {
           const ids = copies.map((copy) => copy.id), open = ids.indexOf(chart.id);
-          if (open >= 0) openChart(chartById(docs[open].id) ?? previousChart() ?? library.charts[0]);
+          // (The copies gone first: the one opened in place of an open copy is one still listed, else a new one.)
           for (const doc of library.charts.filter((doc) => ids.includes(doc.id))) discard(doc);
+          if (open >= 0) openChart(chartById(docs[open].id) ?? previousChart() ?? library.charts[0] ?? (previewing = draftChart()));
           save();
           renderCharts();
         } });
@@ -17472,7 +17489,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           { key: "duplicate", icon: ICONS.duplicate, label: `Duplicate ${n}`, kbd: "⌘D", ...(chart.layers.length + layers.length > MAX_LAYERS ? { disabled: `A chart holds ${MAX_LAYERS} layers at most` } : {}), run: () => layersBatch("duplicate") },
           { key: "move", icon: ICONS.pane, label: "Move to pane", page: () => choicePage("Move to pane", () => paneChoices(layers.map((layer) => layer.id))) },
           { key: "cloud", icon: ICONS.cloud, label: "A cloud between them", ...two, run: () => layersBatch("cloud") },
-          { key: "trend", icon: ICONS.riding, label: "A trend between them", ...two, run: () => layersBatch("trend") },
+          { key: "trend", icon: ICONS.riding, label: "A trend between them", ...(Object.keys(two).length ? two : ((why) => (why ? { disabled: why } : {}))(fromShort({ type: "trend", from: layers.filter((layer) => !layer.from).map((layer) => layer.id) }))), run: () => layersBatch("trend") },
           { key: "remove", icon: ICONS.trash, label: `Remove ${n}`, kbd: "⌫", danger: true, run: () => layersBatch("remove") },
         ];
       }
@@ -17878,6 +17895,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** Colors for levels that color a layer, in order up: warmer as they go, none its own or one taken. */
       const LEVEL_COLORS = ["yellow", "orange", "red", "pink", "purple", "violet", "blue", "sky", "teal", "green", "lime", "amber"];
+      /** A level added to a layer (in its edit): its own color where the layer's colored by its levels. @param {Layer} layer @param {number} value */
+      function withLevel(layer, value) {
+        layer.levels = [...(layer.levels ?? []), { value }];
+        if (layer.byLevels) colorLevels(layer);
+      }
+      /** A layer's level taken off (in its edit): none left, none. @param {Layer} layer @param {number} i */
+      function withoutLevel(layer, i) {
+        const others = layer.levels?.filter((_, k) => k !== i);
+        layer.levels = others?.length ? others : undefined;
+      }
       /**
        * A layer's levels made to color it: each without a color of its own given one (by value, lowest first, from
        * LEVEL_COLORS), so its bands show at once and don't follow its own color under them. @param {Layer} layer
@@ -18868,10 +18895,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         else if (lineDash) lineMenu(button, lineDash, "dash");
         else if (removeLevel) {
           const i = Number(removeLevel);
-          editLayer((layer) => {
-            const rest = layer.levels?.filter((_, k) => k !== i);
-            layer.levels = rest?.length ? rest : undefined;
-          });
+          editLayer((layer) => withoutLevel(layer, i));
           refocus(i ? `#level-${i - 1}` : '[data-action="add-level"]');
         }
         else if (side) editLayer((layer) => (layer.side = side));
@@ -18972,10 +18996,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const layer = layerById(selected);
         if (!layer || (layer.levels?.length ?? 0) >= 12) return;
         const level = levelValue(layer);
-        editLayer((target) => {
-          target.levels = [...(target.levels ?? []), { value: level }];
-          if (target.byLevels) colorLevels(target);
-        });
+        editLayer((target) => withLevel(target, level));
         requestAnimationFrame(() => {
           const input = $(`level-${(layerById(selected)?.levels?.length ?? 1) - 1}`);
           input?.focus();
@@ -19162,8 +19183,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function addFrom(/** @type {"cloud" | "trend"} */ type, /** @type {string[]} */ ids) {
         const members = fromOf(chart, ids, type === "cloud");
-        if (fromShort({ type, from: members })) return void notice(type === "cloud" ? "A cloud spans two layers, or a layer and an edge" : "A trend is on one of two layers or more");
-        if (type === "trend" && chart.layers.every((layer) => layer.from || members.includes(layer.id))) return void notice("A trend flips when another layer touches it: add one (a price)");
+        const short = fromShort({ type, from: members });
+        if (short) return void notice(short === TREND_FLIP ? "A trend flips when another layer touches it: add one (a price)" : type === "cloud" ? "A cloud spans two layers, or a layer and an edge" : "A trend is on one of two layers or more");
         if (!roomFor(chart)) return;
         /** @type {Layer | undefined} */
         let added;
@@ -19784,7 +19805,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           ...(home ? [] : [{ title: "All charts", text: "Every chart, side by side.", words: "grid overview gallery library home browse", icon: "grid", run: () => showHome() }]),
           ...(cloudable() ? [
             { title: "Add a cloud", text: "From layers: filled between them, from the lowest of them to the highest at each date, or from them to the pane's top or bottom.", words: "cloud band envelope fill between shade percentiles from layers", icon: "cloud", keepOpen: true, run: () => pushPage(fromPage("cloud")) },
-            { title: "Add a trend", text: "From layers: on the lowest of them until a price touches it, then on the highest until it touches that.", words: "trend support resistance bound ride regime from layers percentiles", icon: "riding", keepOpen: true, run: () => pushPage(fromPage("trend")) },
+            // (Not now, it says why: dimmed, nothing to run.)
+            { title: "Add a trend", text: trendShort() ? `${trendShort()}.` : "From layers: on the lowest of them until a price touches it, then on the highest until it touches that.", words: "trend support resistance bound ride regime from layers percentiles", icon: "riding", ...(trendShort() ? {} : { keepOpen: true, run: () => pushPage(fromPage("trend")) }) },
           ] : []),
           ...(empty || chart.panes.length >= MAX_PANES ? [] : [{ title: "Add to a new pane", text: "A series in a pane of its own, under the others.", words: "new pane add series separate own below", icon: "pane", keepOpen: true, run: () => openPalette({ add: true, into: "new" }) }]),
           { title: "Add a formula", text: `A layer computed from others or from any series, like A / B or ${EXAMPLE}.`, words: "formula expression compute ratio", icon: "formula", kbd: "F", run: addFormula, suggested: true, keepOpen: true },
@@ -19818,7 +19840,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             { title: `Duplicate ${n}`, text: "Each copy under its original.", words: "selected picked layers copy duplicate", icon: "duplicate", kbd: "⌘D", run: () => layersBatch("duplicate"), suggested: true },
             ...chart.panes.filter((pane) => layers.some((layer) => layer.pane !== pane.id)).map((pane) => ({ title: `Move ${n} to pane ${chart.panes.indexOf(pane) + 1}`, text: paneNames(pane), words: "selected picked layers move pane", icon: "pane", run: () => moveLayers(layers.map((layer) => layer.id), pane.id) })),
             ...(chart.panes.length < MAX_PANES ? [{ title: `Move ${n} to a new pane`, text: "A pane of their own, under the others.", words: "selected picked layers move pane new", icon: "pane", run: () => moveLayers(layers.map((layer) => layer.id), null), suggested: true }] : []),
-            ...(layers.filter((layer) => !layer.from).length > 1 ? [{ title: "A cloud between them", text: "Filled from the lowest of them to the highest, at each date.", words: "selected picked layers cloud band envelope fill between shade", icon: "cloud", run: () => layersBatch("cloud"), suggested: true }, { title: "A trend between them", text: "On the lowest of them until a price touches it, then on the highest until it touches that.", words: "selected picked layers trend support resistance bound ride", icon: "riding", run: () => layersBatch("trend") }] : []),
+            ...(layers.filter((layer) => !layer.from).length > 1 ? [{ title: "A cloud between them", text: "Filled from the lowest of them to the highest, at each date.", words: "selected picked layers cloud band envelope fill between shade", icon: "cloud", run: () => layersBatch("cloud"), suggested: true }, ((why) => ({ title: "A trend between them", text: why ? `${why}.` : "On the lowest of them until a price touches it, then on the highest until it touches that.", words: "selected picked layers trend support resistance bound ride", icon: "riding", ...(why ? {} : { run: () => layersBatch("trend") }) }))(fromShort({ type: "trend", from: layers.filter((layer) => !layer.from).map((layer) => layer.id) }))] : []),
             { title: `Remove ${n}`, text: "With an Undo.", words: "selected picked layers remove delete", icon: "trash", kbd: "⌫", danger: true, run: () => layersBatch("remove"), suggested: true },
             { title: "Clear the selection", text: `${n} selected.`, words: "selected picked layers deselect clear", icon: "close", kbd: "esc", run: () => clearLayerPicks(), suggested: true },
           ])(plural(layers.length, "layer"), layers.some((layer) => !layer.hidden)))(pickedLayers())),
@@ -19926,7 +19948,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // page that has them all, the one in effect checked, does.
         const leads = (command) => (command.follows ?? `${command.title.split(/[\s:]/)[0]} ${command.words ?? ""}`).toLowerCase().split(/\s+/).some((word) => word.startsWith(words[0]));
         const found = !everything ? [] : rank(commands().map((command) => ({ kind: "command", key: command.title, command, group: "Commands" })), (item) => `${item.command.title} ${item.command.words ?? ""}`, words);
-        const strong = found.filter((item) => leads(item.command)).slice(0, 6), weak = found.filter((item) => !leads(item.command)).slice(0, 6);
+        // (Of those leading, a title starting with it first, "delete" Delete this chart; a keyword's after; one that
+        // destroys, by a keyword alone, last.)
+        const titled = (/** @type {Command} */ command) => command.title.toLowerCase().startsWith(words[0]), ahead = found.filter((item) => leads(item.command));
+        const strong = [...ahead.filter((item) => titled(item.command)), ...ahead.filter((item) => !titled(item.command) && !item.command.danger), ...ahead.filter((item) => !titled(item.command) && item.command.danger)].slice(0, 6), weak = found.filter((item) => !leads(item.command)).slice(0, 6);
         // Charts that match come before the series: a chart's title is a few words, matched, it's what's looked for.
         const charts = !everything ? [] : rank(library.charts.filter((doc) => home || doc !== chart).map((doc) => ({ kind: "chart", key: doc.id, group: "Charts" })), rowText, words).slice(0, 4);
         // The website's charts (once read), after yours: a few that match; all of them on their own page.
@@ -20216,6 +20241,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** The row a screen reader's on, as ⌘K's input says it: none when no row is (an empty list). */
       const activeOption = () => ($(`option-${palette.active}`) ? $("palette-input").setAttribute("aria-activedescendant", `option-${palette.active}`) : $("palette-input").removeAttribute("aria-activedescendant"));
       /** The palette's list, grouped; `pending` adds a searching row, `note` a closing remark. */
+      /** Whether ⌘K's item does something with ↵ (dimmed, it doesn't: a row not now, a series by block only, a command saying why). @param {any} item */
+      const actionable = (item) => !(item.kind === "row" && (item.disabled || item.dim || (!item.run && !item.page))) && !(item.kind === "series" && byBlock.has(item.name)) && !(item.kind === "command" && !item.command.run);
+      /** Whether ⌘K's item can be lit first: it acts, and isn't one that destroys found by a keyword alone (its name doesn't start with what's typed). @param {any} item */
+      const litFirst = (item) => {
+        if (!actionable(item)) return false;
+        const danger = item.kind === "command" ? item.command.danger : item.kind === "row" && item.danger, name = item.kind === "command" ? item.command.title : item.label ?? "";
+        return !danger || String(name).toLowerCase().startsWith(palette.query.trim().toLowerCase().split(/\s+/)[0] ?? "");
+      };
       function renderPalette(pending = false, note = "") {
         updateCallHelp();
         const searching = Boolean(palette.query.trim());
@@ -20231,6 +20264,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           return;
         }
         palette.active = Math.min(palette.active, Math.max(0, palette.items.length - 1));
+        // (A list lit at its top, that row doing nothing: the first that does, safely, lit instead; destroying by a keyword
+        // alone, it stays where it is, unlit, for an arrow to light.)
+        // (A page asking for a value keeps its row lit as it's typed: its preview stays.)
+        if (!palette.moved && palette.active === 0 && !palette.pages.at(-1)?.input && !litFirst(palette.items[0])) palette.active = actionable(palette.items[0]) ? -1 : palette.items.findIndex(litFirst);
         // A new list starts at its top (set before it's written: after, it would lay the list out at once).
         list.scrollTop = 0;
         // (Its first rows, as many as a page shows and more, the one highlighted among them: the rest as it's scrolled
@@ -20290,7 +20327,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (item?.kind === "formula" && palette.editing) $("palette-primary").textContent = "Apply";
         $("palette-more").hidden = actionsFor(item).length < 2;
         // (A row saying how things are, or what's still wanting, has nothing for ↵ to do: esc says that.)
-        $("palette-enter").hidden = $("palette-close-sep").hidden = !item || (item.kind === "command" ? !item.command.run : item.kind === "row" && !item.run && !item.page);
+        $("palette-enter").hidden = $("palette-close-sep").hidden = !item || (item.kind !== "formula" && item.kind !== "insert" && item.kind !== "widen" && item.kind !== "folder" && item.kind !== "chart" && !actionable(item));
         // (How many it found, while searching: the series' search stops at its 80, then "80+"; else how many series there are,
         // where they're searched. Not on a page, nor writing a formula.)
         $("palette-count").hidden = palette.pages.length > 0 || palette.formula;
@@ -20306,7 +20343,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!palette.items.length) return;
         palette.moved = true;
         const n = palette.items.length;
-        palette.active = Math.abs(delta) > 1 ? clamp(palette.active + delta, 0, n - 1) : (palette.active + delta + n) % n;
+        // (From none lit: the row it's moved to, -1 + delta, lit; ↑ the last.)
+        palette.active = palette.active < 0 ? clamp(delta > 0 ? delta - 1 : n + delta, 0, n - 1) : Math.abs(delta) > 1 ? clamp(palette.active + delta, 0, n - 1) : (palette.active + delta + n) % n;
         drawOptions(palette.active + PALETTE_PAGE / 2);
         $("palette-list").querySelector('[aria-selected="true"]')?.setAttribute("aria-selected", "false");
         const row = $(`option-${palette.active}`);
@@ -20855,7 +20893,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           { kind: "row", key: "add:formula", icon: ICONS.formula, label: "Formula", aside: "From the layers, by their letters", kbd: "F", words: "formula expression math ratio divide combine function", group: "Other layers", other: true, verb: "Add", run: () => addFormula(palette.into) },
           ...(cloudable() ? [
             { kind: "row", key: "add:cloud", icon: ICONS.cloud, label: "Cloud", aside: "Filled between two layers", words: "cloud band fill area between range", group: "Other layers", other: true, verb: "Add", page: () => fromPage("cloud") },
-            { kind: "row", key: "add:trend", icon: ICONS.riding, label: "Trend", aside: "Above or below one layer", words: "trend riding above below support resistance", group: "Other layers", other: true, verb: "Add", page: () => fromPage("trend") },
+            { kind: "row", key: "add:trend", icon: ICONS.riding, label: "Trend", aside: trendShort() || "Rides two layers, flipped by a third", words: "trend riding above below support resistance", group: "Other layers", other: true, verb: "Add", page: () => fromPage("trend"), ...(trendShort() ? { disabled: trendShort() } : {}) },
           ] : []),
         ];
       }
@@ -20935,7 +20973,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             ] : []),
             { key: "add-series", icon: ICONS.plus, label: "Add a layer", kbd: "A", verb: "Add", group: "In it", leads: true, stay: true, run: () => openPalette({ add: true }) },
             { key: "add-formula", icon: ICONS.formula, label: "Add a formula", kbd: "F", verb: "Add", group: "In it", leads: true, stay: true, run: addFormula },
-            ...(cloudable() ? [{ key: "add-cloud", icon: ICONS.cloud, label: "Add a cloud", group: "In it", page: () => fromPage("cloud") }, { key: "add-trend", icon: ICONS.riding, label: "Add a trend", group: "In it", page: () => fromPage("trend") }] : []),
+            ...(cloudable() ? [{ key: "add-cloud", icon: ICONS.cloud, label: "Add a cloud", group: "In it", page: () => fromPage("cloud") }, { key: "add-trend", icon: ICONS.riding, label: "Add a trend", group: "In it", page: () => fromPage("trend"), ...(trendShort() ? { aside: trendShort(), disabled: trendShort() } : {}) }] : []),
             ...(any ? [
               { key: "share", icon: ICONS.share, label: SHARE, aside: "Its QR code too", words: "share link url copy qr code scan phone", verb: SHEET_SHARE ? "Share" : "Copy", group: "Out of it", run: () => $("share").click() },
               { key: "copy-image", icon: ICONS.copy, label: "Copy as image", verb: "Copy", group: "Out of it", run: () => exportAs("copy") },
@@ -20953,7 +20991,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         ...chart.panes.flatMap((pane, i) => chart.layers.filter((layer) => layer.pane === pane.id).map((layer) => ({ ...layerRow(layer), group: `Pane ${i + 1}` }))),
         { kind: "row", key: "add-series", icon: ICONS.plus, label: "Add a layer", kbd: "A", verb: "Add", group: "Add", leads: true, stay: true, run: () => openPalette({ add: true }) },
         { kind: "row", key: "add-formula", icon: ICONS.formula, label: "Add a formula", kbd: "F", verb: "Add", group: "Add", leads: true, stay: true, run: addFormula },
-        ...(cloudable() ? [{ kind: "row", key: "add-cloud", icon: ICONS.cloud, label: "Add a cloud", group: "Add", page: () => fromPage("cloud") }, { kind: "row", key: "add-trend", icon: ICONS.riding, label: "Add a trend", group: "Add", page: () => fromPage("trend") }] : []),
+        ...(cloudable() ? [{ kind: "row", key: "add-cloud", icon: ICONS.cloud, label: "Add a cloud", group: "Add", page: () => fromPage("cloud") }, { kind: "row", key: "add-trend", icon: ICONS.riding, label: "Add a trend", group: "Add", page: () => fromPage("trend"), ...(trendShort() ? { aside: trendShort(), disabled: trendShort() } : {}) }] : []),
         ...(chart.layers.some((layer) => layer.hidden) ? [{ kind: "row", key: "show-all", icon: ICONS.eye, label: "Show every layer", verb: "Show", group: "Add", stay: true, run: showEvery }] : []),
       ] });
       /** A layer row's ⌘K: what's changed most, the rest a ↵ away on its page. */
@@ -21167,10 +21205,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             { key: "color", icon: swatchOf(look.color), label: "Color", aside: colorName(look.color), page: () => choicePage("Color", () => colorRows(now().color, (name) => setLineLook(id, key, "color", name), (doc, name) => lineLookOn(doc, id, key, "color", name))) },
             { key: "dash", icon: dashGlyph(dash[2], dash[3]), label: "Line style", aside: dash[1], page: () => choicePage("Line style", () => dashChoices(now().dash, (style) => ({ run: () => setLineLook(id, key, "dash", style), look: (/** @type {Chart} */ doc) => lineLookOn(doc, id, key, "dash", style) }))) },
             ...(level ? [{ key: "remove", icon: ICONS.trash, label: "Remove the level", verb: "Remove", danger: true, stay: true, run: () => {
-              editById(id, (item) => {
-                const rest = item.levels?.filter((_, k) => k !== Number(key));
-                item.levels = rest?.length ? rest : undefined;
-              });
+              editById(id, (item) => withoutLevel(item, Number(key)));
               popPage();
             } }] : []),
           ].map((row) => ({ kind: "row", preview: (/** @type {HTMLElement} */ panel) => previewLayer(panel, id), ...row }));
@@ -21186,7 +21221,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             ...(layer.levels ?? []).map((level, i) => ({ ...lineRow(id, String(i), format(level.value, unit), ""), key: `level:${i}`, page: () => linePage(id, String(i), `Level ${i + 1}`) })),
             ...((layer.levels?.length ?? 0) < 12 ? [{ key: "add", icon: ICONS.plus, label: "Add a level", aside: "At a value you type", page: () => numberPage({ title: "New level", value: Number.isFinite(last) ? String(Number(last.toPrecision(3))) : "", apply: (n) => {
               const index = layerById(id)?.levels?.length ?? 0;
-              editById(id, (item) => (item.levels = [...(item.levels ?? []), { value: n }]));
+              editById(id, (item) => withLevel(item, n));
               // Back on the levels, on the new one.
               const levels = palette.pages.at(-2);
               if (levels) levels.landOn = `level:${index}`;
@@ -22343,7 +22378,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * A chart as its link's #chart= writes it, readable. (Only what a link or a chat would break on encoded: brackets and
        * braces too, a chat cuts a trailing "]}" off; a "+", read as a space by what decodes forms.)
        */
-      const linkText = (/** @type {Chart} */ doc) => JSON.stringify(toSketch(doc)).replace(/[\s"<>`%#\\{}[\]+]/g, (char) => encodeURIComponent(char));
+      // (An "&" too: a title's "&chart=" never reads as a field of the link.)
+      const linkText = (/** @type {Chart} */ doc) => JSON.stringify(toSketch(doc)).replace(/[\s"<>`%#\\{}[\]+&]/g, (char) => encodeURIComponent(char));
       /**
        * A chart's link, written as one writes it: for a person or an assistant to read, change and write again. Past what a
        * browser opens (Firefox, a megabyte: long strokes of the brush, many), compressed: it opens, but can't be read.
@@ -23758,28 +23794,33 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * the guide, the "About" section: "{" first, as typed or URL-encoded), else compressed (older links, and the longest).
        * A chart already kept is the one opened, at the link's window (or its range, the link having none).
        */
-      async function fromHash(run = linkRun) {
-        const hash = location.hash.slice(1), params = new URLSearchParams(hash), key = params.has("chart") ? "chart" : params.has("image") ? "image" : "";
+      async function fromHash(run = linkRun, at = 0) {
+        // (The field the link starts with: what follows is its chart, whatever it holds; else the first there is.)
+        const hash = location.hash.slice(1), params = new URLSearchParams(hash), key = /^(?:chart|image)(?==)/.exec(hash)?.[0] ?? (params.has("chart") ? "chart" : params.has("image") ? "image" : "");
         const shared = key ? params.get(key) : null;
         if (!shared) return null;
         picturing = key === "image";
         // (The link stays in the address bar: a chart read from it, written as linkInUrl writes it, or cleared; one that
         // can't be read, as it is, to be put right there.)
         // (Written, it runs to the end, read as it is: a "+" in a formula a plus, an "&" in a name, part of it.)
-        return linked(new RegExp(`(?:^|&)${key}=(.*)$`, "s").exec(hash)?.[1] ?? "", shared, run);
+        return linked(new RegExp(`(?:^|&)${key}=(.*)$`, "s").exec(hash)?.[1] ?? "", shared, run, at);
       }
+      /** The address bar's writes, counted: a compressed link ready late doesn't overwrite a later one. */
+      let urlWrites = 0;
       /**
        * A preview's link in the address bar (as it is now: its changes written in): reloaded, bookmarked or shared again,
        * it's the same chart; kept, or another chart open, it goes (a picture's link stays its own).
        */
       function linkInUrl() {
+        const write = ++urlWrites;
         if (picturing) return;
         const doc = chart && chart === previewing && !home && chart.layers.length ? chart : null, written = doc ? linkText(doc) : "";
         // (A link that couldn't be read stays as it was, to be put right, until another chart's opened.)
         if (location.hash && location.hash === brokenLink) return;
         const put = (/** @type {string} */ hash) => location.hash !== hash && history.replaceState(history.state, "", `${location.pathname}${location.search}${hash}`);
         // (A long one compressed, as Copy link writes it: once it's ready, if it's still the chart shown.)
-        if (written.length >= 60_000) return void shareLink(doc).then((link) => chart === doc && previewing === doc && !picturing && put(link.slice(link.indexOf("#"))));
+        // (Only if no write came since, and it's still shown: not the grid, another chart, a picture.)
+        if (written.length >= 60_000) return void shareLink(doc).then((link) => write === urlWrites && chart === doc && previewing === doc && !home && !picturing && put(link.slice(link.indexOf("#"))));
         put(written ? `#chart=${written}` : "");
       }
       /** Why the last chart written couldn't be read (for studio.open). */
@@ -23787,16 +23828,25 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /**
        * A chart from a link, written (its JSON) or compressed (`shared`): the one kept already if it's the same, else it;
        * said in a toast (not under a picture), or why it couldn't be read.
-       * @param {string} written @param {string | null} shared @param {number} run
+       * @param {string} written @param {string | null} shared @param {number} run @param {number} [at] the navigation it is
+       *   (another after it, it's dropped, unsaid; its own may not be counted yet: a link written out is read at once)
        */
-      async function linked(written, shared, run) {
+      async function linked(written, shared, run, at = 0) {
         // (Written out, as JSON, however encoded: else compressed.)
         const plain = /^(?:%20|%0a|%0d|%09|\s)*(?:\{|%7b|%257b)/i.test(written);
         try {
           lostDrawings = 0;
-          const doc = plain ? fromWritten(written) : await fromLink(shared);
+          // (Another field after it, "&image=" or "&chart=": the whole read first, a title's "&" its own; else up to there.)
+          const field = /&(?:chart|image)=/.exec(written), doc = plain ? (() => {
+            try {
+              return fromWritten(written);
+            } catch (error) {
+              if (!field) throw error;
+              return fromWritten(written.slice(0, field.index));
+            }
+          })() : await fromLink(shared);
           if (!doc.layers.length) throw new Error("it lists no layers");
-          if (run !== linkRun) return null;
+          if (run !== linkRun || (at && navigations > at)) return null;
           const twin = library.charts.find((other) => sameChart(other, doc));
           if (twin) {
             const all = viewsNow();
@@ -23811,8 +23861,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (!picturing) toast(twin ? `Opened a shared chart you have already${lost}` : `Opened a shared chart: Keep it to have it in your charts${lost}`);
           return twin ?? doc;
         } catch (error) {
-          // (Written by hand, why: to tell whoever wrote it; a newer link meanwhile, nothing.)
-          if (run !== linkRun) return null;
+          // (Written by hand, why: to tell whoever wrote it; a newer link meanwhile, or a chart opened, nothing.)
+          if (run !== linkRun || (at && navigations > at)) return null;
           // (Plain words first, the reader's own after: whoever wrote it can find the spot.)
           linkError = plain ? `That link's chart couldn't be read: ${error instanceof SyntaxError ? `its JSON is broken (${error.message})` : /** @type {Error} */ (error).message}` : "That link doesn't contain a chart";
           if (shared !== null) brokenLink = location.hash;
@@ -23831,12 +23881,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let linkRun = 0;
       addEventListener("hashchange", () => {
         const params = new URLSearchParams(location.hash.slice(1));
-        if (!params.has("chart") && !params.has("image")) return void (document.body.hasAttribute("data-picture") && leavePicture());
+        // (Cleared, or another kind: a link still being read is dropped.)
+        if (!params.has("chart") && !params.has("image")) return void (++linkRun, (picturing = picturing && document.body.hasAttribute("data-picture")), document.body.hasAttribute("data-picture") && leavePicture());
         closeDialogs();
-        const run = ++linkRun;
+        // (The navigation this is, as navigate counts it: another chart opened meanwhile, the grid shown, this one's dropped.)
+        const run = ++linkRun, at = navigations + 1;
         navigate((async () => {
-          const doc = await fromHash(run);
+          const doc = await fromHash(run, at);
           if (run !== linkRun) return;
+          // (Dropped for a chart opened meanwhile: no picture, and the address that chart's.)
+          if (navigations > at) return void ((picturing = false), linkInUrl());
           if (doc) showLinked(doc);
           // (Its picture once it's the chart open: not the one before's; any other link, out of a picture.)
           if (doc && picturing) await until(() => chart === doc && !home, 5000);
@@ -23969,13 +24023,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const studio = Object.freeze({
         /** A chart as a link writes it (an object, or its JSON): opened as its link would be; done once it's the one open. */
         open(/** @type {object | string} */ sketch) {
-          const run = ++linkRun;
+          const run = ++linkRun, at = navigations + 1;
           closeDialogs();
           if (document.body.hasAttribute("data-picture")) leavePicture();
           return navigate((async () => {
-            const doc = await linked(typeof sketch === "string" ? sketch : JSON.stringify(sketch), null, run);
+            const doc = await linked(typeof sketch === "string" ? sketch : JSON.stringify(sketch), null, run, at);
             if (!doc) throw new Error(linkError);
-            if (run !== linkRun) throw new Error("Another chart was opened meanwhile");
+            if (run !== linkRun || navigations > at) throw new Error("Another chart was opened meanwhile");
             showLinked(doc);
             await until(() => chart === doc && !home, 5000);
           })());
@@ -24056,7 +24110,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       Object.defineProperty(window, "studio", { value: studio });
 
       async function start() {
-        const shared = await fromHash();
+        // (The page's first navigation, as navigate counts it: a chart opened while a link's read, the link's dropped.)
+        const at = navigations + 1, shared = await fromHash(linkRun, at);
+        // (A chart opened while its link was read: the link dropped, no picture.)
+        if (navigations > at) picturing = false;
         if (shared) {
           if (!library.charts.includes(shared)) previewing = shared;
           chart = shared;
