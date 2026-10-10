@@ -3898,6 +3898,7 @@
         font-weight: 400;
       }
 
+
       /* The guide's start, for people: a few words and this chart's link at hand, before the reference. */
       .guide-start {
         margin-bottom: 18px;
@@ -7396,7 +7397,7 @@
             <li>await studio.png(options): its picture, as Export makes it (its title, legends and dates), as a data URL ("data:image/png;base64," and its base64), in one result, the same whatever the window. If your tool says the output was too long and saved it to a file, decode the base64 from that file: that's the picture, no need to retype it. Options, each if wanted: width and height, in CSS pixels (1200 and 760 if none); scale, 1 or 2 (pixels for each, 1 if none); type, "image/png" (if none), "image/webp" or "image/jpeg", with quality, 0 to 1 (0.9 if none); part, only if long output gets cut off and nothing is saved: 0, 1 and so on, each call with part 0's options, the picture in parts, each {part, parts, mime, base64}, partSize characters of its base64 (45000 if none: each part, all told, under 50,000); part 0 makes the picture of the chart as it is, the others are from that same picture, however long after: join their base64, "data:" + mime + ";base64," before it. Sizes, at 1200 by 760, for a chart of a few lines: a PNG about 130,000 to 160,000 characters (three or four parts), a WebP about 50,000, a JPEG about 100,000; at scale 2, about 330,000, 130,000 and 270,000.</li>
             <li>studio.chart(): the chart open, as a link writes it.</li>
             <li>await studio.errors(): once it's drawn, its layers that show nothing, and why, as [{"layer": "B", "error": "...", "closest": "..."}]: a series name Bitview doesn't have (with the closest it has), a series it has only by block (with its day's, if it has one), a formula it can't read.</li>
-            <li>await studio.search(words): series names for those words, the best first, as Studio's search finds them, only those it can chart (by date; words as people say them do: "200 day moving average", "transaction count"). Its catalog is in the page: no web access needed.</li>
+            <li>await studio.search(words): series names for those words, the best first, as Studio's search finds them, only those it can chart (by date; words as people say them do: "200 day moving average", "transaction count"). No browsing needed: the page knows the catalog, and asks bitview.space only for its first seconds, until its own search is up. It answers within a few seconds, the page shown or not, else it's rejected with why.</li>
           </ul>
           <p>What a chart can't hold is left out, or at its default, without a word: past 40 layers, left out; an interval or a range it doesn't know, day1 or max.</p>
           <pre>await studio.open({"title": "Cost basis", "layers": [{"series": "price"}, {"series": "realized_price"}]});
@@ -7712,7 +7713,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const node = nodeAt(path.split("."));
         return isLeaf(node) ? node.name : null;
       }
-      /** Every name the client knows, to its path: built once, in idle slices (the whole catalog takes a while). */
+      /** Every name the client knows, to its path: built once, in idle slices, the rest at once when needed (see indexCatalog). */
       let catalogIndex = /** @type {Map<string, string> | null} */ (null);
       /** The series Bitview has only by block, none by date (Studio charts by date): known once the catalog's indexed. */
       const byBlock = new Set();
@@ -9199,22 +9200,26 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const isDeleted = (doc) => library.deleted[doc.id] >= doc.updated;
       /** @returns {Chart | undefined} */
       const chartById = (id) => library.charts.find((doc) => doc.id === id) ?? (previewing?.id === id ? previewing : undefined);
-      /** The catalog indexed (see below): a series added waits for it, as for its info, its path kept with its name at once. */
-      let indexed = /** @type {(value?: unknown) => void} */ (() => {});
-      const catalogIndexed = new Promise((resolve) => (indexed = resolve));
       /**
        * Work for a moment the page is idle, given how long it has: at the latest after `timeout` ms. Without idle
        * callbacks (Safari), after `settle` ms, with a slice of 8.
        * @param {(deadline: { timeRemaining: () => number }) => void} work
        */
-      const whenIdle = (work, { timeout = 1000, settle = 40 } = {}) => void (window.requestIdleCallback ? requestIdleCallback(work, { timeout }) : setTimeout(() => work({ timeRemaining: () => 8 }), settle));
-      // Index the catalog when the page is idle; then charts saved without paths get theirs (and survive renames).
-      {
+      const whenIdle = (work, { timeout = 1000, settle = 40 } = {}) => void (window.requestIdleCallback ? requestIdleCallback(work, { timeout }) : setTimeout(() => {
+        const end = performance.now() + 8;
+        work({ timeRemaining: () => Math.max(0, end - performance.now()) });
+      }, settle));
+      /**
+       * The catalog indexed (`catalogIndex`), a slice at a time while the page is idle; then charts saved without paths get
+       * theirs (and survive renames). What needs it before (a search, a series added) has the rest done at once, never
+       * waiting on an idle moment: a hidden tab's are throttled (to one a minute, after five minutes hidden).
+       */
+      const indexCatalog = (() => {
         const index = new Map();
         const stack = [[/** @type {any} */ (tree), ""]];
-        const step = (deadline) => {
-          // (At least a few hundred nodes a turn: an idle callback timed out has no time left, and would never go on.)
-          for (let done = 0; stack.length && (deadline.timeRemaining() > 1 || done < 400); done++) {
+        /** Nodes indexed while `more` says (it's told how many so far); the last, the index is the catalog's. */
+        const run = (/** @type {(done: number) => boolean} */ more) => {
+          for (let done = 0; stack.length && more(done); done++) {
             const [node, path] = stack.pop();
             if (isLeaf(node)) {
               if (index.has(node.name)) continue;
@@ -9222,15 +9227,23 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               if (!INTERVAL_ORDER.some((id) => node.indexes().includes(id))) byBlock.add(node.name);
             } else if (node && typeof node === "object") for (const key of Object.keys(node)) stack.push([aside(node, key), path ? `${path}.${key}` : key]);
           }
-          if (stack.length) return whenIdle(step);
+          if (stack.length || catalogIndex) return;
           catalogIndex = index;
-          indexed();
-          const learned = library.charts.some((doc) => doc.layers.some((layer) => layer.series && !layer.path && index.has(layer.series)));
-          for (const doc of library.charts) normalize(doc);
-          if (learned) save();
+          // (After what asked for it: its work isn't held up, nor failed, by this.)
+          queueMicrotask(() => {
+            const learned = library.charts.some((doc) => doc.layers.some((layer) => layer.series && !layer.path && index.has(layer.series)));
+            for (const doc of library.charts) normalize(doc);
+            if (learned) save();
+          });
+        };
+        const step = (/** @type {{ timeRemaining: () => number }} */ deadline) => {
+          // (At least a few hundred nodes a turn: an idle callback timed out has no time left, and would never go on.)
+          run((done) => deadline.timeRemaining() > 1 || done < 400);
+          if (stack.length) whenIdle(step);
         };
         whenIdle(step, { timeout: 3000 });
-      }
+        return () => run(() => true);
+      })();
       /** @type {Chart} */
       let chart = chartById(library.active) ?? library.charts[0];
       /** The layer open in the panel (its settings). */
@@ -10793,6 +10806,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let drawnIndex = "";
       let drawnRange = "";
       let drawnChart = "";
+      /** Who waits for the chart to be drawn (see settle): woken as it is. @type {Set<() => void>} */
+      const drawnWaiters = new Set();
       /** The chart as it was last drawn (a ⌘K preview's, while one shows): the live price paints its colors from it. @type {Chart | null} */
       let drawnDoc = null;
       /** What the data on screen was resolved for (its `dataKey`), and what the latest draw resolves. */
@@ -10859,6 +10874,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         drawnChart = doc.id;
         drawnDoc = doc;
         drawnVersion = version;
+        for (const wake of [...drawnWaiters]) wake();
         renderLayers();
         renderInspector();
         updateStatus();
@@ -18135,7 +18151,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const theirs = other.split("_");
           return words.filter((word) => theirs.some((their) => their.startsWith(word) || (their.length > 2 && word.startsWith(their)))).length * 2 >= words.length;
         };
-        if (!nearestTo.has(name)) nearestTo.set(name, findSeries(name.replace(/_/g, " "), 8).then((names) => names.find((other) => isSeriesName(other) && other !== name && !gone.has(other) && !byBlock.has(other) && near(other)) ?? null, () => null));
+        if (!nearestTo.has(name)) nearestTo.set(name, findSeries(name.replace(/_/g, " "), 8).then((names) => (indexCatalog(), names.find((other) => isSeriesName(other) && other !== name && !gone.has(other) && !byBlock.has(other) && near(other)) ?? null), () => null));
         return nearestTo.get(name);
       }
       async function suggestReplacement(layer) {
@@ -18165,7 +18181,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!layerById(id)?.series || !isSeriesName(name) || name === layerById(id).series) return;
         // As Add does: a series counted by block has no dates to chart.
         retryInfo(name);
-        const [meta] = await Promise.all([info(name).catch(() => null), catalogIndexed]);
+        indexCatalog();
+        const meta = await info(name).catch(() => null);
         const layer = layerById(id);
         if (chart !== target || !layer?.series || replacing.get(id) !== run) return;
         if (meta && !datedIntervals(meta).length) return void blockOnly(name, (day) => replaceSeries(id, day));
@@ -18933,7 +18950,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!roomFor(target)) return;
         retryInfo(name);
         // (Its path too, kept with its name in the same edit: see normalize.)
-        const [meta] = await Promise.all([info(name).catch(() => null), catalogIndexed]);
+        indexCatalog();
+        const meta = await info(name).catch(() => null);
         if (chart !== target || !roomFor(target)) return;
         if (meta && !datedIntervals(meta).length) return void blockOnly(name, (day) => addSeries(day, { newPane, pane: into }));
         const unit = meta ? unitOf(name, meta.type) : units.get(name) ?? "number";
@@ -19133,21 +19151,20 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       // ── Series search: bitview.space's, on this machine ───────────────────────
 
       /**
-       * The series search as bitview.space runs it (crates/bitview_query/src/vecs/search.rs, on the same quickmatch): the
-       * query normalized, then whole name words, whole description words, name prefixes and typos, description prefixes
-       * and typos; a description several series share ranks them by how few other words their names carry. Before it, what
-       * people type is said as the names say it ("200 day moving average" is "200d sma"), the query as typed searched
-       * after. Series only by block (none of `dated`, the intervals Studio charts) come last, their day's (a 24h sum, an
-       * average) in their place. It runs in a worker started from this function's own source: the catalog's names and
-       * descriptions are indexed once, off the page, and each query is answered in milliseconds.
-       * @param {string} quickmatch the module's URL @param {string} catalog the catalog's URL @param {string[]} dated
+       * A query's words as the server normalizes them (crates/bitview_query/src/vecs/normalize.rs): words of letters, digits
+       * and < > = + %, decimals kept, lowercase. Self-contained: the search's worker is handed it as it is.
+       * @param {string} text
        */
-      async function seriesSearch(quickmatch, catalog, dated) {
-        const { QuickMatch, QuickMatchConfig } = /** @type {typeof import("../modules/quickmatch-js/src/index.js")} */ (await import(quickmatch));
-        const RUNS = /(?:[A-Za-z0-9<>=+%]|(?<=[0-9])\.(?=[0-9]))+/g;
-        /** crates/bitview_query/src/vecs/normalize.rs: words of letters, digits and < > = + %, decimals kept, lowercase. @param {string} text */
-        const normalize = (text) => (text.match(RUNS) ?? []).join(" ").toLowerCase();
-        /** Ways of saying it, in the names' words (on the normalized query: words, single spaces). @type {[RegExp, string][]} */
+      function normalizeQuery(text) {
+        return (text.match(/(?:[A-Za-z0-9<>=+%]|(?<=[0-9])\.(?=[0-9]))+/g) ?? []).join(" ").toLowerCase();
+      }
+      /**
+       * A normalized query as the names say it (people's ways of saying it, in the names' words). Self-contained, as
+       * `normalizeQuery`: the worker and bitview.space's path (until the worker's up) say it alike.
+       * @param {string} typed
+       */
+      function sayQuery(typed) {
+        /** @type {[RegExp, string][]} */
         const SAYINGS = [
           [/\brealis(e|ed)\b/g, "realiz$1"],
           [/\bexponential moving averages?\b/g, "ema"],
@@ -19170,7 +19187,21 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           [/^s2f$/, "stock to flow"],
           [/^mayer(?: multiple)?$/, "price sma 200d ratio"],
         ];
-        const say = (/** @type {string} */ text) => SAYINGS.reduce((said, [pattern, put]) => said.replace(pattern, put), text);
+        return SAYINGS.reduce((said, [pattern, put]) => said.replace(pattern, put), typed);
+      }
+      /**
+       * The series search as bitview.space runs it (crates/bitview_query/src/vecs/search.rs, on the same quickmatch): the
+       * query normalized, then whole name words, whole description words, name prefixes and typos, description prefixes
+       * and typos; a description several series share ranks them by how few other words their names carry. Before it, what
+       * people type is said as the names say it ("200 day moving average" is "200d sma"), the query as typed searched
+       * after. Series only by block (none of `dated`, the intervals Studio charts) come last, their day's (a 24h sum, an
+       * average) in their place. It runs in a worker started from this function's own source: the catalog's names and
+       * descriptions are indexed once, off the page, and each query is answered in milliseconds.
+       * @param {string} quickmatch the module's URL @param {string} catalog the catalog's URL @param {string[]} dated
+       * @param {typeof normalizeQuery} normalize @param {typeof sayQuery} say (handed over as their source)
+       */
+      async function seriesSearch(quickmatch, catalog, dated, normalize, say) {
+        const { QuickMatch, QuickMatchConfig } = /** @type {typeof import("../modules/quickmatch-js/src/index.js")} */ (await import(quickmatch));
         const byBytes = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
         const index = (async () => {
           const response = await fetch(catalog);
@@ -19291,9 +19322,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         /** @type {((data: any) => void) | null} */
         asking: null,
       };
-      /** Settled once the worker's index is built, or once it can't be (it failed: bitview.space answers). */
-      let finderDone = /** @type {(value?: unknown) => void} */ (() => {});
-      const finderUp = new Promise((resolve) => (finderDone = resolve));
       function askNext() {
         const next = !finder.asking && finder.worker ? finder.line.shift() : undefined;
         if (!next) return;
@@ -19309,9 +19337,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function startFinder() {
         if (finder.started) return;
         finder.started = true;
-        if (typeof Worker !== "function") return void finderDone();
+        if (typeof Worker !== "function") return;
         const quickmatch = new URL("../modules/quickmatch-js/src/index.js", location.href).href;
-        const source = URL.createObjectURL(new Blob([`(${seriesSearch})(${JSON.stringify(quickmatch)}, ${JSON.stringify(`${client.baseUrl}/api/series`)}, ${JSON.stringify(INTERVAL_ORDER)});`], { type: "text/javascript" }));
+        const source = URL.createObjectURL(new Blob([`(${seriesSearch})(${JSON.stringify(quickmatch)}, ${JSON.stringify(`${client.baseUrl}/api/series`)}, ${JSON.stringify(INTERVAL_ORDER)}, ${normalizeQuery}, ${sayQuery});`], { type: "text/javascript" }));
         const worker = (finder.worker = new Worker(source, { type: "module" }));
         // A worker that fails leaves the search to bitview.space, the questions it had included.
         const stop = () => {
@@ -19320,14 +19348,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const waiting = [finder.asking, ...finder.line.splice(0).map((question) => question.reply)];
           Object.assign(finder, { ready: false, worker: null, asking: null });
           for (const reply of waiting) reply?.(null);
-          finderDone();
         };
         worker.onerror = stop;
         worker.onmessage = ({ data }) => {
           if (data.broken !== undefined) return stop();
           if (data.ready) {
             finder.ready = true;
-            finderDone();
             return URL.revokeObjectURL(source);
           }
           const reply = finder.asking;
@@ -19365,7 +19391,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function findSeries(query, limit, signal, pause = 0) {
         const key = `${limit}\n${query}`, kept = searched.get(key);
         if (kept) return Promise.resolve(kept);
-        const remote = () => client.searchSeries(/** @type {any} */ (query), /** @type {any} */ (limit), { signal }).then((names) => byDate(/** @type {string[]} */ (names)));
+        // (Said as the names say it first, then as typed, as this machine's search does: the server only normalizes.)
+        const typed = normalizeQuery(query), said = sayQuery(typed);
+        const remote = () => Promise.all((said === typed ? [typed] : [said, typed]).map((words) => client.searchSeries(/** @type {any} */ (words), /** @type {any} */ (limit), { signal })))
+          .then((lists) => byDate([...new Set(/** @type {string[][]} */ (lists).flat())].slice(0, limit)));
         return new Promise((resolve, reject) => {
           if (finder.ready && finder.worker) {
             const question = { message: { query, limit }, reply: (/** @type {any} */ data) => (data?.names ? resolve((searched.set(key, data.names), data.names)) : remote().then(resolve, reject)) };
@@ -19377,6 +19406,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             }, { once: true });
             return askNext();
           }
+          // (No pause, no timer: a hidden tab's may come late.)
+          if (!pause) return void remote().then(resolve, reject);
           const timer = setTimeout(() => remote().then(resolve, reject), pause);
           signal?.addEventListener("abort", () => (clearTimeout(timer), reject(signal.reason)), { once: true });
         }).then((/** @type {string[]} */ names) => {
@@ -22981,6 +23012,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * @param {Redraw} [redraw]
        */
       function refresh(redraw = true, refit = false) {
+        // (What waits for a draw asks again: the grid shown, layers gone, it says so at once.)
+        for (const wake of [...drawnWaiters]) wake();
         linkInUrl();
         if (document.activeElement !== $("title")) $("title").value = chart.title;
         document.title = home ? "All charts · Bitview Studio" : `${titleOf(chart)} · Bitview Studio`;
@@ -23746,7 +23779,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (home) throw new Error("No chart is open (the page shows all charts)");
           if (!chart.layers.length) throw new Error("The chart has no layers");
           if (!left()) throw new Error("The chart is still loading");
-          await new Promise((done) => setTimeout(done, Math.min(50, left())));
+          // (Woken by the draw, else at the time given: no timer chain, which a hidden tab would slow to one a minute.)
+          await new Promise((done) => {
+            const wake = () => (clearTimeout(timer), drawnWaiters.delete(wake), done(undefined));
+            const timer = setTimeout(wake, left());
+            drawnWaiters.add(wake);
+          });
         }
         // (Its reveal, the page's crossfade to it, its legends' fades, the chart's own wipe: each at its end now. A script
         // asking wants the chart as it stays, and a tab drawing no frames (out of sight, a pane not shown) would never
@@ -23756,8 +23794,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           endReveal();
         };
         ended();
-        // (Drawn on its next frame, where there are frames: a picture's drawn when it's made.)
-        await new Promise((done) => (requestAnimationFrame(() => done(undefined)), setTimeout(done, Math.min(100, left()))));
+        // (Drawn on its next frame, where there are frames: out of sight there are none, and a picture's drawn when it's made.)
+        if (!document.hidden) await new Promise((done) => (requestAnimationFrame(() => done(undefined)), setTimeout(done, Math.min(100, left()))));
         ended();
       }
       /**
@@ -23831,19 +23869,26 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           return Promise.all(chart.layers.flatMap((layer) => {
             const result = resolved?.results.get(layer.id), error = result?.error ? result.detail ?? result.error : fromUnfit(chart, layer);
             if (!error) return [];
-            const closest = !layer.series ? null : result?.missing ? closestSeries(layer.series) : result?.detail === BY_BLOCK ? catalogIndexed.then(() => dailyOf(/** @type {string} */ (layer.series)) ?? closestSeries(/** @type {string} */ (layer.series))) : null;
+            const closest = !layer.series ? null : result?.missing ? closestSeries(layer.series) : result?.detail === BY_BLOCK ? Promise.resolve(indexCatalog()).then(() => dailyOf(/** @type {string} */ (layer.series)) ?? closestSeries(/** @type {string} */ (layer.series))) : null;
             return [closest ? closest.then((name) => ({ layer: layer.letter, error, ...(name ? { closest: name } : {}) })) : { layer: layer.letter, error }];
           }));
         },
         /**
-         * Series names for words, as Studio's search finds them (the catalog at hand, its index awaited a while): the
-         * best first, only those it can chart (by date).
+         * Series names for words, as Studio's search finds them (this machine's index once it's built, bitview.space's
+         * until then, said and ranked alike): the best first, only those it can chart (by date). Nothing it waits on waits for the
+         * page to be shown (a hidden tab's frames and idle moments may never come); no answer in 5 s, rejected with why.
          */
         async search(/** @type {string} */ text, count = 10) {
           startFinder();
-          const late = new Promise((done) => setTimeout(done, 15_000));
-          await Promise.race([Promise.all([finderUp, catalogIndexed]), late]);
-          return (await findSeries(String(text), Math.min(50, count) + 20)).filter((name) => !gone.has(name) && !byBlock.has(name)).slice(0, Math.min(50, count));
+          indexCatalog();
+          const most = Math.min(50, count);
+          let timer = 0;
+          const late = new Promise((_, fail) => (timer = window.setTimeout(() => fail(new Error("studio.search: no answer in 5 s (bitview.space didn't answer, and this page's own search isn't up yet)")), 5000)));
+          try {
+            return (await Promise.race([findSeries(String(text), most + 20), late])).filter((name) => !gone.has(name) && !byBlock.has(name)).slice(0, most);
+          } finally {
+            clearTimeout(timer);
+          }
         },
       });
       Object.defineProperty(window, "studio", { value: studio });
