@@ -110,8 +110,10 @@
         --tip: light-dark(#ffffff, #1e1f23);
         --hint: light-dark(#ffffff, #2c2d30);
         /* Shadows, each one shape, its colors by theme: what pops over the page, the card on it, a pressed tab lifted,
-           a folder's held head over its charts, a key's hint. */
-        --pop: inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.05)), 0 0 0 1px light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.08)), 0 24px 64px -12px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.7)), 0 8px 20px -8px light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.5));
+           a folder's held head over its charts, a key's hint. (What pops: its edge solid, the page's ground as a faint
+           ring made it, so over a chart's bright tags it's still its edge, not a gap: a submenu as close to its menu
+           everywhere.) */
+        --pop: inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.05)), 0 0 0 1px light-dark(color-mix(in srgb, var(--app), black 7%), color-mix(in srgb, var(--app), white 8%)), 0 24px 64px -12px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.7)), 0 8px 20px -8px light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.5));
         --card-shadow: 0 0 0 2px light-dark(transparent, rgb(0 0 0 / 0.2)), 0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 24px 60px -30px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.6));
         --lift: 0 1px 3px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.3)), 0 0 0 1px light-dark(rgb(0 0 0 / 0.07), transparent);
         --held-shadow: 0 12px 20px -14px light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.8));
@@ -3940,22 +3942,47 @@
         color: var(--muted);
         font-size: 12px;
 
+        /* The field: the hex, then the color's name at its end (following it), one box of one size. */
+        .hex-box {
+          display: flex;
+          flex: 1;
+          align-items: center;
+          min-width: 0;
+          height: 28px;
+          border-radius: var(--radius-sm);
+          background: var(--field);
+          box-shadow: inset 0 0 0 1px var(--line);
+          cursor: text;
+
+          &:focus-within {
+            box-shadow: var(--field-focus);
+          }
+        }
+
         .hex {
           flex: 1;
           min-width: 0;
-          height: 28px;
+          height: 100%;
           border: 0;
-          border-radius: var(--radius-sm);
           padding: 0 8px;
           color: var(--ink);
-          background: var(--field);
-          box-shadow: inset 0 0 0 1px var(--line);
+          background: none;
           font: 12px/28px var(--mono);
 
           &:focus {
             outline: none;
-            box-shadow: var(--field-focus);
           }
+        }
+
+        /* (Cut short when long: the hex keeps its room.) */
+        .color-now {
+          flex: none;
+          max-width: 60%;
+          padding-right: 8px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          pointer-events: none;
         }
       }
 
@@ -3972,6 +3999,25 @@
           border-radius: inherit;
           box-shadow: inset 0 0 0 1px var(--line-strong);
           pointer-events: none;
+        }
+      }
+
+      /* Its hex joined under it, edged as one with it: one control (the surface's edge their seam). */
+      .color-box:has(.hex-field) .plane {
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+
+      .color-box .hex-field {
+        margin-top: 0;
+
+        .hex-box {
+          border-radius: 0 0 var(--radius-md) var(--radius-md);
+          box-shadow: inset 1px 0 0 var(--line-strong), inset -1px 0 0 var(--line-strong), inset 0 -1px 0 var(--line-strong);
+
+          &:focus-within {
+            box-shadow: var(--field-focus);
+          }
         }
       }
 
@@ -4021,13 +4067,25 @@
       /* A layer's colors, one input (a ground, its edge, as a segmented control's), its parts over hairlines: which one
          (two, four), then where it's from (Bitview's, any other, a fading one's own) and the pick. */
       .color-editor {
+        position: relative;
         margin-top: 10px;
+        overflow: hidden;
         border-radius: var(--radius-md);
         background: light-dark(rgb(0 0 0 / 0.055), var(--field));
-        box-shadow: inset 0 0 0 1px var(--line);
 
         > * + * {
           border-top: 1px solid var(--line);
+        }
+
+        /* (Its edge over what's in it: the surface reaches it.) */
+        &::after {
+          content: "";
+          position: absolute;
+          z-index: 1;
+          inset: 0;
+          border-radius: inherit;
+          box-shadow: inset 0 0 0 1px var(--line);
+          pointer-events: none;
         }
 
         /* (Its segmented rows, the input's own: no ground, no edge of their own.) */
@@ -4082,28 +4140,54 @@
         }
       }
 
-      .color-from {
-        padding: 8px 10px 10px;
+      /* Where it's from, as tabs across the editor (the one chosen underlined), what it shows under them: Bitview's colors,
+         inset; the surface edge to edge, its hex closing the editor; a fading one's own. */
+      .color-editor .color-source {
+        display: flex;
+        width: 100%;
+        gap: 0;
+        padding: 0;
 
-        .color-source {
-          margin: 0 0 8px;
-          padding: 0;
-          gap: 2px;
-
-          button {
-            flex: none;
-            height: 28px;
-
-            @media (pointer: coarse) {
-              height: 32px;
-            }
-          }
+        /* (Its focus inside it, and the surface's: the editor clips what reaches its edge.) */
+        button:focus-visible,
+        & ~ .color-pick .plane:focus-visible {
+          outline-offset: -2px;
         }
 
+        button {
+          position: relative;
+          flex: 1;
+          height: 32px;
+          border-radius: 0;
+
+          &[aria-pressed="true"] {
+            background: none;
+            box-shadow: none;
+
+            &::after {
+              content: "";
+              position: absolute;
+              right: 12px;
+              bottom: 0;
+              left: 12px;
+              height: 2px;
+              border-radius: 1px;
+              background: var(--ink);
+            }
+          }
+
+          @media (pointer: coarse) {
+            height: 40px;
+          }
+        }
+      }
+
+      .color-pick {
         /* Bitview's colors, ten to a row across it (by touch too: wide enough), a click each. */
         .swatch-grid {
           grid-template-columns: repeat(10, minmax(0, 1fr));
           gap: 2px;
+          padding: 10px;
 
           button {
             width: auto;
@@ -4122,24 +4206,46 @@
           }
         }
 
-        /* Any other: the surface across it, its hex under it. */
+        /* Any other: the surface across it, no edge of its own; its hex under it, the editor's last row. */
         .color-box .plane {
-          margin-top: 0;
-          height: 96px;
+          height: 112px;
+          margin: 0;
+          border-radius: 0;
+
+          &::after {
+            content: none;
+          }
 
           @media (pointer: coarse) {
-            height: 128px;
+            height: 140px;
           }
         }
 
-        .hex-field {
-          margin-top: 8px;
+        .color-box .hex-field .hex-box {
+          height: 32px;
+          border-radius: 0;
+          background: none;
+          box-shadow: inset 0 1px 0 var(--line);
+
+          &:focus-within {
+            box-shadow: inset 0 0 0 1px var(--edge);
+          }
+
+          .hex {
+            padding: 0 10px;
+          }
+
+          .color-now {
+            padding-right: 10px;
+          }
 
           /* (A finger's: tall enough, its type 16, so a phone doesn't zoom in to it.) */
           @media (pointer: coarse) {
+            height: 40px;
+
             .hex {
-              height: 36px;
               font-size: 16px;
+              line-height: 40px;
             }
           }
         }
@@ -4150,9 +4256,9 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        height: 30px;
+        height: 36px;
         margin: 0;
-        padding: 0 4px;
+        padding: 0 10px;
         color: var(--text);
         font: 510 12px var(--sans);
 
@@ -7183,8 +7289,9 @@
           outline-offset: 2px;
         }
 
-        /* (Inside what clips them: a menu's rows, ⌘K's lit one, a field.) */
+        /* (Inside what clips them: a menu's rows, ⌘K's lit one, a field, the color editor's tabs and surface.) */
         :is(.menu > button, #palette [role="option"], #suggest [role="option"]):is(:focus-visible, [aria-selected="true"]),
+        .color-editor :is(.color-source button, .plane):focus-visible,
         :is(input, textarea):focus {
           outline: 2px solid Highlight !important;
           outline-offset: -2px;
@@ -7205,7 +7312,7 @@
           outline: 2px solid SelectedItem;
         }
 
-        :is(.color-editor, .hex-field .hex) {
+        :is(.color-editor, .hex-field .hex-box) {
           border: 1px solid CanvasText;
         }
 
@@ -17699,6 +17806,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const CHROMA = 0.18;
 
       /** Bitview's colors, a dot each (its name on hover), the one in use ringed. */
+      /**
+       * A custom color's hex, typed or followed (`target`: what it sets), its name after it in the field (none: an empty
+       * field, a color another's); joined under its surface, the two one control. @param {string} target @param {string} color
+       */
+      const hexField = (target, color) => `<label class="hex-field"><span class="hex-box"><input class="hex" data-hex="${escape(target)}" value="${color ? escape(ink(color)) : ""}" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color" /><span class="color-now">${color ? escape(colorName(color)) : ""}</span></span></label>`;
       const swatchGrid = (/** @type {string} */ current) => `<div class="swatch-grid" role="radiogroup" aria-label="Bitview's colors">${SWATCHES.map((color) => `<button type="button" role="radio" data-pick-color="${escape(color)}" aria-checked="${current === color}" aria-label="${escape(colorName(color))}" data-tip="${escape(colorName(color))}"><i class="swatch" style="--c:${escape(cssColor(color))}"></i></button>`).join("")}</div>`;
       /** The surface: every hue across, lightness down, the color's place ringed (`target`: what it picks for, see planeTarget). */
       function planeHtml(/** @type {string} */ color, /** @type {string} */ target, name = "Color") {
@@ -17771,10 +17883,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const sources = /** @type {[string, string][]} */ ([["presets", "Palette"], ["custom", "Custom"], ...(fadingSlot(key) ? [["auto", "Auto"]] : [])]);
         const tabs = `<div class="tabs color-source" role="group" aria-label="${escape(label)}, its color from">${sources.map(([source, name]) => `<button type="button" data-color-source="${source}" aria-pressed="${source === from}">${name}</button>`).join("")}</div>`;
         const target = `layer:${key}`, side = key === "colorFading" ? layer.color : belowOf(layer);
-        const body = from === "custom" ? `<div class="color-box">${planeHtml(colorOf(layer, key), target, label)}</div><label class="hex-field"><span>Hex</span><input class="hex" data-hex="${escape(target)}" value="${escape(ink(colorOf(layer, key)))}" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color" /></label>`
+        const body = from === "custom" ? `<div class="color-box">${planeHtml(colorOf(layer, key), target, label)}${hexField(target, colorOf(layer, key))}</div>`
           : from === "auto" ? `<p class="color-auto"><i class="swatch" style="--c:${escape(cssColor(faintOf(side)))}"></i>Fainter ${escape(colorName(side).toLowerCase())}</p>`
           : swatchGrid(own && SWATCHES.includes(own) ? own : "");
-        return `${head}<div class="color-editor" data-palette="${key}">${which}<div class="color-from">${tabs}<div class="color-pick">${body}</div></div></div>`;
+        return `${head}<div class="color-editor" data-palette="${key}">${which}${tabs}<div class="color-pick">${body}</div></div>`;
       }
       /** A color of four that fades (its default: its growing one, fainter). */
       const fadingSlot = (/** @type {string} */ key) => key === "colorFading" || key === "colorBelowFading";
@@ -17860,7 +17972,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** Custom: the surface alone, its color picked live (the page stays open), Bitview's colors a step back. */
       function colorPane(/** @type {HTMLElement} */ anchor, /** @type {string} */ color, /** @type {string} */ target, /** @type {() => void} */ back, borrowed = false) {
-        showMenu(anchor, `<div class="field belt-pop color-pop color-pane"><span><button type="button" class="cap small" data-pane-back="1" aria-label="Bitview's colors" data-tip="Bitview's colors">${ICONS.back}</button>Custom<span class="color-now">${borrowed ? "" : escape(colorName(color))}</span></span><div class="color-box">${planeHtml(color, target)}</div><label class="hex-field"><span>Hex</span><input class="hex" data-hex="${escape(target)}" value="${borrowed ? "" : escape(ink(color))}" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color" /></label></div>`, ({ paneBack }) => paneBack && back(), null, anchor.closest("#belt") ? beltSide() : "");
+        showMenu(anchor, `<div class="field belt-pop color-pop color-pane"><span><button type="button" class="cap small" data-pane-back="1" aria-label="Bitview's colors" data-tip="Bitview's colors">${ICONS.back}</button>Custom</span><div class="color-box">${planeHtml(color, target)}${hexField(target, borrowed ? "" : color)}</div></div>`, ({ paneBack }) => paneBack && back(), null, anchor.closest("#belt") ? beltSide() : "");
         drawPlanes();
         planeOf(target)?.focus({ preventScroll: true });
       }
@@ -18048,7 +18160,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const hex = `#${field.value.trim().replace(/^#/, "").toLowerCase()}`;
         if (!/^#[0-9a-f]{6}$/.test(hex)) return;
         // (Typed as it shows: on the light, kept as a color picked on the surface is.)
-        const color = kept(hex), plane = planeOf(name), { u, t } = placeOf(color), named = field.closest(".field")?.querySelector(".color-now");
+        const color = kept(hex), plane = planeOf(name), { u, t } = placeOf(color), named = field.closest(".field, .color-editor")?.querySelector(".color-now");
         /** @type {HTMLElement | null | undefined} */ (field.closest(".color-editor")?.querySelector('.slot-chip[aria-pressed="true"]'))?.style.setProperty("--c", cssColor(color));
         plane?.style.setProperty("--x", String(u));
         plane?.style.setProperty("--y", String(t));
