@@ -4051,48 +4051,89 @@
         }
       }
 
-      /* A layer's colors: which one (two, four), a segmented row; its four, two by two. */
-      .color-slots {
-        display: flex;
-        margin-top: 10px;
-
-        button {
-          display: inline-flex;
-          flex: 1;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          min-width: 0;
-          height: 26px;
-        }
-
-        .swatch {
-          flex-shrink: 0;
-          width: 10px;
-          height: 10px;
-        }
-
-        /* (Over a section's segmented row, a line: its four in two.) */
-        &.tabs.four {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-
-      .field.color-slot {
-        margin-top: 4px;
-      }
-
-      /* Bitview's colors in the panel, an input as the others are (a ground, its edge, as a segmented control's), ten to a
-         row across it (by touch too: wide enough), a click each; under them, on its foot, any other (Custom) and a fading
-         one's default. */
-      .color-palette {
+      /* A layer's colors, one input (a ground, its edge, as a segmented control's), its parts over hairlines: which one
+         (two, four), then where it's from (Bitview's, any other, a fading one's own) and the pick. */
+      .color-editor {
         margin-top: 10px;
         border-radius: var(--radius-md);
-        padding: 4px;
         background: light-dark(rgb(0 0 0 / 0.055), var(--field));
         box-shadow: inset 0 0 0 1px var(--line);
 
+        > * + * {
+          border-top: 1px solid var(--line);
+        }
+
+        /* (Its segmented rows, the input's own: no ground, no edge of their own.) */
+        .tabs {
+          display: flex;
+          border-radius: 0;
+          background: none;
+          box-shadow: none;
+        }
+      }
+
+      /* Which color: the colors themselves, wide, under what they're for; the one being set ringed. */
+      .color-slots {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: 4px 8px;
+        padding: 8px 10px 10px;
+        color: var(--muted);
+        font: 510 12px var(--sans);
+
+        > .head {
+          text-align: center;
+        }
+
+        &.four {
+          grid-template-columns: auto 1fr 1fr;
+        }
+
+        .slot-chip {
+          height: 22px;
+          border: 0;
+          border-radius: var(--radius-sm);
+          padding: 0;
+          background: var(--c);
+          box-shadow: inset 0 0 0 1px light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+          cursor: pointer;
+
+          &:hover {
+            outline: 1px solid var(--line-strong);
+            outline-offset: 2px;
+          }
+
+          &[aria-pressed="true"] {
+            outline: 1.5px solid var(--ink);
+            outline-offset: 2px;
+          }
+
+          @media (pointer: coarse) {
+            height: 32px;
+          }
+        }
+      }
+
+      .color-from {
+        padding: 8px 10px 10px;
+
+        .color-source {
+          margin: 0 0 8px;
+          padding: 0;
+          gap: 2px;
+
+          button {
+            flex: none;
+            height: 28px;
+
+            @media (pointer: coarse) {
+              height: 32px;
+            }
+          }
+        }
+
+        /* Bitview's colors, ten to a row across it (by touch too: wide enough), a click each. */
         .swatch-grid {
           grid-template-columns: repeat(10, minmax(0, 1fr));
           gap: 2px;
@@ -4113,50 +4154,49 @@
             box-shadow: none;
           }
         }
-      }
 
-      .color-palette-foot {
-        display: flex;
-        gap: 4px;
-        margin: 4px -4px -4px;
-        border-top: 1px solid var(--line);
-        padding: 3px 4px;
-
-        button {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          height: 26px;
-          border: 0;
-          border-radius: var(--radius-sm);
-          padding: 0 8px 0 6px;
-          color: var(--muted);
-          background: none;
-          font: 510 12px var(--sans);
-
-          &:hover {
-            color: var(--ink);
-            background: var(--hover);
-          }
-
-          &[aria-pressed="true"] {
-            color: var(--ink);
-          }
-
-          &[aria-pressed="true"] .swatch {
-            outline: 1.5px solid var(--ink);
-            outline-offset: 2px;
-          }
-
-          .swatch {
-            width: 14px;
-            height: 14px;
-          }
+        /* Any other: the surface across it, its hex under it. */
+        .color-box .plane {
+          margin-top: 0;
+          height: 96px;
 
           @media (pointer: coarse) {
-            height: 34px;
+            height: 128px;
           }
         }
+
+        .hex-field {
+          margin-top: 8px;
+
+          /* (A finger's: tall enough, its type 16, so a phone doesn't zoom in to it.) */
+          @media (pointer: coarse) {
+            .hex {
+              height: 36px;
+              font-size: 16px;
+            }
+          }
+        }
+      }
+
+      /* A fading one's own: its growing one fainter (following it, as it changes). */
+      .color-auto {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 30px;
+        margin: 0;
+        padding: 0 4px;
+        color: var(--text);
+        font: 510 12px var(--sans);
+
+        .swatch {
+          width: 14px;
+          height: 14px;
+        }
+      }
+
+      .field.color-slot {
+        margin-top: 4px;
       }
 
       .color-select .swatch {
@@ -7185,6 +7225,21 @@
 
         .menu > button[aria-checked="true"]:focus-visible {
           outline-color: SelectedItemText !important;
+        }
+
+        /* A layer's colors: the chips their own colors (what they're for), edged, the one being set outlined; the input edged. */
+        .slot-chip {
+          forced-color-adjust: none;
+          border: 1px solid CanvasText;
+        }
+
+        .slot-chip[aria-pressed="true"] {
+          background: var(--c) !important;
+          outline: 2px solid SelectedItem;
+        }
+
+        :is(.color-editor, .hex-field .hex) {
+          border: 1px solid CanvasText;
         }
 
         /* What floats over the page, edged (its shadow gone). */
@@ -14268,7 +14323,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       // ── A group of choices, one stop for Tab: in it, the arrows ───────────────────
       /** A segmented control (its pressed one is its value) or a set of radios: one place in the tab order, the arrows within. */
-      const GROUP = '.tabs[role="group"], [role="radiogroup"]';
+      const GROUP = '.tabs[role="group"], .color-slots[role="group"], [role="radiogroup"]';
       const groupButtons = (/** @type {Element} */ group) => /** @type {HTMLButtonElement[]} */ (all$(":scope > button", group)).filter((button) => !button.disabled && !button.hidden);
       // Entered from outside, the one in effect takes the focus; whichever has it is the group's one stop.
       document.addEventListener("focusin", (event) => {
@@ -14283,15 +14338,17 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       // The arrows move along it (round past its ends), what's chosen waiting for ↵ or space (the swatches, a grid, have
       // their own arrows: see below).
       document.addEventListener("keydown", (event) => {
-        const button = /** @type {HTMLElement} */ (document.activeElement), group = button?.parentElement?.closest('.tabs[role="group"]');
+        const button = /** @type {HTMLElement} */ (document.activeElement), group = button?.parentElement?.closest('.tabs[role="group"], .color-slots');
         if (!group || button.parentElement !== group || event.metaKey || event.ctrlKey || event.altKey) return;
         const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key] ?? (event.key === "Home" ? -Infinity : event.key === "End" ? Infinity : 0);
+        // (Down and up the four: two along.)
+        const along = group.matches(".color-slots.four") && (event.key === "ArrowUp" || event.key === "ArrowDown") ? 2 : 1;
         if (!step) return;
         const buttons = groupButtons(group), at = buttons.indexOf(/** @type {HTMLButtonElement} */ (button));
         if (at < 0) return;
         event.preventDefault();
         event.stopPropagation();
-        buttons[Number.isFinite(step) ? (at + step + buttons.length) % buttons.length : step < 0 ? 0 : buttons.length - 1].focus();
+        buttons[Number.isFinite(step) ? (at + step * along + buttons.length) % buttons.length : step < 0 ? 0 : buttons.length - 1].focus();
       }, true);
 
       /** Words for a screen reader alone, on the status line where the focus is (the page's, or an open dialog's). */
@@ -17263,7 +17320,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * redrawn).
        */
       const actionsOf = (/** @type {Layer} */ layer) => `<section class="layer-actions">${layerActions(layer.id, "panel").map((row, i) => `<button type="button" id="act-${row.key}" class="nav-item${row.danger ? " danger" : ""}" data-act="${i}"${row.page ? ' aria-haspopup="menu"' : ""}${row.disabled ? ` aria-disabled="true" data-tip="${escape(row.disabled)}"` : ""}${row.kbd?.startsWith("⌘") ? ` data-kbd="${[...row.kbd].join(" ")}"` : ""}>${row.icon ?? ""}<span class="label">${escape(row.label)}</span>${row.kbd ? `<kbd${row.kbd.startsWith("⌘") ? ' class="mod"' : ""}>${escape(keyText(row.kbd))}</kbd>` : ""}</button>`).join("")}</section>`;
+      /** The panel waiting to be drawn again, a color's hex being typed in it (see renderInspector). */
+      let inspectorDue = false;
       function renderInspector() {
+        // (Not under a hex being typed: its caret, its undo, what's half typed; drawn again once it's left.)
+        if (document.activeElement?.matches?.("#inspector .color-editor .hex")) return void (inspectorDue = true);
+        inspectorDue = false;
         const layer = layerById(selected);
         document.body.toggleAttribute("data-inspect", Boolean(layer));
         const panel = $("inspector");
@@ -17590,9 +17652,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** Bitview's colors, a dot each (its name on hover), the one in use ringed. */
       const swatchGrid = (/** @type {string} */ current) => `<div class="swatch-grid" role="radiogroup" aria-label="Bitview's colors">${SWATCHES.map((color) => `<button type="button" role="radio" data-pick-color="${escape(color)}" aria-checked="${current === color}" aria-label="${escape(colorName(color))}" data-tip="${escape(colorName(color))}"><i class="swatch" style="--c:${escape(cssColor(color))}"></i></button>`).join("")}</div>`;
       /** The surface: every hue across, lightness down, the color's place ringed (`target`: what it picks for, see planeTarget). */
-      function planeHtml(/** @type {string} */ color, /** @type {string} */ target) {
+      function planeHtml(/** @type {string} */ color, /** @type {string} */ target, name = "Color") {
         const { u, t } = placeOf(color), said = planeSays(color, u);
-        return `<div class="plane" data-plane="${escape(target)}" role="slider" tabindex="0" aria-label="Color: hue across, then grays; lightness down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${said.now}" aria-valuetext="${said.text}" style="--x: ${u}; --y: ${t}"><canvas></canvas><i class="ring" style="--c:${escape(cssColor(color))}"></i></div>`;
+        return `<div class="plane" data-plane="${escape(target)}" role="slider" tabindex="0" aria-label="${escape(name)}: hue across, then grays; lightness down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${said.now}" aria-valuetext="${said.text}" style="--x: ${u}; --y: ${t}"><canvas></canvas><i class="ring" style="--c:${escape(cssColor(color))}"></i></div>`;
       }
       /** What a surface says of its color, at its place across: its lightness, and its hue (amid the grays, a gray). */
       function planeSays(/** @type {string} */ color, /** @type {number} */ u) {
@@ -17648,16 +17710,37 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (mode === "from") return `${head}<div class="field color-slot"><span>Layer</span><button type="button" id="color-from" class="preset" data-action="color-from" aria-haspopup="menu" aria-label="Colors from: ${escape(source ? labelOf(source) : "")}">${source ? letterChip(source) : ""}<span class="name">${escape(source ? labelOf(source) : "")}</span>${CHEVRON}</button></div>`;
         // By its levels: its colors its levels', the one under them the first of them (none here).
         if (mode === "levels") return head;
-        const places = colorSlots(layer), key = slotNow(layer), fading = key === "colorFading" || key === "colorBelowFading";
-        const own = key === "colorFading" ? layer.colorFading : key === "colorBelowFading" ? layer.colorBelowFading : colorOf(layer, key);
-        // Which one (two, four): a segmented row, each its color and what it's for.
-        const which = places.length > 1 ? `<div class="tabs color-slots${places.length > 2 ? " four" : ""}" role="group" aria-label="Which color">${places.map(([slot, label]) => `<button type="button" data-color-slot="${slot}" aria-pressed="${slot === key}" aria-label="${escape(label)}: ${escape(slotName(layer, slot))}" data-tip="${escape(slotName(layer, slot))}"><i class="swatch" style="--c:${escape(cssColor(colorOf(layer, slot)))}"></i>${escape(label)}</button>`).join("")}</div>` : "";
-        // Bitview's colors, a click each (the one it is ringed); then any other (Custom: the surface), and a fading one's
-        // default (its growing one's, fainter).
-        const custom = own !== undefined && !SWATCHES.includes(own);
-        const side = key === "colorFading" ? layer.color : belowOf(layer);
-        const more = `<div class="color-palette-foot"><button type="button" id="color-custom" data-palette-custom="1" aria-pressed="${custom}" aria-haspopup="menu" aria-label="Custom${custom ? `: ${escape(colorName(own ?? ""))}` : ""}" ${custom ? `data-tip="${escape(colorName(own ?? ""))}"` : ""}><i class="swatch" style="${custom ? `--c:${escape(cssColor(own ?? ""))}` : "background: conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #10b981, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f43f5e)"}"></i>${custom ? escape(ink(own ?? "")) : "Custom"}</button>${fading ? `<button type="button" data-palette-faint="1" aria-pressed="${own === undefined}"><i class="swatch" style="--c:${escape(cssColor(faintOf(side)))}"></i>Fainter ${escape(colorName(side).toLowerCase())}</button>` : ""}</div>`;
-        return `${head}${which}<div class="color-palette" data-palette="${key}">${swatchGrid(own ?? "")}${more}</div>`;
+        const places = colorSlots(layer), key = slotNow(layer), label = places.find(([slot]) => slot === key)?.[1] ?? "Color";
+        const own = key === "colorFading" ? layer.colorFading : key === "colorBelowFading" ? layer.colorBelowFading : colorOf(layer, key), from = sourceNow(layer, key);
+        // Which one (two, four): the colors themselves, under what they're for (four: its sides down, what the bar does
+        // across), the one being set ringed.
+        const chip = (/** @type {string} */ slot, /** @type {string} */ name) => `<button type="button" class="slot-chip" data-color-slot="${slot}" aria-pressed="${slot === key}" aria-label="${escape(name)}: ${escape(slotName(layer, slot))}" data-tip="${escape(slotName(layer, slot))}" style="--c:${escape(cssColor(colorOf(layer, slot)))}"></button>`;
+        const which = places.length > 2
+          ? `<div class="color-slots four" role="group" aria-label="Which color"><span></span><span class="head">Growing</span><span class="head">Fading</span><span>Above</span>${chip("color", "Above, growing")}${chip("colorFading", "Above, fading")}<span>Below</span>${chip("colorBelow", "Below, growing")}${chip("colorBelowFading", "Below, fading")}</div>`
+          : places.length > 1 ? `<div class="color-slots" role="group" aria-label="Which color">${places.map(([, name]) => `<span class="head">${escape(name)}</span>`).join("")}${places.map(([slot, name]) => chip(slot, name)).join("")}</div>` : "";
+        // Where it's from: Bitview's colors; any other (the surface, its hex); a fading one's own, its growing one fainter.
+        const sources = /** @type {[string, string][]} */ ([["presets", "Palette"], ["custom", "Custom"], ...(fadingSlot(key) ? [["auto", "Auto"]] : [])]);
+        const tabs = `<div class="tabs color-source" role="group" aria-label="${escape(label)}, its color from">${sources.map(([source, name]) => `<button type="button" data-color-source="${source}" aria-pressed="${source === from}">${name}</button>`).join("")}</div>`;
+        const target = `layer:${key}`, side = key === "colorFading" ? layer.color : belowOf(layer);
+        const body = from === "custom" ? `<div class="color-box">${planeHtml(colorOf(layer, key), target, label)}</div><label class="hex-field"><span>Hex</span><input class="hex" data-hex="${escape(target)}" value="${escape(ink(colorOf(layer, key)))}" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color" /></label>`
+          : from === "auto" ? `<p class="color-auto"><i class="swatch" style="--c:${escape(cssColor(faintOf(side)))}"></i>Fainter ${escape(colorName(side).toLowerCase())}</p>`
+          : swatchGrid(own && SWATCHES.includes(own) ? own : "");
+        return `${head}<div class="color-editor" data-palette="${key}">${which}<div class="color-from">${tabs}<div class="color-pick">${body}</div></div></div>`;
+      }
+      /** A color of four that fades (its default: its growing one, fainter). */
+      const fadingSlot = (/** @type {string} */ key) => key === "colorFading" || key === "colorBelowFading";
+      /** A layer's color as set (a fading one not set: none). */
+      const ownColor = (/** @type {Layer} */ layer, /** @type {string} */ key) => (key === "colorFading" ? layer.colorFading : key === "colorBelowFading" ? layer.colorBelowFading : colorOf(layer, key));
+      /**
+       * Where each layer's color is picked from, as last chosen (by its id and which), with the color it was then: while
+       * that's still its color; else as its color is (one of Bitview's, any other; a fading one not set, its own).
+       * @type {Map<string, { source: string, color: string | undefined }>}
+       */
+      const colorSource = new Map();
+      function sourceNow(/** @type {Layer} */ layer, /** @type {string} */ key) {
+        const last = colorSource.get(`${layer.id}:${key}`), own = ownColor(layer, key);
+        if (last && last.color === own && (last.source !== "auto" || fadingSlot(key))) return last.source;
+        return fadingSlot(key) && own === undefined ? "auto" : SWATCHES.includes(colorOf(layer, key)) ? "presets" : "custom";
       }
       /** Which of each layer's colors its palette sets now: the one picked (by its id), else its first. @type {Map<string, string>} */
       const colorSlot = new Map();
@@ -17890,12 +17973,25 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         plane?.setAttribute("aria-valuenow", String(said.now));
         plane?.setAttribute("aria-valuetext", said.text);
         // (Its name, and Bitview's colors, none of them ringed now, follow too.)
-        const field = plane?.closest(".field"), named = field?.querySelector(".color-now"), hex = /** @type {HTMLInputElement | null | undefined} */ (field?.querySelector(".hex"));
+        const field = plane?.closest(".field, .color-editor"), named = field?.querySelector(".color-now"), hex = /** @type {HTMLInputElement | null | undefined} */ (field?.querySelector(".hex"));
+        /** @type {HTMLElement | null | undefined} */ (field?.querySelector('.slot-chip[aria-pressed="true"]'))?.style.setProperty("--c", cssColor(color));
         if (named) named.textContent = colorName(color);
         if (hex && document.activeElement !== hex) hex.value = ink(color);
         for (const dot of field ? all$(".swatch-grid [aria-checked='true']", field) : []) dot.setAttribute("aria-checked", "false");
         pick(name, color);
       }
+      // The panel's hex: ↵ takes what reads (a #fff, an OKLCH, a name too) and leaves it, esc leaves it; left, the panel's
+      // drawn again (it shows the color as it is).
+      document.addEventListener("keydown", (event) => {
+        const field = /** @type {HTMLInputElement} */ (event.target);
+        if (!field.matches?.("#inspector .color-editor .hex") || (event.key !== "Enter" && event.key !== "Escape")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const color = event.key === "Enter" ? readColor(field.value) : null, key = field.closest("[data-palette]")?.getAttribute("data-palette");
+        if (color && key) editById(selected, (item) => setColor(item, key, kept(color)));
+        field.blur();
+      }, true);
+      document.addEventListener("focusout", (event) => /** @type {HTMLElement} */ (event.target).matches?.("#inspector .color-editor .hex") && inspectorDue && setTimeout(renderInspector));
       // A color typed in hex (#3b82f6, or without its #): picked as the surface picks it, its ring moved there.
       document.addEventListener("input", (event) => {
         const field = /** @type {HTMLInputElement} */ (event.target), name = field.dataset?.hex;
@@ -17904,6 +18000,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!/^#[0-9a-f]{6}$/.test(hex)) return;
         // (Typed as it shows: on the light, kept as a color picked on the surface is.)
         const color = kept(hex), plane = planeOf(name), { u, t } = placeOf(color), named = field.closest(".field")?.querySelector(".color-now");
+        /** @type {HTMLElement | null | undefined} */ (field.closest(".color-editor")?.querySelector('.slot-chip[aria-pressed="true"]'))?.style.setProperty("--c", cssColor(color));
         plane?.style.setProperty("--x", String(u));
         plane?.style.setProperty("--y", String(t));
         plane?.querySelector(".ring")?.setAttribute("style", `--c:${cssColor(color)}`);
@@ -18524,13 +18621,17 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       $("inspector").addEventListener("click", (event) => {
         const button = closest(event, "button");
         if (!button) return;
-        const { type, dash, shape, fill, side, priceLine, action, insert, index, reset, colorSelect, replace, removeLevel, lineColor, lineDash, act, colorSlot: slot, pickColor, paletteCustom, paletteFaint } = button.dataset;
+        const { type, dash, shape, fill, side, priceLine, action, insert, index, reset, colorSelect, replace, removeLevel, lineColor, lineDash, act, colorSlot: slot, pickColor, colorSource: source } = button.dataset;
         const paletteKey = button.closest("[data-palette]")?.getAttribute("data-palette");
         if (index) switchInterval(index);
         else if (slot) colorSlot.set(selected, slot), renderInspector();
-        else if (pickColor && paletteKey) editById(selected, (item) => setColor(item, paletteKey, pickColor));
-        else if (paletteFaint && paletteKey) editById(selected, (item) => setColor(item, paletteKey, ""));
-        else if (paletteCustom && paletteKey) ((layer) => layer && colorPane(button, colorOf(layer, paletteKey), `layer:${paletteKey}`, () => hideMenu(), (paletteKey === "colorFading" ? layer.colorFading : paletteKey === "colorBelowFading" ? layer.colorBelowFading : "x") === undefined))(layerById(selected));
+        else if (source && paletteKey) {
+          // (Auto is a color: its own, set now; Palette and Custom, where to pick one: shown.)
+          const layer = layerById(selected);
+          colorSource.set(`${selected}:${paletteKey}`, { source, color: source === "auto" ? undefined : layer && ownColor(layer, paletteKey) });
+          if (source === "auto") editById(selected, (item) => setColor(item, paletteKey, ""));
+          renderInspector();
+        } else if (pickColor && paletteKey) editById(selected, (item) => setColor(item, paletteKey, pickColor));
         else if (colorSelect) layerColorMenu(button, colorSelect);
         else if (act !== undefined) {
           const row = layerActions(selected, "panel")[Number(act)], at = chart.layers.findIndex((layer) => layer.id === selected);
