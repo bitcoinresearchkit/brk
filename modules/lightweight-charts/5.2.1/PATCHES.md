@@ -5,10 +5,10 @@ it, the build inlines it). A fresh download loses them: apply each again at its 
 then open `tests.html` (served from the repo) and check it says 0 failing and every step the same.
 
 The plots draw exactly what the library does, but for the log marks (1) and the rounded bars (7, only where a radius is
-set); the axes' tags are rounded (6). `tests.html` runs the patched file and 5.2.1 as published side by side through every
+set); the axes' tags are rounded (6). The rest (2–5, 8) draw the same, faster. `tests.html` runs the patched file and 5.2.1 as published side by side through every
 series type, every price scale mode (inverted too), pans, jumps, zooms, the crosshair, restyles, live updates, new data,
 resizes, margins, moves between scales, a held price range and conflation, and compares their plots pixel for pixel, the
-axes left out (664 steps).
+axes left out (713 steps).
 
 ## 1. Log scales: marks on round values
 
@@ -108,6 +108,51 @@ gives 1× canvases, and Mullvad's fingerprinting protection scrambles a canvas r
 Measured (Chromium at a true 2×, the library's time over a 2.5 s pan, medians of 6, before → rounded with Studio's
 rule): candles 60 → 56 ms at a spacing of 6, 50 → 45.5 at 12; a two-color histogram 44.5 → 51 at 6 (+15%), 41 → 41 at
 12. Not rounded (spacing 3), as before or less.
+
+## 8. A series' data set again: the time scale rebuilt only when its points change
+
+A series' `setData` took its old rows off every point and marked the data changed whenever it had any, so the time
+scale was rebuilt (every point sorted again, every point's index and every series' row on it rewritten) for each series
+set, though the points were the same: setting 40 series' data rebuilt it 40 times, each over all of them. It's now
+rebuilt when points are made (a time no series had) or dropped (one no series holds any more), as the library already
+does for new points; when neither, its rebuild found nothing changed and returned what it now returns at once. (A
+series alone on the chart is still cleared and rebuilt whole, as before.)
+
+- `class ms` (the data layer), `oM()` (a series' data set): the loop taking its rows off the points no longer marks a
+  change; `_M()` (dropping points no series holds) returns whether it dropped any, and that marks one.
+
+`tests.html`: "a series set again among others" sets one series' data again among others: the same times, fewer (the
+others holding them), its own points let go, gaps over a stretch, more past every end, emptied, and back; with the
+setData already in the lines scenarios (one series of four, fewer points).
+
+Measured (Chromium, 39 layers, a layer added, every series set again): a day's 5,900 points 231 → 107 ms; ten
+minutes' 14,800 points 484 → 225 ms; a chunk reached back (22,800 points) 721 → 328 ms.
+
+## 9. Older data put before a series' own (`bvPrepend`)
+
+A chart that holds a stretch of history and reaches further back (Studio at a fine interval: 8,000 older points a
+series at a time) could only set each series' whole data again: every point it already had converted, matched to its
+time and rowed once more, for every series, to add the older ones. `series.bvPrepend(items)` takes only the items
+before the series' first: they alone are converted and put on their times (made where no series had them), placed
+before the series' own rows, and the time scale is made again once if they added points (every point's index moves). The
+same update then goes to the chart as `setData`'s would: what's drawn is what setting the whole data again draws. Items
+not older than the first time the series holds (its gaps too) are refused (an error, as `update` refuses data older than
+its last); none, nothing. One difference with setting the whole data again: a point's `originalTime` (the time as given,
+which callbacks and formatters see) is the form of the first series holding it; a series' data set whole again puts it
+after the others there, prepended it keeps its place. They differ only when series give the same moment in different
+forms (a date string in one, a timestamp in another).
+
+- `class ms` (the data layer): `bvPrepend(t, i)`, beside `oM` (setData).
+- The chart (`JM`'s class): `bvPrepend(t, i)`, as `JM` hands its result on.
+- The series' API (`setData`'s class): `bvPrepend(t)`, as `setData` (a full data change to its listeners).
+
+`tests.html`: "older data prepended": a line with gaps and colors, candles, a colored histogram and an area, prepended
+(as published, set whole again: they must draw alike): one series, then the others; gaps only; points no other
+series held; then a live update, the whole set again, and an emptied series given older data.
+
+Measured (Chromium, a chunk of 8,000 points reached back at ten minutes, with Studio's build only giving the new
+points): 39 layers 721 → 162 ms (patch 8 alone: 328); 10 layers with 11 chunks held (87,000 points) 317 → 161 ms.
+Mullvad, 10 layers: 250 → 133 ms at 3 chunks, 583 → 250 at 7.
 
 ## Measured (Chromium, CPU time in script; scratch benchmarks, before → after)
 

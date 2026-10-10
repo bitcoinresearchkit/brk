@@ -134,6 +134,52 @@ scenario("baseline and histogram", (L, el) => {
   const s2 = c.addSeries(L.HistogramSeries, { color: "#888", base: 0 }, 1); s2.setData(walk(3000, 0, 3, { negative: true, colors: true }));
   return [["full", () => c.timeScale().fitContent()], ...pan(c, 10, 0, 2000, 900), ["restyle", () => s2.applyOptions({ color: "#a3f" })], ...pan(c, 5, 2000, 2400, 300), ["base moved", () => s1.applyOptions({ baseValue: { type: "price", price: 5 } })], ...pan(c, 3, 100, 500, 1500)];
 });
+// One series' data set again among others (patch 8): the same times, fewer (the others holding them), its own points let
+// go, gaps over a stretch, more past every end, emptied, and back.
+scenario("a series set again among others", (L, el) => {
+  seed = 77;
+  const c = base(L, el);
+  const shift = (points, by) => points.map((p) => ({ ...p, time: day(Math.round((p.time - day(0)) / 86400) + by) }));
+  // (Every step's data made here, before the steps: they run for both libraries in turn, drawing from one random state.)
+  const first1 = walk(3000, 100, 0.02, { gaps: 0.02 }), first2 = walk(3000, 90, 0.02), first3 = walk(3000, 0, 1, { negative: true }), first4 = shift(walk(400, 110, 0.02), 2900);
+  const other2 = walk(3000, 70, 0.03), fewer3 = walk(2000, 0, 1, { negative: true }), less4 = shift(walk(200, 110, 0.02), 2900);
+  const gapped2 = other2.map((p, i) => (i > 1200 && i < 1800 ? { time: p.time } : p)), more1 = walk(3400, 100, 0.02), back4 = shift(walk(400, 110, 0.02), 2900);
+  const s1 = c.addSeries(L.LineSeries, { color: "#fff" }); s1.setData(first1);
+  const s2 = c.addSeries(L.LineSeries, { color: "#f80" }); s2.setData(first2);
+  const s3 = c.addSeries(L.HistogramSeries, { color: "#08f", base: 0 }, 1); s3.setData(first3);
+  const s4 = c.addSeries(L.LineSeries, { color: "#0f8" }); s4.setData(first4);
+  return [["full", () => c.timeScale().fitContent()],
+    ["same times, other values", () => s2.setData(other2)], ...pan(c, 3, 2000, 2400, 800),
+    ["fewer, the others holding them", () => s3.setData(fewer3)], ...pan(c, 3, 1500, 2500, 800),
+    ["its own points let go", () => s4.setData(less4)], ["full again", () => c.timeScale().fitContent()],
+    ["gaps over a stretch", () => s2.setData(gapped2)], ...pan(c, 3, 1000, 2000, 900),
+    ["more, past every end", () => s1.setData(more1)], ["full at last", () => c.timeScale().fitContent()],
+    ["emptied", () => s4.setData([])], ...pan(c, 3, 2600, 3200, 600),
+    ["back", () => s4.setData(back4)], ["full once more", () => c.timeScale().fitContent()]];
+});
+// Older data before a series' own (patch 9's bvPrepend; as published, the whole data set again: they must draw alike):
+// one series, then the others; gaps only; points no other series holds yet; then a live update, the whole set again,
+// and an emptied series given older data.
+scenario("older data prepended", (L, el) => {
+  seed = 55;
+  const c = base(L, el);
+  const all1 = walk(3000, 100, 0.02, { gaps: 0.02, colors: true }), all2 = ohlc(3000, 90, 0.02), all3 = walk(3000, 0, 1, { negative: true, colors: true }), all4 = walk(3000, 95, 0.02), all5 = walk(3000, 105, 0.02);
+  const s1 = c.addSeries(L.LineSeries, { color: "#fff" }), s2 = c.addSeries(L.CandlestickSeries, {}), s3 = c.addSeries(L.HistogramSeries, { color: "#08f", base: 0 }, 1), s4 = c.addSeries(L.AreaSeries, { lineColor: "#0f8", topColor: "#0f84", bottomColor: "#0f80" });
+  // (One holding gaps only, its times its own: older values put before them.)
+  const s5 = c.addSeries(L.LineSeries, { color: "#f0f" });
+  const held = new Map([[s1, all1.slice(2000)], [s2, all2.slice(2000)], [s3, all3.slice(2000)], [s4, all4.slice(2200)], [s5, all5.slice(2500).map((p) => ({ time: p.time }))]]);
+  for (const [series, rows] of held) series.setData(rows);
+  const prepend = (series, older) => { const rows = [...older, ...held.get(series)]; held.set(series, rows); series.bvPrepend ? series.bvPrepend(older) : series.setData(rows); };
+  return [["full", () => c.timeScale().fitContent()],
+    ["one series older", () => prepend(s1, all1.slice(1500, 2000))], ["fit", () => c.timeScale().fitContent()],
+    ["the others", () => { prepend(s2, all2.slice(1500, 2000)); prepend(s3, all3.slice(1500, 2000)); prepend(s4, all4.slice(1700, 2200)); }], ...pan(c, 4, 1200, 2600, 700),
+    ["gaps only", () => prepend(s4, all4.slice(1500, 1700).map((p) => ({ time: p.time })))], ["fit again", () => c.timeScale().fitContent()],
+    ["points none had", () => prepend(s2, all2.slice(500, 1500))], ...pan(c, 4, 0, 2000, 900),
+    ["a live update after", () => s1.update({ time: day(3000), value: 120 })], ["fit once more", () => c.timeScale().fitContent()],
+    ["set whole again", () => { held.set(s3, all3.slice(1000)); s3.setData(held.get(s3)); }], ...pan(c, 3, 800, 2400, 1200),
+    ["emptied, then older", () => { held.set(s4, []); s4.setData([]); prepend(s4, all4.slice(100, 900)); }], ["last fit", () => c.timeScale().fitContent()],
+    ["gaps held, older values before them", () => prepend(s5, all5.slice(2000, 2500))], ["then a live update", () => s5.update({ time: day(3000), value: 99 })], ["fit at the end", () => c.timeScale().fitContent()]];
+});
 for (const mode of [0, 1]) scenario(`candles and bars mode ${mode}`, (L, el) => {
   seed = 123 + mode;
   const c = base(L, el, { rightPriceScale: { mode, entireTextOnly: true } });
