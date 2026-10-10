@@ -201,6 +201,11 @@
         outline-offset: 1px;
       }
 
+      /* A field left by ↵ or esc gives the focus to the place that holds it: no ring, it's where the focus is, not a control. */
+      :is(.card-head, #inspector, .home-tools, #panel)[tabindex="-1"]:focus-visible {
+        outline: none;
+      }
+
       a {
         color: inherit;
       }
@@ -258,9 +263,9 @@
         }
       }
 
-      /* On a row that's lit (selected, current), its small grey text a tier up: on the lit ground, the muted grey reads too
+      /* On a row that's lit (selected, current, a menu's pointed at or open), its small grey text a tier up: on the lit ground, the muted grey reads too
          faintly. */
-      :is([aria-selected="true"], [aria-current]:not([aria-current="false"])) {
+      :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), .menu > button:is(:hover, :focus-visible, [aria-expanded="true"])) {
         --muted: var(--soft);
       }
 
@@ -511,6 +516,8 @@
       }
 
       .tabs {
+        /* (Its unchosen options a tier up: on its deeper ground, the muted tone was under 4.5:1 in the light.) */
+        --muted: var(--soft);
         display: inline-flex;
         gap: 1px;
         border-radius: var(--radius-md);
@@ -704,6 +711,8 @@
       }
 
       .search {
+        /* (Its words a label, not a placeholder: a tier up, 4.5:1 and more in the light.) */
+        --muted: var(--soft);
         display: flex;
         align-items: center;
         gap: 10px;
@@ -7520,7 +7529,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             <span id="preview-note" class="preview-note" hidden><span class="preview-said">A preview</span><button id="keep" class="btn small" type="button" data-tip="Keep puts it in your charts, as it is" data-kbd="⌘ S">Keep</button></span>
             <span id="saved" class="saved"></span>
             <button id="undo" class="cap" type="button" aria-label="Undo" data-tip="Undo" data-kbd="⌘ Z" data-icon="undo"></button>
-            <button id="redo" class="cap" type="button" aria-label="Redo" data-tip="Redo" data-kbd="⇧ ⌘ Z" data-icon="redo" disabled></button>
+            <button id="redo" class="cap" type="button" aria-label="Redo" data-tip="Redo" data-kbd="⇧ ⌘ Z" data-icon="redo" aria-disabled="true"></button>
             <span class="divider"></span>
             <button id="draw-toggle" class="cap" type="button" aria-pressed="false" aria-label="Drawing tools" data-tip="Drawing tools" data-kbd="D" data-action="draw" data-icon="draw"></button>
             <button id="add" class="cap" type="button" aria-haspopup="dialog" aria-label="Add a layer" data-tip="Add a layer" data-kbd="A" data-icon="plus"></button>
@@ -8924,15 +8933,15 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        *   way along it: a trend line's, from its first point to its second; a line across's, across the plot; down, down it.
        */
 
-      const TOOLS = /** @type {Record<DrawingKind, { name: string, noun: string, verb: string, key: string, tip: string, icon: string }>} */ ({
-        trend: { name: "Trend line", noun: "trend line", verb: "Draw a trend line", key: "L", tip: `Drag, or ${CLICK} its two ends`, icon: ICONS.trend },
-        hline: { name: "Horizontal line", noun: "horizontal line", verb: "Draw a horizontal line", key: "H", tip: `${capitalize(CLICK)} at its value`, icon: ICONS.hline },
-        vline: { name: "Vertical line", noun: "vertical line", verb: "Draw a vertical line", key: "V", tip: `${capitalize(CLICK)} at its date`, icon: ICONS.vline },
-        rect: { name: "Rectangle", noun: "rectangle", verb: "Draw a rectangle", key: "R", tip: `Drag, or ${CLICK} two corners`, icon: ICONS.rect },
-        ellipse: { name: "Ellipse", noun: "ellipse", verb: "Draw an ellipse", key: "E", tip: `Drag, or ${CLICK} two corners`, icon: ICONS.ellipse },
-        text: { name: "Text", noun: "text", verb: "Write on the chart", key: "T", tip: `${capitalize(CLICK)} where it goes, then type`, icon: ICONS.text },
-        brush: { name: "Brush", noun: "stroke", verb: "Draw with the brush", key: "B", tip: "Draw freely", icon: ICONS.brush },
-        ruler: { name: "Ruler", noun: "ruler", verb: "Measure a change", key: "M", tip: "Drag across the chart to measure a change", icon: ICONS.ruler },
+      const TOOLS = /** @type {Record<DrawingKind, { name: string, noun: string, verb: string, key: string, tip: string, keys: string, icon: string }>} */ ({
+        trend: { name: "Trend line", noun: "trend line", verb: "Draw a trend line", key: "L", tip: `Drag, or ${CLICK} its two ends`, keys: "Arrows to each end, ↵ to place it", icon: ICONS.trend },
+        hline: { name: "Horizontal line", noun: "horizontal line", verb: "Draw a horizontal line", key: "H", tip: `${capitalize(CLICK)} at its value`, keys: "Arrows to its value, ↵ to place it", icon: ICONS.hline },
+        vline: { name: "Vertical line", noun: "vertical line", verb: "Draw a vertical line", key: "V", tip: `${capitalize(CLICK)} at its date`, keys: "Arrows to its date, ↵ to place it", icon: ICONS.vline },
+        rect: { name: "Rectangle", noun: "rectangle", verb: "Draw a rectangle", key: "R", tip: `Drag, or ${CLICK} two corners`, keys: "Arrows to each corner, ↵ to place it", icon: ICONS.rect },
+        ellipse: { name: "Ellipse", noun: "ellipse", verb: "Draw an ellipse", key: "E", tip: `Drag, or ${CLICK} two corners`, keys: "Arrows to each corner, ↵ to place it", icon: ICONS.ellipse },
+        text: { name: "Text", noun: "text", verb: "Write on the chart", key: "T", tip: `${capitalize(CLICK)} where it goes, then type`, keys: "Arrows to where it goes, ↵, then type", icon: ICONS.text },
+        brush: { name: "Brush", noun: "stroke", verb: "Draw with the brush", key: "B", tip: "Draw freely", keys: "Draw freely, with a pointer", icon: ICONS.brush },
+        ruler: { name: "Ruler", noun: "ruler", verb: "Measure a change", key: "M", tip: "Drag across the chart to measure a change", keys: "Arrows to each end, ↵ to place it", icon: ICONS.ruler },
       });
       const KINDS = /** @type {DrawingKind[]} */ (Object.keys(TOOLS));
       /** The kinds placed by two points: a line's ends, a box's corners. */
@@ -11977,6 +11986,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
 
       /** The date the keys' crosshair is on (a time in the data), or null: none. */
       let keyTime = /** @type {number | null} */ (null);
+      /** With a tool in hand, the value ↑ and ↓ moved the keys' point to at its date (off its layer's line); another date, on the line again. */
+      let keyValue = /** @type {{ layer: string, value: number } | null} */ (null);
       /** The plot as the keys reach it, laid over the plot as it's laid out (none without a chart drawn). */
       function placePlotKeys() {
         const keys = $("plot-keys"), plot = home || !chart?.layers.length || drawnChart !== chart.id ? null : plotBox();
@@ -12011,7 +12022,20 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         return `${CADENCE[chart.index]}, ${span}. ${panes.join(". ")}.`;
       }
       /** The plot as its keys describe it: what it shows, and how to read it. */
-      const chartSummary = () => `${chartFacts()} The left and right arrows read it date by date (with shift, ten at a time); Home and End, the first and last shown.`;
+      const chartSummary = () => `${chartFacts()} The left and right arrows read it date by date (with shift, ten at a time); Home and End, the first and last shown. With a drawing tool in hand, Enter places a point there, and the up and down arrows move it off the line.`;
+      /**
+       * Where the keys' crosshair is at a bar: on a layer (the one being drawn on; else the selected, else the first shown with
+       * a value there), at its value as drawn (a stack's at its height); with a tool, at the value ↑ and ↓ moved it to, or, its
+       * layer without one there, the point being placed keeps its own. None: nothing drawn there.
+       */
+      function keyPoint(/** @type {number} */ i) {
+        const at = (/** @type {Layer} */ item) => built.get(item.id)?.shown?.[i] ?? NaN;
+        const layer = placing?.host ?? [layerById(selected), ...chart.layers].find((item) => item && !item.hidden && drawn.get(item.id) && Number.isFinite(at(item)));
+        const value = !layer ? NaN : tool && keyValue?.layer === layer.id ? keyValue.value : Number.isFinite(at(layer)) ? at(layer) : placing ? (draft?.points.at(-1)?.[1] ?? NaN) : NaN;
+        return layer && Number.isFinite(value) ? { layer, value } : null;
+      }
+      /** A value as a layer's legend writes it. */
+      const amountOn = (/** @type {Layer} */ layer, /** @type {number} */ value) => format(value, unitFor(layer, resolved?.results.get(layer.id)));
       /** The keys' crosshair on a bar: in view (the view moves to it), on the chart, its values in the legends, said. */
       function keyAt(/** @type {number} */ i) {
         if (!resolved) return;
@@ -12020,11 +12044,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (Out of sight, the view moves just enough to show it.)
         const first = range ? Math.ceil(range.from) : i, last = lastShown(), shift = i < first ? i - first : i > last ? i - last : 0;
         if (range && shift) view.timeScale().setVisibleLogicalRange({ from: range.from + shift, to: range.to + shift });
-        // Its line at the first layer drawn there, as it's drawn (a stack's at its height); none drawn there, none.
-        const at = (/** @type {Layer} */ item) => built.get(item.id)?.shown?.[i];
-        const layer = chart.layers.find((item) => !item.hidden && drawn.get(item.id) && Number.isFinite(at(item)));
-        if (layer) view.setCrosshairPosition(/** @type {number} */ (at(layer)), /** @type {any} */ (time), drawn.get(layer.id));
+        // Its line where its point is (none drawn there, none); a point being placed click by click goes there too.
+        const point = keyPoint(i);
+        if (point) view.setCrosshairPosition(point.value, /** @type {any} */ (time), drawn.get(point.layer.id));
         else view.clearCrosshairPosition();
+        if (point && draft && placing && !placing.held) {
+          draft = { ...draft, points: [...draft.points.slice(0, -1), pointOf(time, point.value)] };
+          repaintDrawings();
+        }
         hoverTime = time;
         valuesSoon();
         const shown = chart.layers.filter((item) => !item.hidden);
@@ -12032,15 +12059,60 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** The keys' crosshair let go: the readout back at the view's end. */
       function keyAway() {
+        keyValue = null;
         if (keyTime === null) return;
         keyTime = null;
         view.clearCrosshairPosition();
         hoverTime = null;
         valuesSoon();
       }
-      $("plot-keys").addEventListener("focus", describePlot);
+      /** The keys' point moved up or down a step (a hundredth of its pane; with shift, a tenth), off its line. */
+      function nudgeKey(/** @type {number} */ i, /** @type {boolean} */ up, /** @type {boolean} */ far) {
+        const point = keyPoint(i), series = point && drawn.get(point.layer.id), y = series?.priceToCoordinate(point.value);
+        const height = point ? (view.panes()[chart.panes.findIndex((pane) => pane.id === point.layer.pane)]?.getHeight() ?? 0) : 0;
+        if (!point || !series || y === null || y === undefined || !height) return;
+        const value = series.coordinateToPrice(clamp(y + ((up ? -1 : 1) * height) / (far ? 10 : 100), 0, height));
+        if (value === null || !Number.isFinite(value)) return;
+        keyValue = { layer: point.layer.id, value };
+        keyAt(i);
+        $("chart-said").textContent = amountOn(point.layer, value);
+      }
+      /** With a tool in hand, ↵: a point placed where the keys' crosshair is (a two-point kind's first, then its other: one clicked first too). */
+      function placeByKeys(/** @type {number} */ i) {
+        const kind = tool, point = keyPoint(i), said = $("chart-said");
+        if (!kind || !resolved) return;
+        if (kind === "brush") return void (said.textContent = "The brush draws only with a pointer");
+        if (!point) return void (said.textContent = "Nothing drawn at this date to place it on");
+        // (As a press on the chart does: a measure shown goes.)
+        clearMeasure();
+        const time = resolved.times[i], spot = pointOf(time, point.value), part = BOXES.has(kind) ? "corner" : "end";
+        const at = (/** @type {[number, number]} */ [when, value]) => `${dateLabel(when, FINE.has(chart.index))}, ${amountOn(point.layer, value)}`;
+        // A two-point kind's first: its other follows the keys (a click places it too).
+        if (PAIRED.has(kind) && !placing) {
+          const rect = view.panes()[chart.panes.findIndex((pane) => pane.id === point.layer.pane)]?.getHTMLElement()?.getBoundingClientRect();
+          if (!rect) return;
+          placing = { rect, host: point.layer, down: { x: NaN, y: NaN }, held: false, clicks: true, keys: true, stroke: [] };
+          draft = newDrawing(kind, point.layer.id, [spot, [...spot]]);
+          repaintDrawings();
+          renderBelt();
+          return void (said.textContent = `First ${part} at ${at(spot)}`);
+        }
+        const drawing = draft && placing ? { ...draft, points: [draft.points[0], spot] } : newDrawing(kind, point.layer.id, [spot]);
+        // (Both on one spot: the other's still to place.)
+        if (PAIRED.has(kind) && !pointsApart(drawing)) return void (said.textContent = `Its other ${part} is on its first: move it first`);
+        keyValue = null;
+        // (Kept, the tool's in hand again for the next one.)
+        setTool(toolKept ? kind : "", toolKept);
+        if (kind === "text") return startTyping(drawing, $("plot-keys"));
+        keepDrawing(drawing);
+        // (Said once it's there: a chart full, its notice says why not.)
+        const reading = kind === "ruler" ? rulerReading(drawing) : null;
+        if (kind === "ruler") said.textContent = reading ? `${reading.name}: ${reading.figures.join(", ")} over ${reading.span}` : "Nothing measured";
+        else if (drawingById(drawing.id)) said.textContent = `${TOOLS[kind].name} ${kind === "hline" ? `at ${amountOn(point.layer, point.value)}` : kind === "vline" ? `at ${dateLabel(time, FINE.has(chart.index))}` : `from ${at(drawing.points[0])} to ${at(spot)}`}`;
+      }
+      $("plot-keys").addEventListener("focus", () => (describePlot(), tool && renderBelt()));
       // (Left for another window, it's where it was when the window's back.)
-      $("plot-keys").addEventListener("blur", () => document.hasFocus() && keyAway());
+      $("plot-keys").addEventListener("blur", () => (document.hasFocus() && keyAway(), tool && renderBelt()));
       $("plot-keys").addEventListener("keydown", (event) => {
         const n = resolved?.times.length ?? 0, range = view.timeScale().getVisibleLogicalRange();
         // (Another chart loading, nothing to read yet.)
@@ -12048,14 +12120,24 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const on = keyTime === null ? -1 : indexOfTime(keyTime), first = clamp(Math.ceil(range.from), 0, n - 1), last = lastShown(), from = on >= 0 ? on : last + 1;
         const step = event.shiftKey ? 10 : 1;
         const to = event.key === "ArrowLeft" ? from - step : event.key === "ArrowRight" ? (on < 0 ? first : from + step) : event.key === "Home" ? first : event.key === "End" ? last : null;
-        if (event.key === "Escape" && keyTime !== null) {
+        // (A point being placed, a tool in hand, a measure shown: esc's for them first.)
+        if (event.key === "Escape" && keyTime !== null && !tool && !placing && !measuring) {
           event.preventDefault();
           event.stopPropagation();
           return keyAway();
         }
+        // With a tool in hand: ↵ places a point, ↑ and ↓ move it (none shown yet, it shows at the view's end first).
+        const keyed = tool && tool !== "brush" && (event.key === "ArrowUp" || event.key === "ArrowDown");
+        if ((tool && event.key === "Enter") || keyed) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (on < 0) keyAt(last);
+          return event.key === "Enter" ? placeByKeys(on < 0 ? last : on) : nudgeKey(on < 0 ? last : on, event.key === "ArrowUp", event.shiftKey);
+        }
         if (to === null) return;
         event.preventDefault();
         event.stopPropagation();
+        keyValue = null;
         keyAt(clamp(to, 0, n - 1));
       });
       let layoutFrame = 0, laidWidth = 0;
@@ -13281,6 +13363,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** A chart's drawings, on the series just built (each given its sketch once). @param {Chart} doc */
       function showDrawings(doc) {
         measuring = null;
+        // (The layer a drawing was being placed on, gone: it goes.)
+        if (placing && !drawn.has(placing.host.id)) stopDrawing();
         shownDrawings = doc.drawings ?? [];
         for (const [id, series] of drawn) {
           if (sketches.has(series)) continue;
@@ -13393,6 +13477,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         tool = kind;
         selectingArea = false;
         placing = moving = draft = boxing = null;
+        keyValue = null;
         reshaped = new Map();
         $("select-box").hidden = true;
         hold("");
@@ -13493,15 +13578,24 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             button("remove", drawings.length > 1 ? `Remove ${drawings.length} drawings` : "Remove", ICONS.trash, false, "⌫"),
           ] : []),
         ].join("");
-        const how = selectingArea ? "Drag a box around drawings to select them" : tool && (placing?.clicks ? `${capitalize(CLICK)} its ${BOXES.has(tool) ? "other corner" : "other end"}` : toolKept ? `${TOOLS[tool].tip}, as many as you like` : TOOLS[tool].tip);
+        // (The plot in focus, as the keys place it.)
+        const byKeys = document.activeElement === $("plot-keys"), other = BOXES.has(tool) ? "other corner" : "other end";
+        const how = selectingArea ? "Drag a box around drawings to select them" : tool && (placing?.clicks ? (byKeys ? `Arrows to its ${other}, ↵ to place it` : `${capitalize(CLICK)} its ${other}`) : `${byKeys ? TOOLS[tool].keys : TOOLS[tool].tip}${toolKept ? ", as many as you like" : ""}`);
         // The tools, then what's in hand; drawings selected, only theirs (esc, or a click on the chart, and the tools are back).
         const html = `<button type="button" class="grip" id="belt-grip" aria-label="Move the drawing tools" data-tip="Drag it to any side of the chart">${ICONS.grip}</button>
           ${drawings.length ? "" : `<div class="belt-tools" role="group" aria-label="Tools">${tools}</div>`}
           ${context ? `${drawings.length ? "" : '<i class="belt-rule"></i>'}<div class="belt-context" role="group" aria-label="${escape(tool ? `Next ${TOOLS[tool].noun}` : drawing ? drawingNames().get(drawing.id) ?? "" : `${drawings.length} drawings`)}">${context}</div>` : ""}
-          ${how ? `<p class="belt-caption">${escape(how)}<kbd>esc</kbd></p>` : ""}`;
+          ${how ? '<p class="belt-caption"><span></span><kbd>esc</kbd></p>' : ""}`;
+        // (Its words set in place: the plot taking the focus or giving it up, as a belt's button is pressed, changes only
+        // them, and the button pressed stays the one clicked.)
+        const writeHow = () => {
+          const caption = belt.querySelector(".belt-caption span");
+          if (caption && caption.textContent !== how) caption.textContent = how || "";
+        };
         if (html !== beltShown) {
           const focus = focusKey(belt);
           belt.innerHTML = beltShown = html;
+          writeHow();
           drawKeys(belt);
           restoreFocus(belt, focus);
           // The button in focus gone with what it was for (a drawing removed from it): D's keys end with it.
@@ -13514,6 +13608,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (was) reshapeBelt(was);
           return;
         }
+        writeHow();
         placeBelt(false, true);
       }
       /** The belt from its last shape to this one (its place, its size), what's in it coming in: no jump. */
@@ -13630,7 +13725,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (To draw: what's selected is let go, the tools come back.)
         chooseDrawings([]);
         if (!prefs.belt.on) (prefs.belt.on = true), savePrefs();
-        beltFrom = document.activeElement instanceof HTMLElement && document.activeElement !== document.body && !$("belt").contains(document.activeElement) ? document.activeElement : null;
+        beltFrom = document.activeElement instanceof HTMLElement && !$("belt").contains(document.activeElement) ? document.activeElement : null;
         beltKeys = true;
         renderBelt();
         $("belt").classList.add("keys");
@@ -13641,8 +13736,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function leaveBelt() {
         const back = beltFrom;
         beltFrom = null;
-        if (back?.isConnected && back.checkVisibility()) back.focus({ preventScroll: true });
-        else /** @type {HTMLElement | null} */ (document.activeElement)?.blur();
+        // (Nothing in focus as D was pressed, a pointer's way: nothing again.)
+        if (back === document.body) return void (/** @type {HTMLElement | null} */ ($("belt").querySelector(":focus"))?.blur());
+        // (Gone since: the chart, its keys, else Draw: never the page.)
+        const to = back?.isConnected && back.checkVisibility() ? back : [$("plot-keys"), $("draw-toggle")].find((element) => element?.checkVisibility());
+        to?.focus({ preventScroll: true });
       }
       $("belt").addEventListener("focusout", (event) => {
         if ($("belt").contains(/** @type {Node | null} */ (event.relatedTarget))) return;
@@ -13735,14 +13833,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const now = words?.back ?? "", color = words?.color ?? PEN_COLOR;
           return beltPopover(button, "Background", beltTabs("Background", BACKS.map(([back, text, tip]) => `<button type="button" data-pick-back="${back}" aria-pressed="${now === back}" aria-label="${text}" data-tip="${text}: ${tip.toLowerCase()}">${backChip(back, color)}</button>`)), ({ pickBack }) => pickBack !== undefined && setLook("back", pickBack || undefined));
         }
-        if (part === "label" && drawing) return startLabel(drawing);
+        if (part === "label" && drawing) return startLabel(drawing, drawing.at, button);
         if (part === "color") penColors(button);
         else if (part === "width" || part === "opacity") {
           beltPopover(button, part === "width" ? "Width" : "Opacity", slider(`draw-${part}`, look), () => {});
           $(`draw-${part}`)?.focus();
         } else if (part === "dash") beltPopover(button, "Line style", beltTabs("Line style", DASHES.map(([dash, text, length, gap]) => `<button type="button" data-pick-dash="${dash}" aria-pressed="${look.dash === dash}" aria-label="${text}" data-tip="${text}">${dashGlyph(length, gap)}</button>`)), ({ pickDash }) => pickDash !== undefined && setLook("dash", Number(pickDash)));
         else if (part === "extend") beltPopover(button, "Extend", beltTabs("Extend", EXTENDS.map(([extend, text, tip]) => `<button type="button" data-pick-extend="${extend}" aria-pressed="${(look.extend ?? "") === extend}" aria-label="${text}" data-tip="${tip}">${extendGlyph(extend)}</button>`)), ({ pickExtend }) => pickExtend !== undefined && setLook("extend", pickExtend || undefined));
-        else if (part === "text" && drawing) startTyping(drawing);
+        else if (part === "text" && drawing) startTyping(drawing, button);
         else if (part === "duplicate") duplicateDrawings(drawings);
         else if (part === "remove") removeDrawings(drawings);
       });
@@ -14021,7 +14119,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // Placed click by click: this press ends it, at its release; its end where it's pressed (a finger still till
           // it lifts moves nothing: a mouse's hovered there first).
           if (placing) {
-            Object.assign(placing, { down: at, held: true });
+            Object.assign(placing, { down: at, held: true, keys: false });
             return placeTo(event);
           }
           // (Drawn to a value within reach: a line's ends, a box's corners, a level; not a ruler's: it reads its dates.)
@@ -14047,7 +14145,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }, true);
       $("chart").addEventListener("pointermove", (event) => {
         if (gesturing() && event.pointerId !== gesturePointer) return;
-        if (placing) return placeTo(event);
+        if (placing) return void (placing.keys || placeTo(event));
         if (moving) return moveTo(event);
         if (boxing) return boxTo(event);
         hover(event.buttons || tool || selectingArea ? null : drawingAt(event.clientX, event.clientY));
@@ -14105,6 +14203,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function stopDrawing() {
         if (!placing && !moving && !boxing) return;
         placing = moving = draft = boxing = null;
+        keyValue = null;
         reshaped = new Map();
         $("select-box").hidden = true;
         hold("");
@@ -14155,11 +14254,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           for (let tolerance = 1.5; kept.length > MAX_STROKE; tolerance *= 1.5) kept = simplify(stroke, tolerance);
           drawing = { ...drawing, points: /** @type {[number, number][]} */ (kept.map((each) => each.point).filter(Boolean)) };
         }
-        const series = drawn.get(host.id), line = timeLine(), ends = drawing && series && line ? onScreen(drawing, series, line) : [];
-        // Its two points on one spot: nothing to draw.
-        if (!drawing || !drawing.points.length || (PAIRED.has(kind) && !(ends.length && Math.hypot(ends[1].x - ends[0].x, ends[1].y - ends[0].y) >= 3))) return repaintDrawings();
-        // (A ruler's measure passes: shown, not kept.)
-        if (kind === "ruler") return void ((measuring = drawing), repaintDrawings());
+        if (!drawing) return repaintDrawings();
+        keepDrawing(drawing);
+      }
+      /** Whether a two-point drawing's points are apart on the plot (3px at least). */
+      function pointsApart(/** @type {Drawing} */ drawing) {
+        const series = drawn.get(drawing.layer), line = timeLine(), ends = series && line ? onScreen(drawing, series, line) : [];
+        return ends.length > 1 && Math.hypot(ends[1].x - ends[0].x, ends[1].y - ends[0].y) >= 3;
+      }
+      /** A drawing placed, into the chart: a ruler's measure shown (it passes); its two points on one spot, nothing to draw. */
+      function keepDrawing(/** @type {Drawing} */ drawing) {
+        if (!drawing.points.length || (PAIRED.has(drawing.kind) && !pointsApart(drawing))) return repaintDrawings();
+        if (drawing.kind === "ruler") return void ((measuring = drawing), repaintDrawings());
         addDrawing(drawing);
       }
       /**
@@ -14353,10 +14459,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         field.dataset.back = drawing.back ?? "";
         field.hidden = false;
       }
-      /** Typing a text where it's drawn: ↵ or esc (or a click away) keeps it, ⇧↵ starts a line; emptied, it goes. @param {Drawing} drawing */
-      function startTyping(drawing) {
+      /**
+       * Typing a text where it's drawn: ↵ or esc (or a click away) keeps it, ⇧↵ starts a line; emptied, it goes. ↵ or esc
+       * gives the focus `back` (what opened it by keys: the plot, the belt's button).
+       * @param {Drawing} drawing @param {HTMLElement | null} back
+       */
+      function startTyping(drawing, back = null) {
         const field = /** @type {HTMLTextAreaElement} */ ($("draw-text")), fresh = !drawingById(drawing.id);
-        writing = { drawing, fresh };
+        writing = { drawing, fresh, back };
         field.maxLength = 500;
         field.setAttribute("aria-label", "Text");
         typingIn = drawing.id;
@@ -14367,11 +14477,15 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         field.setSelectionRange(field.value.length, field.value.length);
         repaintDrawings();
       }
-      /** Typing a line's label where it sits (`at`: where it goes, a share of the way along): ↵ or esc keeps it; emptied, it goes. @param {Drawing} drawing */
-      function startLabel(drawing, at = drawing.at) {
+      /**
+       * Typing a line's label where it sits (`at`: where it goes, a share of the way along): ↵ or esc keeps it (the focus
+       * `back`, as a text's); emptied, it goes.
+       * @param {Drawing} drawing @param {HTMLElement | null} back
+       */
+      function startLabel(drawing, at = drawing.at, back = null) {
         if (!chosen.has(drawing.id)) chooseDrawings([drawing.id]);
         const field = /** @type {HTMLTextAreaElement} */ ($("draw-text"));
-        writing = { drawing: { ...drawing, ...(at === undefined ? {} : { at }) }, fresh: false, label: true };
+        writing = { drawing: { ...drawing, ...(at === undefined ? {} : { at }) }, fresh: false, label: true, back };
         field.maxLength = LABEL_MAX;
         field.setAttribute("aria-label", "Label");
         labelTyping = drawing.id;
@@ -14429,7 +14543,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (Enter mid-composition is the input method's. A label is one line: ⇧Enter puts it down too.)
         if (event.isComposing || !((event.key === "Enter" && (!event.shiftKey || writing?.label)) || event.key === "Escape")) return;
         event.preventDefault();
+        const back = writing?.back;
         $("draw-text").blur();
+        // (The belt's button drawn again as it's kept: the one in its place.)
+        const to = back?.isConnected ? back : back?.id ? document.getElementById(back.id) : null;
+        if (to?.checkVisibility()) to.focus({ preventScroll: true });
       });
 
       // ── Layers ────────────────────────────────────────────────────────────────
@@ -15482,7 +15600,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if ($("home-filter").value) {
             $("home-filter").value = "";
             renderHome();
-          } else $("home-filter").blur();
+          } else letGo($("home-filter"));
         } else if (event.key === "ArrowDown" || event.key === "Enter") {
           // Down, or ↵, to the first chart through.
           const first = all$(".tile-open", $("home-grid"))[0];
@@ -16417,12 +16535,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         /** The item an id names now (the list may have been drawn anew since the press). */
         const itemNamed = (/** @type {string} */ id) => all$(how.item, list).find((element) => how.idOf(element) === id);
         const unmark = () => [list, ...all$(".drop-before, .drop-after, .drop-target", list)].forEach((element) => element.classList.remove("drop-before", "drop-after", "drop-target"));
-        const letGo = (landed = false) => {
+        const endDrag = (landed = false) => {
           const unpick = Boolean(press?.began && drag && !landed);
           if (press) clearTimeout(press.timer);
           press?.touched?.removeEventListener("touchmove", pin);
           press = null;
-          if (carrying === letGo) carrying = null;
+          if (carrying === endDrag) carrying = null;
           if (!drag) return;
           cancelAnimationFrame(drag.frame);
           drag.ghost.remove();
@@ -16505,7 +16623,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const item = /** @type {HTMLElement | null} */ (closest(event, how.item));
           if (!item || typing(event.target) || how.refuse?.(event)) return;
           press = { id: how.idOf(item), x: event.clientX, y: event.clientY, at: [event.clientX, event.clientY], pointer: event.pointerId, touch: event.pointerType === "touch", held: false, began: false, timer: 0, touched: null };
-          carrying = letGo;
+          carrying = endDrag;
           // (A touch's moves go to what it started on, drawn anew or not: there, they're held from scrolling.)
           if (press.touch) {
             press.touched = event.target;
@@ -16514,7 +16632,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // By touch, held still: picked (where items are), and ready to be carried.
           if (press.touch) press.timer = window.setTimeout(() => {
             if (!press) return;
-            if (!itemNamed(press.id)) return letGo();
+            if (!itemNamed(press.id)) return endDrag();
             press.held = true;
             // (A carry from here: a drift while held still isn't one.)
             [press.x, press.y] = press.at;
@@ -16528,7 +16646,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         window.addEventListener("pointermove", (event) => {
           if (!press || event.pointerId !== press.pointer) return;
           // (A mouse with no button down: its press was let go where nothing heard it.)
-          if (!press.touch && !event.buttons) return letGo();
+          if (!press.touch && !event.buttons) return endDrag();
           if (drag) {
             drag.x = event.clientX;
             drag.y = event.clientY;
@@ -16537,7 +16655,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
           // (By touch, moved before it's held: a scroll.)
           press.at = [event.clientX, event.clientY];
-          if (press.touch && !press.held) return void (moved > 8 && letGo());
+          if (press.touch && !press.held) return void (moved > 8 && endDrag());
           if (moved >= (press.touch ? 6 : 4) && !how.still?.() && itemNamed(press.id)) lift(event);
         });
         window.addEventListener("pointerup", (event) => {
@@ -16551,21 +16669,21 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // (A drag, or a hold, makes no click: it'd open, or pick again, what was pressed.)
           if (carried || press.held) swallowClick();
           const began = press.began;
-          letGo(true);
+          endDrag(true);
           if (carried?.at) how.land(carried.ids, carried.at, carried.y);
           // A hold that became a drag moved it: it picked nothing (picking was on before, it stays).
           if (carried && began) how.unpick?.();
         });
-        window.addEventListener("pointercancel", (event) => event.pointerId === press?.pointer && letGo());
+        window.addEventListener("pointercancel", (event) => event.pointerId === press?.pointer && endDrag());
         // (Its own capture lost, not a row's: a touch's own, let go as the list takes it, says nothing.)
-        list.addEventListener("lostpointercapture", (event) => drag && event.target === list && event.pointerId === press?.pointer && letGo());
+        list.addEventListener("lostpointercapture", (event) => drag && event.target === list && event.pointerId === press?.pointer && endDrag());
         // (Nothing in it is dragged the browser's way: an image, a link.)
         list.addEventListener("dragstart", (event) => event.preventDefault());
         document.addEventListener("keydown", (event) => {
           if (!drag || event.key !== "Escape") return;
           event.preventDefault();
           event.stopImmediatePropagation();
-          letGo();
+          endDrag();
         }, true);
       }
       /** The gesture going on, if one is (its letting go): one at a time, whatever the list; a chart opened, the grid, a panel closed end it. @type {(() => void) | null} */
@@ -17521,11 +17639,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (fromList && selected) /** @type {HTMLElement | null} */ ($("inspector").querySelector('[data-action="deselect"]'))?.focus();
       }
       function deselect() {
-        const was = selected, fromSettings = $("inspector").contains(document.activeElement);
+        const was = selected, fromSettings = $("inspector").contains(document.activeElement), peeking = document.body.hasAttribute("data-peek");
         selected = "";
+        // (Open for the while, the panel goes: a key's focus in it to its button, else the chart.)
+        if (peeking) keepFocus($("panel"), () => $("panel-toggle"), () => $("plot-keys"));
         document.body.removeAttribute("data-peek");
         refresh("none");
-        if (fromSettings) /** @type {HTMLElement | null} */ ($("layer-list").querySelector(`[data-select="${was}"]`))?.focus();
+        if (fromSettings && !peeking) /** @type {HTMLElement | null} */ ($("layer-list").querySelector(`[data-select="${was}"]`))?.focus();
       }
 
       let inspected = "";
@@ -18221,7 +18341,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         event.stopPropagation();
         const color = event.key === "Enter" ? readColor(field.value) : null, key = field.closest("[data-palette]")?.getAttribute("data-palette");
         if (color && key) editById(selected, (item) => setColor(item, key, kept(color)));
-        field.blur();
+        letGo(field);
       }, true);
       document.addEventListener("focusout", (event) => /** @type {HTMLElement} */ (event.target).matches?.("#inspector .color-editor .hex") && inspectorDue && setTimeout(renderInspector));
       // A color typed in hex (#3b82f6, or without its #): picked as the surface picks it, its ring moved there.
@@ -18797,14 +18917,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const n = suggest.items.length, down = event.key === "ArrowDown";
           if (down || event.key === "ArrowUp") chooseSuggestion(suggest.active < 0 ? (down ? 0 : n - 1) : (suggest.active + (down ? 1 : -1) + n) % n);
           else if ((event.key === "Enter" || (event.key === "Tab" && !event.shiftKey)) && suggest.active >= 0) acceptSuggestion();
-          else if (event.key === "Enter" && !event.shiftKey) event.target.blur();
+          else if (event.key === "Enter" && !event.shiftKey) letGo(event.target);
           else return;
           event.preventDefault();
           event.stopPropagation();
         } else if ((event.key === "Enter" && !event.shiftKey) || event.key === "Escape") {
           // ↵ is done, as in every field (⇧↵ a line); esc too, as typed (⌘Z takes it back).
           event.preventDefault();
-          event.target.blur();
+          letGo(event.target);
         }
       });
       $("inspector").addEventListener("focusin", (event) => {
@@ -21980,7 +22100,30 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         menuScrim.remove();
         $("menu").hidden = true;
         unexpand(ownerNow());
+        (closedOwner = ownerNow()), (closedAt = performance.now());
         menuOwner = null;
+      }
+      /** The last menu's opener, and when it closed: a field opened by one of its rows (Rename) goes back to it. */
+      let closedOwner = /** @type {HTMLElement | null} */ (null), closedAt = 0;
+      /** What opened a field (a menu's opener), where the focus goes as it's left. */
+      const fieldOpener = /** @type {WeakMap<Element, HTMLElement>} */ (new WeakMap());
+      document.addEventListener("focusin", (event) => {
+        const field = /** @type {HTMLElement} */ (event.target), from = /** @type {Element | null} */ (event.relatedTarget);
+        if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+        if (closedOwner && (from?.closest("#menu, #submenu") || performance.now() - closedAt < 400)) fieldOpener.set(field, closedOwner);
+        else fieldOpener.delete(field);
+      });
+      /**
+       * A field left by ↵ or esc: the focus to what opened it (Rename's ⋯), else the grid's first chart (from its filter,
+       * as ↓), else the place that holds it (the chart's head, the panel, the grid's tools): never the page, a screen
+       * reader's place kept, the app's single keys back. @param {HTMLElement} field
+       */
+      function letGo(field) {
+        const opener = fieldOpener.get(field), first = field.id === "home-filter" ? all$(".tile-open", $("home-grid"))[0] : null;
+        const to = /** @type {HTMLElement | undefined} */ ([opener, first, field.closest(".card-head, #inspector, .home-tools, #panel")].find((element) => element instanceof HTMLElement && element.isConnected && element !== field && element.checkVisibility()));
+        if (!to) return field.blur();
+        if (!to.matches("button, a[href], input, textarea, select, [tabindex]")) to.tabIndex = -1;
+        to.focus({ preventScroll: true });
       }
       $("menu").addEventListener("keydown", (event) => {
         // Tab goes on from what opened the menu (on a color's Custom page, first through it: the way back, the surface,
@@ -22114,11 +22257,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           field.value = typedFrom.get(field);
           field.dispatchEvent(new Event("input", { bubbles: true }));
         }
-        // The edit may have redrawn the field: leave whichever one has the focus now.
-        /** @type {HTMLElement} */ (document.activeElement)?.blur();
+        // The edit may have redrawn the field: leave whichever one has the focus now (for what opened the one typed in).
+        const now = /** @type {HTMLElement | null} */ (document.activeElement);
+        if (now && now !== field && fieldOpener.has(field)) fieldOpener.set(now, /** @type {HTMLElement} */ (fieldOpener.get(field)));
+        if (now) letGo(now);
       }, true);
-      $("undo").addEventListener("click", undoLast);
-      $("redo").addEventListener("click", redo);
+      $("undo").addEventListener("click", () => ($("undo").getAttribute("aria-disabled") === "true" ? say("Nothing to undo") : undoLast()));
+      $("redo").addEventListener("click", () => ($("redo").getAttribute("aria-disabled") === "true" ? say("Nothing to redo") : redo()));
       /** Out of the open chart: its image (copied, opened, downloaded), its data, its file. @returns {Action[]} */
       const exportRows = () => /** @type {[string, string, string, string, string][]} */ ([["copy", "Copy as image", "", ICONS.copy, "Copy"], ["open", "Open image", "In a tab of its own", ICONS.link, "Open"], ["png", "Download image", "PNG", ICONS.image, "Download"], ["csv", "Download data", "CSV", ICONS.table, "Download"], ["json", "Download chart file", "JSON", ICONS.file, "Download"]]).map(([kind, label, note, icon, verb]) => ({ key: kind, icon, label, aside: note, verb, apart: kind === "csv", run: () => exportAs(kind) }));
       // The panel's adds, from the header (and the phone's bar): those made from layers too, once there are layers for one.
@@ -23116,8 +23261,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * nothing moves under a second press); a preview's Keep marked once it's edited (the edits go with it, if kept).
        */
       function syncUndo() {
-        $("undo").disabled = !edits.past.length && toastUndo?.mark !== revision;
-        $("redo").disabled = !edits.future.length;
+        // (Dimmed, not disabled: a key's focus on one stays there as it runs out.)
+        $("undo").setAttribute("aria-disabled", String(!edits.past.length && toastUndo?.mark !== revision));
+        $("redo").setAttribute("aria-disabled", String(!edits.future.length));
         const edited = chart === previewing && touched.has(chart), keep = $("keep");
         keep.classList.toggle("edited", edited);
         keep.dataset.tip = edited ? "Your edits aren't in your charts yet: Keep puts it there, with them" : "Keep puts it in your charts, as it is";
@@ -23386,7 +23532,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const mod = event.metaKey || event.ctrlKey;
         const key = event.key.toLowerCase();
         if (flyout) {
-          if (!mod && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+          // (↑ ↓ into it only from nowhere, or from what opened it: from a field, a list, they're theirs, and it goes.)
+          const at = document.activeElement, free = !at || at === document.body || at === ownerNow();
+          if (!mod && free && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
             event.preventDefault();
             flyout = false;
             const items = all$("button:not(:disabled)", $("menu"));
@@ -23501,7 +23649,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           else if (chosen.size) chooseDrawings([]);
           else if (layerPicks.size) clearLayerPicks(true);
           else if (selected) deselect();
-          else if (document.body.hasAttribute("data-peek")) document.body.removeAttribute("data-peek");
+          else if (document.body.hasAttribute("data-peek")) {
+            keepFocus($("panel"), () => $("panel-toggle"), () => $("plot-keys"));
+            document.body.removeAttribute("data-peek");
+          }
           else if (document.body.dataset.sheet) delete document.body.dataset.sheet;
           else if (!home && tablet.matches && panelShown()) togglePanel(false);
           // A new chart left empty: Escape takes it back, as its Cancel button does.
