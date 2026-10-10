@@ -19411,7 +19411,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
 
       /**
-       * The search's worker, started once the page is idle: it answers once its index is built; bitview.space until then.
+       * The search's worker, started once the chart's asked for its data: it answers once its index is built; bitview.space until then.
        * One question is with it at a time, the others wait their turn, and one given up (typing went on) leaves the line:
        * the latest is never stuck behind stale ones.
        */
@@ -19443,7 +19443,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (typeof Worker !== "function") return;
         const quickmatch = new URL("../modules/quickmatch-js/src/index.js", location.href).href;
         const source = URL.createObjectURL(new Blob([`(${seriesSearch})(${JSON.stringify(quickmatch)}, ${JSON.stringify(`${client.baseUrl}/api/series`)}, ${JSON.stringify(INTERVAL_ORDER)}, ${normalizeQuery}, ${sayQuery});`], { type: "text/javascript" }));
-        const worker = (finder.worker = new Worker(source, { type: "module" }));
+        // (Workers turned off for the page: none, and bitview.space answers; never the page's start failing with it.)
+        let worker;
+        try {
+          worker = finder.worker = new Worker(source, { type: "module" });
+        } catch {
+          return void URL.revokeObjectURL(source);
+        }
         // A worker that fails leaves the search to bitview.space, the questions it had included.
         const stop = () => {
           worker.terminate();
@@ -24034,8 +24040,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         else if (picturing) pictureFailed(linkError || "That link doesn't contain a chart");
         else if (document.body.hasAttribute("data-picture")) leavePicture();
         setTimeout(() => document.body.classList.remove("boot"), 1400);
-        // Once the chart is up, while the page is idle: the search's index builds (off the page), and the color surface.
-        whenIdle(startFinder, { timeout: 3000, settle: 1500 });
+        // Once the chart's asked for its data: the search's index builds, off the page, at once (search is this machine's
+        // a second or so after a load, not after an idle moment a hidden tab may give late); the color surface when idle.
+        startFinder();
         whenIdle(vividSoon, { timeout: 3000, settle: 1500 });
         // Charts this Studio couldn't read: kept aside, said once (again only when they change), to be had as a file
         // (Download all has them too).
