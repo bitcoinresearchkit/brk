@@ -10361,7 +10361,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             while (data.length < part.start - start) data.push(null);
             for (const value of part.data) data.push(value);
           }
-          return { start, data, times: data.map((_, i) => timeAt(index, start + i)), stamp: loaded.at(-1)?.stamp ?? "" };
+          // (A fine interval's steps are even: its times one from the next, as the client puts the last one; else each asked.)
+          const begin = timeAt(index, start), step = FINE_STEP[/** @type {keyof typeof FINE_STEP} */ (index)], times = new Array(data.length);
+          if (data.length && timeAt(index, start + data.length - 1) === begin + (data.length - 1) * step) for (let i = 0; i < data.length; i++) times[i] = begin + i * step;
+          else for (let i = 0; i < data.length; i++) times[i] = timeAt(index, start + i);
+          return { start, data, times, stamp: loaded.at(-1)?.stamp ?? "" };
         });
         const held = holder();
         if (held(key)) spanned.set(key, { parts, value });
@@ -10451,6 +10455,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const datas = [...fetched.values()].flatMap(({ data }) => (data ? [data] : []));
         const frameKey = `${doc.id}@${doc.index}`;
         let frame = frames.has(frameKey) ? lastUsed(frames, frameKey, frames.get(frameKey)) : undefined;
+        // A series added whose every point is on the timeline already (the same interval over the same stretch, as most
+        // are): the timeline kept, and with it the others' series as they were: only the new one is set. (One gone, or
+        // one reaching past the timeline: made again.)
+        if (frame && frame.datas.every((data) => datas.includes(data))) {
+          const { lo, position } = frame;
+          const fits = (data) => data.start >= lo && data.start + data.times.length <= lo + position.length && position.subarray(data.start - lo, data.start - lo + data.times.length).every((at) => at >= 0);
+          const added = datas.filter((data) => !frame?.datas.includes(data));
+          if (added.length && added.every(fits)) {
+            frame.datas = [...frame.datas, ...added];
+            for (const data of added) if (data.stamp > frame.stamp) frame.stamp = data.stamp;
+          }
+        }
         if (!frame || frame.datas.length !== datas.length || !datas.every((data) => frame?.datas.includes(data))) {
           // The timeline: every point any series has, by its index at this interval (shared by them all), in order; and
           // where each index lands on it. In flat arrays over the span of indexes: a Map per point is many times slower.
@@ -10989,6 +11005,42 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
 
       /** @param {Chart} doc @param {Resolved} data */
+      /**
+       * What each series holding a layer's data was last set to (by any way: its rows, a spotlight's faded ones), to tell
+       * rows set again from the same with older ones before them; its last point updated (a live tick), unknown. Only at
+       * a fine interval, the one that reaches back (elsewhere, rows kept would only take memory).
+       */
+      const rowsOf = /** @type {WeakMap<object, object[]>} */ (new WeakMap());
+      /** A series holding a layer's data, its data followed (see rowsOf). @param {any} series @returns {any} */
+      function tracked(series) {
+        const setData = series.setData.bind(series), update = series.update.bind(series);
+        series.setData = (/** @type {any[]} */ rows) => {
+          setData(rows);
+          if (FINE.has(chart.index)) rowsOf.set(series, rows);
+          else rowsOf.delete(series);
+        };
+        series.update = (/** @type {any} */ row, /** @type {boolean | undefined} */ historical) => (rowsOf.delete(series), update(row, historical));
+        return series;
+      }
+      /**
+       * A layer's rows set: the ones its series has with older ones before them (the view reaching back at a fine
+       * interval): only those, put before them (the library converts them alone, what it had kept); else all, again.
+       * @param {any} series @param {any[]} rows
+       */
+      function setRows(series, rows) {
+        const was = rowsOf.get(series), extra = was ? rows.length - was.length : 0;
+        if (!was || extra <= 0 || !was.length || !sameRows(rows, extra, was)) return series.setData(rows);
+        series.bvPrepend(rows.slice(0, extra));
+        rowsOf.set(series, rows);
+      }
+      /** Whether `rows` from `at` on are `was`, field by field (a row's fields: a point's, a candle's, a color's). @param {any[]} rows @param {number} at @param {any[]} was */
+      function sameRows(rows, at, was) {
+        for (let k = 0; k < was.length; k++) {
+          const a = rows[at + k], b = was[k];
+          if (a.time !== b.time || a.value !== b.value || a.color !== b.color || a.open !== b.open || a.high !== b.high || a.low !== b.low || a.close !== b.close || a.lineColor !== b.lineColor || a.topColor !== b.topColor || a.bottomColor !== b.bottomColor) return false;
+        }
+        return true;
+      }
       function build(doc, data, refit) {
         // (Another chart, another interval: the keys' crosshair lets go of a date it may not have.)
         if (drawnChart !== doc.id || drawnIndex !== doc.index) keyAway();
@@ -11089,7 +11141,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             // Its band alone: no label on the axis, no line across, no marker (its legend says its range); to its pane's edges
             // if it has them.
             const options = { ...common, ...paint, lastValueVisible: false, priceLineVisible: false, top: layer.from?.includes("top"), bottom: layer.from?.includes("bottom") };
-            series = again ?? view.addCustomSeries(cloudView(), options, pane);
+            series = again ?? tracked(view.addCustomSeries(cloudView(), options, pane));
             if (again) series.applyOptions(lookOf(options));
           } else if (candles) {
             // The close line stays to carry the last-value label in the layer's color (a hollow candle's would be the
@@ -11097,10 +11149,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             const options = { ...common, ...paint, borderVisible: true, cornerRadius: BAR_CORNER, lastValueVisible: false, priceLineVisible: false, visible: !layer.hidden && candlesFit };
             const close = { color }, closeOptions = { ...common, ...close, ...marker, lineWidth, lineVisible: !candlesFit, crosshairMarkerVisible: !candlesFit };
             const closeAgain = again && wasCloses.get(layer.id)?.series;
-            series = again ?? view.addSeries(LC.CandlestickSeries, options, pane);
+            series = again ?? tracked(view.addSeries(LC.CandlestickSeries, options, pane));
             if (again) series.applyOptions(lookOf(options));
             if (closeAgain) closeAgain.applyOptions(lookOf(closeOptions));
-            closes.set(layer.id, { candles: series, series: closeAgain || view.addSeries(LC.LineSeries, closeOptions, pane), paint: close });
+            closes.set(layer.id, { candles: series, series: closeAgain || tracked(view.addSeries(LC.LineSeries, closeOptions, pane)), paint: close });
           } else {
             const radius = dotRadius(layer.width);
             const [kind, options] = layer.type === "dots" ? [LC.LineSeries, { ...common, ...paint, ...marker, lineVisible: false, pointMarkersVisible: true, pointMarkersRadius: radius }]
@@ -11108,7 +11160,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               : layer.type === "histogram" ? [LC.HistogramSeries, { ...common, ...paint, base: layer.base ?? 0, cornerRadius: stack ? 0 : BAR_CORNER }]
               : layer.type === "baseline" ? [LC.BaselineSeries, { ...common, ...paint, ...marker, ...line, baseValue: { type: "price", price: layer.base ?? 0 } }]
               : [LC.LineSeries, { ...common, ...paint, ...marker, ...line, ...(layer.type === "trend" ? (dated ? { priceLineColor: "", crosshairMarkerBackgroundColor: "" } : { priceLineColor: color, crosshairMarkerBackgroundColor: color }) : {}) }];
-            series = again ?? view.addSeries(/** @type {any} */ (kind), options, pane);
+            series = again ?? tracked(view.addSeries(/** @type {any} */ (kind), options, pane));
             if (again) series.applyOptions(lookOf(options));
             if (layer.type === "dots") dotted.set(layer.id, { series, width: layer.width, radius });
           }
@@ -11133,7 +11185,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             const log = modeOf(doc, layer) === 1, top = layer.from?.includes("top"), bottom = layer.from?.includes("bottom");
             const low = bottom ? result.shown : /** @type {Vector} */ (result.low), high = top ? low : result.shown;
             const rows = fromUnfit(doc, layer) ? [] : data.times.map((time, i) => (Number.isFinite(low[i]) && Number.isFinite(high[i]) && (!log || low[i] > 0) ? { time, low: low[i], high: high[i], ...(dated ? { color: alpha(dated(i), op) } : {}) } : { time }));
-            series.setData(rows);
+            setRows(series, rows);
             if (dated) paintedPoints.set(layer.id, { points: rows, faint: false, paintWith: (/** @type {string} */ c) => ({ color: alpha(c, op) }) });
           } else if (result?.shown) {
             const shown = stack?.values ?? result.shown;
@@ -11155,11 +11207,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               const tint = alpha(under, 0.75 * op), from = layer.base ?? 0;
               const bars = points.map((point) => ("value" in point && point.value < from ? { ...point, color: tint } : point));
               if (bars.some((point) => "color" in point)) barsBelow.set(layer.id, { points: bars, color: tint, faded: faded({ color: tint }).color, faint: false });
-              series.setData(bars);
-            } else series.setData(candles
+              setRows(series, bars);
+            } else setRows(series, candles
               ? data.times.map((time, i) => (result.ohlc[i] && Number.isFinite(shown[i]) && (!log || at(result.ohlc[i][2], i) > 0) ? { time, open: at(result.ohlc[i][0], i), high: at(result.ohlc[i][1], i), low: at(result.ohlc[i][2], i), close: at(result.ohlc[i][3], i) } : { time }))
               : points);
-            closes.get(layer.id)?.series.setData(points);
+            const close = closes.get(layer.id)?.series;
+            if (close) setRows(close, points);
             linesAcross(layer, pane, common.priceFormat, op, true);
           }
           drawn.set(layer.id, series);
