@@ -9,7 +9,8 @@
 <!-- The patches of PATCHES.md, checked (serve the repo and open this page; the result is written below, and as
      window.result once done): the log scale's marks over thousands of ranges, then the patched library drawing exactly
      what the unpatched one does (5.2.1 as published, from unpkg) through series of operations, picture by picture
-     (the plot only: log marks differ, as patched; horizontal grid lines off, price scales one width). -->
+     (the plot only, its axes left out: log marks and the axes' tags differ, as patched; horizontal grid lines off, price
+     scales one width). -->
 <pre id="out">Running…</pre>
 <div id="a" class="c"></div><div id="b" class="c"></div>
 <script type="module">
@@ -179,10 +180,19 @@ scenario("log under one, gaps, edge marks", (L, el) => {
   c.panes()[1].priceScale("right").applyOptions({ mode: 1 }); c.panes()[2].priceScale("right").applyOptions({ mode: 1 });
   return [["full", () => c.timeScale().fitContent()], ...pan(c, 8, 0, 2400, 600), jump(c, "in the hole", 1200, 1500), ...pan(c, 4, 1200, 1400, 300), jump(c, "narrow", 2000, 2010), jump(c, "wide", 0, 3000)];
 });
+scenario("corners off: radius 0, negative, NaN, a rule's 0", (L, el) => {
+  seed = 61;
+  const c = base(L, el);
+  const s1 = c.addSeries(L.CandlestickSeries, { upColor: "#2a2a2a", cornerRadius: 0 }); s1.setData(ohlc(600, 100, 0.03));
+  const s2 = c.addSeries(L.CandlestickSeries, { borderVisible: false, cornerRadius: -3 }, 1); s2.setData(ohlc(600, 50, 0.03));
+  const s3 = c.addSeries(L.HistogramSeries, { cornerRadius: NaN }, 2); s3.setData(walk(600, 0, 1, { negative: true, colors: true }));
+  const s4 = c.addSeries(L.HistogramSeries, { color: "#f80", base: 0.2, cornerRadius: () => 0 }, 2); s4.setData(walk(600, 0, 0.5, { negative: true }));
+  return [jump(c, "wide", 500, 560), jump(c, "wider", 585, 600), jump(c, "middle", 300, 450), jump(c, "far", 0, 600), ...pan(c, 4, 400, 500, 40), ...cross(c, s1, 3, 520, 560)];
+});
 const compare = (a, b) => { const x = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, y = b.getContext("2d").getImageData(0, 0, b.width, b.height).data; if (x.length !== y.length) return -1; let n = 0; for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) n++; return n; };
 
   window.__charts = [];
-  const plot = (c) => { const s = c.takeScreenshot(), w = s.width - Math.ceil(c.priceScale("right").width() * devicePixelRatio) - Math.ceil(c.priceScale("left").width() * devicePixelRatio); return s.getContext("2d").getImageData(Math.ceil(c.priceScale("left").width() * devicePixelRatio), 0, w, s.height).data; };
+  const plot = (c) => { const s = c.takeScreenshot(), w = s.width - Math.ceil(c.priceScale("right").width() * devicePixelRatio) - Math.ceil(c.priceScale("left").width() * devicePixelRatio); return s.getContext("2d").getImageData(Math.ceil(c.priceScale("left").width() * devicePixelRatio), 0, w, s.height - Math.ceil(c.timeScale().height() * devicePixelRatio)).data; };
   const differ = (x, y) => { if (x.length !== y.length) return -1; let n = 0; for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) n++; return n; };
   let steps = 0, bad = 0;
   for (const sc of scenarios) {
@@ -202,5 +212,51 @@ const compare = (a, b) => { const x = a.getContext("2d").getImageData(0, 0, a.wi
     say(`${wrong ? "✗" : "✓"} ${sc.name}: ${sa.length - wrong}/${sa.length} the same${first ? `, first differing: ${first}` : ""}`);
   }
   say(`Pictures: ${steps - bad} of ${steps} steps the same`);
-  window.result = { marks: fails, pictures: bad };
+
+  // 3. Rounded corners (the patched library alone): a chart with a radius against the same chart without, at bar
+  // spacings from 2 to 60. Rounding only takes from the bars: no pixel painted where the square bars left the
+  // background, none changed past a corner's square ((radius + 1)² a corner, in device pixels); where the radius comes to
+  // nothing, nothing changes. Candles with a border (a body of its own color) and without, a histogram above and below
+  // its base, in two colors.
+  const corners = [];
+  let cornerChecks = 0;
+  const studioRule = (s) => (s < 4 ? 0 : Math.min(4, Math.max(1, s / 10)));
+  for (const [name, radius] of [["Studio's rule", studioRule], ["a third of the spacing", (s) => (s < 4 ? 0 : s / 3)], ["2", 2], ["1000", 1000]]) {
+    for (const spacing of [0.5, 1, 2, 3.5, 6, 12, 30, 60]) {
+      const make = (r, el) => {
+        seed = 71;
+        const c = base(B, el, { timeScale: { barSpacing: spacing, rightOffset: 1 } });
+        c.addSeries(B.CandlestickSeries, { upColor: "#2a2a2a", downColor: "#ddd", borderUpColor: "#ddd", borderDownColor: "#ddd", wickUpColor: "#999", wickDownColor: "#999", cornerRadius: r }).setData(ohlc(400, 100, 0.03));
+        c.addSeries(B.CandlestickSeries, { upColor: "#3a6", downColor: "#a36", borderVisible: false, wickVisible: false, cornerRadius: r }, 1).setData(ohlc(400, 50, 0.03));
+        c.addSeries(B.HistogramSeries, { color: "#46f", cornerRadius: r }, 2).setData(walk(400, 0, 1, { negative: true, colors: true }));
+        return c;
+      };
+      document.getElementById("a").innerHTML = ""; document.getElementById("b").innerHTML = "";
+      window.__charts = [];
+      let thrown = "";
+      try { make(0, document.getElementById("a")); make(radius, document.getElementById("b")); } catch (error) { thrown = String(error); }
+      await frames(); await frames();
+      cornerChecks++;
+      if (thrown) { corners.push(`${name} at ${spacing}: ${thrown}`); continue; }
+      const [square, round] = window.__charts.map(plot), BG = [17, 17, 17];
+      let outside = 0, changed = 0;
+      for (let i = 0; i < square.length; i += 4) {
+        const same = square[i] === round[i] && square[i + 1] === round[i + 1] && square[i + 2] === round[i + 2];
+        if (same) continue;
+        changed++;
+        if (square[i] === BG[0] && square[i + 1] === BG[1] && square[i + 2] === BG[2]) outside++;
+      }
+      const r = typeof radius === "function" ? radius(spacing) : radius, device = Math.min(r, spacing / 2) * devicePixelRatio;
+      const bars = Math.ceil(window.__charts[0].timeScale().width() / spacing) + 2, most = r > 0 ? bars * (8 + 4 + 2) * (device + 1) ** 2 : 0;
+      if (outside) corners.push(`${name} at ${spacing}: ${outside} pixels painted outside the bars`);
+      if (device >= 0.5 && spacing * devicePixelRatio >= 6 && !changed) corners.push(`${name} at ${spacing}: no corner rounded`);
+      // (Bars a device pixel or less apart touch: rounded, they'd overlap. None is.)
+      if (spacing * devicePixelRatio <= 1 && changed) corners.push(`${name} at ${spacing}: ${changed} pixels changed where bars touch`);
+      if (changed > most) corners.push(`${name} at ${spacing}: ${changed} pixels changed, more than corners hold (${Math.round(most)})`);
+      window.__charts[0].remove(); window.__charts[1].remove(); window.__charts = [];
+    }
+  }
+  say(`Rounded corners: ${cornerChecks} checks, ${corners.length} failing`);
+  for (const f of corners.slice(0, 10)) say(`  ✗ ${f}`);
+  window.result = { marks: fails, pictures: bad, corners: corners.length };
 </script>

@@ -4,10 +4,11 @@ Applied by hand to `dist/lightweight-charts.standalone.production.mjs`, the only
 it, the build inlines it). A fresh download loses them: apply each again at its anchor (minified names are 5.2.1's),
 then open `tests.html` (served from the repo) and check it says 0 failing and every step the same.
 
-Every patch but the first draws exactly what the library does: `tests.html` runs the patched file and 5.2.1 as published
-side by side through every series type, every price scale mode (inverted too), pans, jumps, zooms, the crosshair,
-restyles, live updates, new data, resizes, margins, moves between scales, a held price range and conflation, and compares
-their plots pixel for pixel (653 steps).
+The plots draw exactly what the library does, but for the log marks (1) and the rounded bars (7, only where a radius is
+set); the axes' tags are rounded (6). `tests.html` runs the patched file and 5.2.1 as published side by side through every
+series type, every price scale mode (inverted too), pans, jumps, zooms, the crosshair, restyles, live updates, new data,
+resizes, margins, moves between scales, a held price range and conflation, and compares their plots pixel for pixel, the
+axes left out (664 steps).
 
 ## 1. Log scales: marks on round values
 
@@ -67,6 +68,46 @@ view that jumps past the stretch starts a new one (a gap would hold stale coordi
 
 `Rb(t,i,n)` (a point from a row: its fields, then its style) spread two fresh objects into a third for each point. It
 now assigns the style onto the fields' object: the same keys in the same order, one object fewer per point.
+
+## 6. Axis tags rounded at both ends
+
+A price axis's tags (a series' last value, a price line's, the crosshair's) were rounded on their outer side only, square
+where they meet the plot; the time axis's (the crosshair's date) at its bottom only. Each is now rounded at every corner,
+by the same radius (2 px).
+
+- `class L` (a price axis tag), `st()`: one `A(...)` call with `[l.ft,l.ft,l.ft,l.ft]` for either side (it chose
+  `[l.ft,0,0,l.ft]` on a left scale, `[0,l.ft,l.ft,0]` on a right one).
+- `class W` (the time axis's tag), `st()`: its path (square top, rounded bottom) is now `B(t,r,h,l-r,c-h,[d,d,d,d])`,
+  the library's own rounded box.
+
+`tests.html` leaves the axes out of its pictures (it compares the plots).
+
+## 7. Candles' and histogram bars' corners rounded (an option)
+
+`cornerRadius` on a candlestick or histogram series: a radius in CSS pixels, or a function of the bar spacing giving
+one (TradingView's rounded candles plugin takes the same). Unset, 0, negative or not a number, the bars are drawn as the
+library draws them. Set, one rule for both: a bar is rounded when it's 3 device pixels wide or more and a device pixel
+or more from the next (touching, rounded bars would overlap), by at most half its width, where that comes to half a
+device pixel or more; others keep the library's rectangles. A candle's body and its border are rounded (the border a
+ring: the box less its inside, the inside's radius the border's less, a plain box when that's none); a histogram bar's
+far end (from its base). The rounded bars of each color are one path, filled once a frame (they never overlap: the
+order isn't seen).
+
+- `bvRadius(option, spacing)`, `bvCorner(radius, ratio, width, gap)`, `bvPath(map, color)`, `bvFill(context, map,
+  rule)` added (module level, before `B`).
+- Candles: the pane view's `NM()` hands `cornerRadius` over (`bvR`); `class tr`'s `Vm()` (borders) and `wS()` (bodies).
+- Histogram: its pane view's `NM()` the same; `class sr`'s `et()`, which also sets the fill color only when it changes
+  (it set it for every bar: the same pixels, less work).
+
+`tests.html`: with no radius (0, negative, NaN, a function giving 0) the pictures are 5.2.1's, step by step; with one
+(Studio's rule, a third of the spacing, 2, 1000), at spacings from 0.5 to 60, rounding only takes from the bars (no
+pixel painted where they left the background), changes no more than their corners hold, changes nothing where bars
+touch (a device pixel apart or less), and changes something from 6 device pixels apart. Run at a true 2× too (Chromium with `--force-device-scale-factor=2`: an emulated ratio
+gives 1× canvases, and Mullvad's fingerprinting protection scrambles a canvas read back).
+
+Measured (Chromium at a true 2×, the library's time over a 2.5 s pan, medians of 6, before → rounded with Studio's
+rule): candles 60 → 56 ms at a spacing of 6, 50 → 45.5 at 12; a two-color histogram 44.5 → 51 at 6 (+15%), 41 → 41 at
+12. Not rounded (spacing 3), as before or less.
 
 ## Measured (Chromium, CPU time in script; scratch benchmarks, before → after)
 
