@@ -647,7 +647,7 @@
         min-height: 0;
         overflow: hidden;
         padding: 10px 8px 8px;
-        transition: width var(--dur-layout) var(--ease-layout), margin-left var(--dur-layout) var(--ease-layout), margin-right var(--dur-layout) var(--ease-layout), box-shadow var(--dur-layout) var(--ease-layout), border-radius var(--dur-layout) var(--ease-layout), visibility 0s;
+        transition: width var(--dur-layout) var(--ease-layout), margin-left var(--dur-layout) var(--ease-layout), visibility 0s;
 
         /* Only the list gives way when the column runs out of room (and scrolls): every other row keeps its size. */
         > :not(.chart-list) {
@@ -1408,23 +1408,8 @@
       }
 
       @media (min-width: 761px) and (min-height: 501px) {
-        /* (Its own ground, the page's, always: going back to the rail, it slides over the card, not see-through.) */
-        .sidebar {
-          background: var(--app);
-        }
-
-        /* Collapsed, pointed at a moment: the whole sidebar floats over the page, its column as narrow as the rail's
-           (nothing under it moves), until the pointer leaves it; its toggle keeps it whole. */
-        body[data-sidebar="collapsed"][data-side-peek] .sidebar {
-          z-index: 8;
-          margin-right: calc(var(--side-collapsed) - var(--side));
-          border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-          background: var(--app);
-          box-shadow: var(--pop);
-        }
-
         /* Collapsed, the sidebar is a rail: only its own icons stay (the panel's rows are left alone). */
-        body[data-sidebar="collapsed"]:not([data-side-peek]) .sidebar {
+        body[data-sidebar="collapsed"] .sidebar {
           width: var(--side-collapsed);
 
           .brand > :not(.logo),
@@ -2848,7 +2833,7 @@
         min-height: 0;
         overflow: hidden;
         border-left: 1px solid var(--line);
-        transition: width var(--dur-layout) var(--ease-layout), border-width var(--dur-layout) var(--ease-layout), margin-left var(--dur-layout) var(--ease-layout), box-shadow var(--dur-layout) var(--ease-layout), border-radius var(--dur-layout) var(--ease-layout);
+        transition: width var(--dur-layout) var(--ease-layout), border-width var(--dur-layout) var(--ease-layout);
 
         > .panel-view {
           min-width: 299px;
@@ -2861,26 +2846,7 @@
           width: 0;
           border-left-width: 0;
           visibility: hidden;
-          transition: width var(--dur-layout) var(--ease-layout), border-width var(--dur-layout) var(--ease-layout), margin-left var(--dur-layout) var(--ease-layout), box-shadow var(--dur-layout) var(--ease-layout), border-radius var(--dur-layout) var(--ease-layout), visibility 0s var(--dur-layout);
-        }
-
-        /* Closed, its button pointed at a moment: the panel floats over the chart's side, its width and its margin moving
-           together (nothing under it moves), until the pointer leaves it; its button keeps it. (Narrower, the panel
-           floats over the plot anyway.) */
-        @media (min-width: 1101px) {
-          /* (Its own ground, over the chart, always: going from floating, or kept, it slides over it, not under.) */
-          .panel {
-            position: relative;
-            z-index: 8;
-            background: var(--panel-ground);
-          }
-
-          body[data-panel="closed"][data-peek="float"] .panel {
-            margin-left: -300px;
-            border-left-width: 0;
-            border-radius: var(--radius-xl) 0 0 var(--radius-xl);
-            box-shadow: var(--pop);
-          }
+          transition: width var(--dur-layout) var(--ease-layout), border-width var(--dur-layout) var(--ease-layout), visibility 0s var(--dur-layout);
         }
 
         body[data-empty] .panel {
@@ -7243,8 +7209,15 @@
         }
 
         /* What floats over the page, edged (its shadow gone). */
-        :is(.menu, .belt, .belt-caption, .key-hint, .assist, dialog, .loupe, #tip, #toast, #palette, body[data-side-peek] .sidebar, body[data-peek="float"] .panel) {
+        :is(.menu, .belt, .belt-caption, .key-hint, .assist, dialog, .loupe, #tip, #toast, #palette) {
           outline: 1px solid CanvasText;
+        }
+
+        /* (The panel too where it floats: a tablet's, a phone's sheet.) */
+        @media (max-width: 1100px), (max-height: 500px) {
+          .panel {
+            outline: 1px solid CanvasText;
+          }
         }
 
         :is(#palette, body) mark {
@@ -9729,7 +9702,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
 
       function applySidebar() {
         const collapsed = prefs.sidebar === "collapsed";
-        delete document.body.dataset.sidePeek;
         if (collapsed) document.body.dataset.sidebar = "collapsed";
         else delete document.body.dataset.sidebar;
         const toggle = $("sidebar-toggle");
@@ -9743,9 +9715,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         $("panel-toggle").setAttribute("aria-pressed", String(state === "open"));
       }
       const panelShown = () => (phone.matches ? document.body.dataset.sheet === "panel" : document.body.dataset.panel === "open" || document.body.hasAttribute("data-peek"));
-      /** The closed panel floats, its button pointed at (pressed then, the button keeps it). */
-      const panelFloats = () => document.body.dataset.peek === "float";
-      function togglePanel(open = panelFloats() || !panelShown()) {
+      function togglePanel(open = !panelShown()) {
         if (!chart.layers.length) return;
         if (!open) stopCarrying();
         if (phone.matches) {
@@ -9785,7 +9755,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         };
         new MutationObserver(sheetModal).observe(document.body, { attributes: true, attributeFilter: ["data-sheet", "data-sheet-size"] });
         phone.addEventListener("change", sheetModal);
-        phone.addEventListener("change", () => delete document.body.dataset.sidePeek);
         heldUpright.addEventListener("change", sheetModal);
       }
       function toggleSidebar() {
@@ -16951,7 +16920,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function setFull(on = !fullOn()) {
         if (on === fullOn()) return;
-        delete document.body.dataset.sidePeek;
         layOutAlone(on);
         // (The focus in what full screen puts away, the sidebar or the panel: on its way out, then the chart.)
         if (on) keepFocus(document.activeElement?.closest(".sidebar, #panel, .card-head") ?? null, () => $("full"), () => $("plot-keys"));
@@ -17305,8 +17273,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function deselect() {
         const was = selected, fromSettings = $("inspector").contains(document.activeElement);
         selected = "";
-        // (A panel floating by its button stays: back to its list, under the pointer.)
-        if (!panelFloats()) document.body.removeAttribute("data-peek");
+        document.body.removeAttribute("data-peek");
         refresh("none");
         if (fromSettings) /** @type {HTMLElement | null} */ ($("layer-list").querySelector(`[data-select="${was}"]`))?.focus();
       }
@@ -21625,59 +21592,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const items = all$("button:not(:disabled)", $("submenu")), at = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
         items[event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (at + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
       });
-      /** Whether the sidebar is a rail of icons (collapsed, not peeking). */
-      const railed = () => document.body.dataset.sidebar === "collapsed" && !document.body.hasAttribute("data-side-peek");
+      /** Whether the sidebar is a rail of icons. */
+      const railed = () => document.body.dataset.sidebar === "collapsed";
       /** A menu shown by a pointer's resting (a closed folder's charts): it leaves the focus be, goes as the pointer does, and as a key's pressed (a tip's way). */
       let flyout = false;
-      // Hover to look, press to keep (with a mouse): the collapsed sidebar's button, pointed at a moment, floats the sidebar
-      // whole over the page (the button keeps it), the closed panel's button the panel; a closed folder's row, its charts
-      // beside it (pressed, it opens); the chart's ⋯, its menu (pressed, kept). Gone as the pointer leaves what floats (and its button), a moment after (time
-      // enough to cross to the flyout, right beside its row).
+      // Hover to look, press to keep (with a mouse): a closed folder's row, its charts beside it (pressed, it opens); the
+      // chart's ⋯, its menu (pressed, kept). Gone as the pointer leaves the menu (and what opened it), a moment after
+      // (time enough to cross to the flyout, right beside its row).
       {
-        let peekTimer = 0, flyTimer = 0, from = /** @type {HTMLElement | null} */ (null);
-        const sidebar = $("sidebar"), peeking = () => document.body.hasAttribute("data-side-peek");
-        /** Whether a menu that something in the sidebar opened shows (the peek stays while it does). */
-        const sidebarMenu = () => !$("menu").hidden && Boolean(ownerNow()?.closest("#sidebar"));
-        // (A name being typed in it, a rename, keeps it out until done.)
-        const unpeek = () => {
-          clearTimeout(peekTimer);
-          peekTimer = window.setTimeout(() => !sidebar.matches(":hover") && !sidebarMenu() && !sidebar.querySelector("input:focus") && delete document.body.dataset.sidePeek, 260);
-        };
-        $("sidebar-toggle").addEventListener("pointerenter", (event) => {
-          clearTimeout(peekTimer);
-          if (event.pointerType !== "mouse" || document.body.dataset.sidebar !== "collapsed" || peeking()) return;
-          peekTimer = window.setTimeout(() => document.body.dataset.sidebar === "collapsed" && (document.body.dataset.sidePeek = ""), 300);
-        });
-        // (Off the button before it floats: it doesn't. Back over it floating: it stays.)
-        $("sidebar-toggle").addEventListener("pointerleave", () => peeking() || clearTimeout(peekTimer));
-        sidebar.addEventListener("pointerenter", () => peeking() && clearTimeout(peekTimer));
-        sidebar.addEventListener("pointerleave", (event) => event.pointerType === "mouse" && peeking() && unpeek());
-        sidebar.addEventListener("focusout", () => peeking() && unpeek());
-        // The closed panel, by its button, the same.
-        let panelTimer = 0;
-        const panel = $("panel"), panelButton = $("panel-toggle");
-        const panelMenu = () => !$("menu").hidden && Boolean(ownerNow()?.closest("#panel"));
-        // (As the sidebar, and a key's focus in it too: hidden closed, focus there came while it floats; the rail shows,
-        // its focus maybe a key's from before.)
-        const unfloat = () => {
-          clearTimeout(panelTimer);
-          panelTimer = window.setTimeout(() => {
-            if (!panelFloats() || panel.matches(":hover") || panelButton.matches(":hover") || panelMenu() || panel.querySelector("input:focus, textarea:focus, :focus-visible")) return;
-            // (A layer picked in it goes with it: nothing stays picked out of sight.)
-            if (selected) deselect();
-            document.body.removeAttribute("data-peek");
-          }, 260);
-        };
-        panelButton.addEventListener("pointerenter", (event) => {
-          clearTimeout(panelTimer);
-          if (event.pointerType !== "mouse" || phone.matches || fullOn() || document.body.dataset.panel !== "closed" || document.body.hasAttribute("data-peek") || !chart.layers.length) return;
-          panelTimer = window.setTimeout(() => document.body.dataset.panel === "closed" && !document.body.hasAttribute("data-peek") && !fullOn() && chart.layers.length && (document.body.dataset.peek = "float"), 300);
-        });
-        for (const element of [panelButton, panel]) element.addEventListener("pointerleave", (event) => event.pointerType === "mouse" && (panelFloats() ? unfloat() : clearTimeout(panelTimer)));
-        panel.addEventListener("pointerenter", () => panelFloats() && clearTimeout(panelTimer));
-        panel.addEventListener("focusout", () => panelFloats() && unfloat());
-        // (A menu opened from either closed with the pointer away: it folds too.)
-        new MutationObserver(() => $("menu").hidden && (peeking() && unpeek(), panelFloats() && unfloat())).observe($("menu"), { attributes: true, attributeFilter: ["hidden"] });
+        let flyTimer = 0, from = /** @type {HTMLElement | null} */ (null);
+        const sidebar = $("sidebar");
         const shut = () => {
           clearTimeout(flyTimer);
           if (from && flyout && ownerNow() === from) hideMenu();
@@ -21693,7 +21617,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (!row || !folder?.closed) return from && (flyTimer = window.setTimeout(shut, 200));
           if (!$("menu").hidden && !flyout) return;
           flyTimer = window.setTimeout(async () => {
-            // (Over a sidebar still widening, the peek: once it's done, beside the row where it ends.)
+            // (Over a sidebar still widening: once it's done, beside the row where it ends.)
             await Promise.all(sidebar.getAnimations().map((animation) => animation.finished)).catch(() => {});
             const docs = library.charts.filter((doc) => doc.folder === folder.id);
             // (Still pointed at, and no menu opened meanwhile, a right-click's.)
