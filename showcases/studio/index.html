@@ -3909,6 +3909,23 @@
         }
       }
 
+      /* A preview's Keep, once it's edited, and its row in the sidebar: a dot on its corner (its edits go with it, if
+         kept; nothing beside it moves). */
+      :is(#keep, [data-preview-row] .chart-item).edited {
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          top: 3px;
+          right: 3px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--ink);
+        }
+      }
+
       .color-now {
         margin-left: auto;
         color: var(--muted);
@@ -4034,73 +4051,110 @@
         }
       }
 
-      /* How a layer's colored, on its label's line beside the word (Color · One ⌄): quiet as the label, a choice once pointed at. */
-      .way {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        height: 20px;
-        margin: -2px auto -2px 6px;
-        border: 0;
-        border-radius: var(--radius-xs);
-        padding: 0 4px 0 5px;
-        color: var(--text);
-        background: none;
-        font: 510 12px var(--sans);
+      /* A layer's colors: which one (two, four), a segmented row; its four, two by two. */
+      .color-slots {
+        display: flex;
+        margin-top: 10px;
 
-        svg {
-          width: 9px;
-          height: 9px;
-          color: var(--muted);
+        button {
+          display: inline-flex;
+          flex: 1;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-width: 0;
+          height: 26px;
         }
 
-        &:is(:hover, [aria-expanded="true"]) {
-          color: var(--ink);
-          background: var(--hover);
+        .swatch {
+          flex-shrink: 0;
+          width: 10px;
+          height: 10px;
         }
 
-        @media (pointer: coarse) {
-          height: 32px;
-          margin-block: -8px;
-          padding-inline: 8px;
+        /* (Over a section's segmented row, a line: its four in two.) */
+        &.tabs.four {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
         }
       }
 
-      /* A layer's colors, under how they're chosen: close to it, one setting. */
       .field.color-slot {
         margin-top: 4px;
       }
 
-      /* Four colors: its sides (rows) across its directions (columns), each a bar of its color. */
-      .color-grid {
-        display: grid;
-        grid-template-columns: auto 1fr 1fr;
-        align-items: center;
-        gap: 6px 8px;
-        margin-top: 8px;
-        color: var(--muted);
-        font: 510 12px var(--sans);
+      /* Bitview's colors in the panel, an input as the others are (a ground, its edge, as a segmented control's), ten to a
+         row across it (by touch too: wide enough), a click each; under them, on its foot, any other (Custom) and a fading
+         one's default. */
+      .color-palette {
+        margin-top: 10px;
+        border-radius: var(--radius-md);
+        padding: 4px;
+        background: light-dark(rgb(0 0 0 / 0.055), var(--field));
+        box-shadow: inset 0 0 0 1px var(--line);
 
-        > .head {
-          text-align: center;
-        }
+        .swatch-grid {
+          grid-template-columns: repeat(10, minmax(0, 1fr));
+          gap: 2px;
 
-        > .color-chip {
-          height: 18px;
-          border: 0;
-          border-radius: 9px;
-          background: var(--c);
-          box-shadow: inset 0 0 0 1px light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.08));
-          cursor: pointer;
+          button {
+            width: auto;
+            height: 26px;
 
-          &:is(:hover, [aria-expanded="true"]) {
-            box-shadow: 0 0 0 2px var(--card), 0 0 0 3px var(--line-strong);
+            @media (pointer: coarse) {
+              height: 34px;
+            }
           }
 
-          /* (A finger's.) */
+          /* (Its ring around it, the ground between: whatever ground it's on.) */
+          [aria-checked="true"] .swatch {
+            outline: 1.5px solid var(--ink);
+            outline-offset: 2px;
+            box-shadow: none;
+          }
+        }
+      }
+
+      .color-palette-foot {
+        display: flex;
+        gap: 4px;
+        margin: 4px -4px -4px;
+        border-top: 1px solid var(--line);
+        padding: 3px 4px;
+
+        button {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          height: 26px;
+          border: 0;
+          border-radius: var(--radius-sm);
+          padding: 0 8px 0 6px;
+          color: var(--muted);
+          background: none;
+          font: 510 12px var(--sans);
+
+          &:hover {
+            color: var(--ink);
+            background: var(--hover);
+          }
+
+          &[aria-pressed="true"] {
+            color: var(--ink);
+          }
+
+          &[aria-pressed="true"] .swatch {
+            outline: 1.5px solid var(--ink);
+            outline-offset: 2px;
+          }
+
+          .swatch {
+            width: 14px;
+            height: 14px;
+          }
+
           @media (pointer: coarse) {
-            height: 32px;
-            border-radius: 16px;
+            height: 34px;
           }
         }
       }
@@ -6075,7 +6129,7 @@
         /* The header: the title, Undo (Keep in its place for a preview), Draw, Share (its icon), ⋯ (Redo in it); "Saved"
            said elsewhere, taking no room from the title. */
         #saved,
-        .head-actions:has(#preview-note:not([hidden])) #undo {
+        .head-actions:has(#preview-note:not([hidden])):not(:has(#keep.edited)) #undo {
           display: none;
         }
 
@@ -7104,9 +7158,38 @@
        * surface) kept as it is, edges where a fill was the only one. Last in the sheet: over the rules it overrides.
        */
       @media (forced-colors: active) {
-        :is([aria-selected="true"], [aria-pressed="true"], [aria-checked="true"], [aria-current]:not([aria-current="false"])) {
-          outline: 2px solid Highlight;
+        /* (Grounds and shadows are gone here: a state shows as the system's selection, focus as an outline; never one
+           for the other.) */
+        :is([aria-pressed="true"], [aria-checked="true"], [aria-current]:not([aria-current="false"])) {
+          forced-color-adjust: none;
+          color: SelectedItemText !important;
+          background: SelectedItem !important;
+        }
+
+        /* (Its words too, which set their own: a layer's name, its value; not a color's mark.) */
+        :is([aria-pressed="true"], [aria-checked="true"], [aria-current]:not([aria-current="false"])) :not(.letter, .swatch, .series-mark, .chart-mark, .letter *, .swatch *) {
+          color: SelectedItemText !important;
+        }
+
+        :focus-visible {
+          outline: 2px solid Highlight !important;
+          outline-offset: 2px;
+        }
+
+        /* (Inside what clips them: a menu's rows, ⌘K's lit one, a field.) */
+        :is(.menu > button, #palette [role="option"], #suggest [role="option"]):is(:focus-visible, [aria-selected="true"]),
+        :is(input, textarea):focus {
+          outline: 2px solid Highlight !important;
           outline-offset: -2px;
+        }
+
+        .menu > button[aria-checked="true"]:focus-visible {
+          outline-color: SelectedItemText !important;
+        }
+
+        /* What floats over the page, edged (its shadow gone). */
+        :is(.menu, .belt, .belt-caption, .key-hint, .assist, dialog, .loupe, #tip, #toast, #palette, body[data-side-peek] .sidebar, body[data-peek="float"] .panel) {
+          outline: 1px solid CanvasText;
         }
 
         :is(#palette, body) mark {
@@ -7244,7 +7327,7 @@
             <li>"index": its interval: minute10, minute30, hour1, hour4, hour12, day1, day3, week1, month1, month3, month6, year1 or year10 (day1 if none).</li>
             <li>"range": what it shows: 3m, 1y, 4y or max (max if none: all of history at day1 or coarser; at a finer interval, as far back as fits on the screen). Or "view": {"from": "2021-01-01", "to": "2022-06-30"}, a window by dates: from the bar holding its "from" to the one holding its "to" (now if none). Dates and times are UTC: "2026-10-08", or with a time where it needs one, "2026-10-08T14:00:00Z".</li>
             <li>"panes": [{"mode": 1}, {"mode": 0, "stack": "stack"}], top to bottom: "mode" is its scale (0 linear, 1 logarithmic, 2 percent change, 3 indexed to 100), "stack" stacks its layers ("stack", or "percent" for shares), "size" is its height relative to the others' (3 for the first, 1.4 for the others if none: 1 and 1 halves the chart), "reverse": true puts its last layer in front. Without them, the first pane is logarithmic and the others linear.</li>
-            <li>"halvings": true: a line at each halving.</li>
+            <li>"halvings": true: a line at each halving, and at the next three, estimated (a block each ten minutes).</li>
             <li>"legend": "off": no legend over the panes.</li>
             <li>"drawings" (see below).</li>
           </ul>
@@ -7307,7 +7390,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             <input id="title" class="title" aria-label="Chart title" placeholder="Untitled chart" maxlength="120" spellcheck="false" autocomplete="off" />
           </div>
           <div class="head-actions">
-            <span id="preview-note" class="preview-note" hidden><span class="preview-said">A preview</span><button id="keep" class="btn small" type="button" data-tip="Keep puts it in your charts (so does editing it)">Keep</button></span>
+            <span id="preview-note" class="preview-note" hidden><span class="preview-said">A preview</span><button id="keep" class="btn small" type="button" data-tip="Keep puts it in your charts, as it is" data-kbd="⌘ S">Keep</button></span>
             <span id="saved" class="saved"></span>
             <button id="undo" class="cap" type="button" aria-label="Undo" data-tip="Undo" data-kbd="⌘ Z" data-icon="undo"></button>
             <button id="redo" class="cap" type="button" aria-label="Redo" data-tip="Redo" data-kbd="⇧ ⌘ Z" data-icon="redo" disabled></button>
@@ -7355,7 +7438,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
                     <span id="cta-label">Search every series</span><kbd>A</kbd>
                   </button>
                   <div class="starts">
-                    <div class="starts-head"><h2>Recommended</h2><button class="btn ghost small" type="button" data-action="website-charts">Browse all<span class="more" data-icon="next"></span></button></div>
+                    <div class="starts-head"><h2>Recommended</h2><button class="btn ghost small" type="button" data-action="presets">Browse all<span class="more" data-icon="next"></span></button></div>
                     <div id="templates" class="templates strip"></div>
                   </div>
                   <div class="keys"><button class="btn ghost small keys-sheet" type="button" data-action="shortcuts"><span data-icon="keyboard"></span>Shortcuts<kbd>?</kbd></button><div class="keys-actions"><button class="btn ghost small" type="button" data-action="import"><span data-icon="upload"></span>Import charts</button><button id="leave-empty" class="btn ghost small" type="button" data-action="leave-empty" hidden><span>Cancel</span><kbd>esc</kbd></button></div></div>
@@ -8740,7 +8823,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const KNOWN_HALVINGS = [1354116278, 1468082773, 1589225023, 1713571767], HALVING_BLOCKS = 210_000;
       /** The halvings mined so far: those known, and any since, placed from the tip's time back (a block each ten minutes). */
       const minedHalvings = () => [...KNOWN_HALVINGS, ...Array.from({ length: Math.max(0, Math.floor(liveHeight / HALVING_BLOCKS) - KNOWN_HALVINGS.length) }, (_, k) => (liveAt || Date.now() / 1000) - (liveHeight - (KNOWN_HALVINGS.length + k + 1) * HALVING_BLOCKS) * 600)];
-      const nextHalving = () => (liveHeight ? Date.now() / 1000 + ((Math.floor(liveHeight / HALVING_BLOCKS) + 1) * HALVING_BLOCKS - liveHeight) * 600 : NaN);
+      /** The halvings to come, the next `count`, estimated (a block each ten minutes from the tip): each its number and time. */
+      const nextHalvings = (count = 3) => (liveHeight ? Array.from({ length: count }, (_, k) => ((n) => ({ n, time: Date.now() / 1000 + (n * HALVING_BLOCKS - liveHeight) * 600 }))(Math.floor(liveHeight / HALVING_BLOCKS) + 1 + k)) : []);
       /** At most this many drawings, a stroke at most this many points: all of it still fits in a link (two megabytes at most). */
       const MAX_DRAWINGS = 100, MAX_STROKE = 300;
       /** A drawing's point as kept: its time to the second, its value as it is (any rounding moves it on a scale zoomed in far enough). */
@@ -8846,6 +8930,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function blankChart(title = "") {
         return { id: uid(), title, index: "day1", range: "max", panes: [{ id: uid(), mode: 1 }], layers: [], updated: Date.now() };
       }
+      /** Charts started empty here (New chart, a first visit, the last one deleted): the person's own from their first edit (another's preview, a link's or a website's, is kept only by Keep). */
+      const drafts = new WeakSet();
+      const draftChart = () => ((doc) => (drafts.add(doc), doc))(blankChart());
+      /** Previews changed since they were opened (an edit, a rename): Keep marked, and one replaced by another offered back. */
+      const touched = new WeakSet();
 
       /** Drops empty panes, keeps every layer on a pane, keeps letters unique, draws layers pane by pane. @param {Chart} doc */
       function normalize(doc) {
@@ -8929,6 +9018,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const STORE = "bitview-studio:v2";
       const RECENT = "bitview-studio:recent";
       const PREFS = "bitview-studio:prefs";
+      /** The last preview edited and not yet kept or closed: in its place again at the next start (one at a time). */
+      const PREVIEW_ASIDE = "bitview-studio:preview";
       const storage = {
         get(key, fallback) {
           try {
@@ -9038,10 +9129,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       library.folders = foldersOf(library.folders, library.charts);
       library.order = orderOf(library.order);
       /**
-       * The preview, if there's one (`previewing`): a chart opened from the website's charts, from a link, or new, not in
-       * the list. Looked at (zoomed, its range), it stays one; changed (or kept), it's yours, first in the list. It waits,
-       * in its own place in the sidebar, while other charts open: another preview takes its place, its × closes it (an
-       * empty one, left, simply goes). This tab's only, until it's reloaded. @type {Chart | null}
+       * The preview, if there's one (`previewing`): a chart opened from a preset, from a link, or new, not in the list.
+       * Another's stays one, edited too, until Keep (or ⌘S): edited, it's kept here (PREVIEW_ASIDE) till kept or closed; one
+       * started here is yours from its first edit, first in the list. It waits, in its own place in the sidebar, while
+       * other charts open: another preview takes its place (an edited one offered back), its × closes it (an empty one,
+       * left, simply goes). @type {Chart | null}
        */
       let previewing = null;
       /** A link that couldn't be read, left in the address bar to be put right (until another chart's opened). */
@@ -9183,6 +9275,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           return false;
         }
         const written = { ...library, schema: SCHEMA };
+        // (An edited preview, with it: never in the list, never lost.)
+        if (previewing && touched.has(previewing) && previewing.layers.length) storage.set(PREVIEW_ASIDE, previewing);
         return storage.set(STORE, written) || (storage.drop(PREVIEWS, THUMBS), storage.set(STORE, written));
       }
       let readOnlyTold = false;
@@ -9190,6 +9284,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function flushEdits() {
         endTyping();
         naming?.finish();
+        applyFormulaLeft();
         const formula = /** @type {HTMLTextAreaElement | null} */ (document.getElementById("formula"));
         if (formula && document.activeElement === formula && selected) applyFormula(selected, formula.value);
       }
@@ -9244,7 +9339,6 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // Ours alone: kept unless the other tab just deleted it (the open chart always stays).
         // (Ours alone are new here, not yet saved: like every new chart, they start the list.)
         merged.unshift(...library.charts.filter((doc) => !merged.some((item) => item.id === doc.id) && (doc === chart || !removed.has(doc.id))));
-        const current = chart === previewing ? chart : merged.find((doc) => doc.id === chart.id);
         // (Its folders, and which chart's in which, as that tab saved them: one state, the library's, not a chart's edit.)
         const theirs = new Map(stored.charts.map((item) => [item?.id, item]));
         for (const doc of merged) {
@@ -9257,6 +9351,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         library.charts = merged;
         library.folders = foldersOf(stored.folders, merged);
         library.order = orderOf(stored.order);
+        // (Still starting, a link being read: the library's taken, and start shows what's open once it's ready.)
+        if (!chart) return;
+        const current = chart === previewing ? chart : merged.find((doc) => doc.id === chart.id);
         drawThumbs();
         if ($("palette").open) showPalette();
         if (current === chart) return renderCharts();
@@ -9279,13 +9376,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /**
        * Every edit goes through here: undoable, normalized, saved, redrawn. Edits sharing a `coalesce` key within a second
        * (typing) undo as one; `quiet`, a change of view (range, pane sizes), is saved without the "Saved" note; `look`, a
-       * way of looking at what's there (a scale, an interval, the legend, layers hidden), keeps no preview (only making
-       * something does: a layer, a style, a drawing, a title); `keepMenu`, made from a menu that stays (its slider), the
-       * menu stays open.
+       * way of looking at what's there (a scale, an interval, the legend, layers hidden), keeps no chart started here
+       * (only making something does: a layer, a style, a drawing, a title; another's preview is kept by Keep alone);
+       * `keepMenu`, made from a menu that stays (its slider), the menu stays open.
        * @param {(doc: Chart) => void} edit @param {{ coalesce?: string, redraw?: Redraw, quiet?: boolean, look?: boolean, keepMenu?: boolean }} [options]
        */
       function commit(edit, { coalesce = "", redraw = /** @type {Redraw} */ (true), quiet = false, look = false, keepMenu = false } = {}) {
-        const before = JSON.stringify(chart), had = chart.layers.length;
+        const before = JSON.stringify(chart);
         edit(chart);
         normalize(chart);
         if (JSON.stringify(chart) === before) return;
@@ -9300,7 +9397,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         edits.at = now;
         edits.held = holding;
         chart.updated = now;
-        if (chart === previewing && !quiet && !look) keepPreview(false, had > 0);
+        if (chart === previewing && JSON.stringify({ ...JSON.parse(before), range: 0 }) !== JSON.stringify({ ...chart, range: 0 })) touched.add(chart);
+        if (chart === previewing && drafts.has(chart) && !quiet && !look) keepPreview(false);
         changed(!quiet, redraw, keepMenu);
       }
       /** Undo, as ⌘Z and ⌘K do it: a toast's Undo while it's up (a deleted chart comes back), else the chart's last edit. */
@@ -9522,7 +9620,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           previewing = doc;
           openChart(doc);
         });
-        if (was && !linked) toast(`Closed the preview “${titleOf(was)}”`, { label: "Undo", run: () => showPreview(was) });
+        if (was && (!linked || touched.has(was))) toast(`Closed the preview “${titleOf(was)}”`, { label: "Undo", run: () => showPreview(was) });
       }
       /** An open preview closes back to the previous chart (under the grid too; no × when there's nowhere back). */
       function closePreview() {
@@ -9532,13 +9630,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!back) return;
         const focused = Boolean(document.activeElement?.closest("[data-preview-row]"));
         previewing = null;
+        forgetPreview(was);
         if (chart === was) openChart(back);
         save();
         renderCharts();
         if (focused) /** @type {HTMLElement | null} */ ($("chart-list").querySelector("[data-open-chart]"))?.focus();
+        // (Edited: offered back, its edits with it.)
+        if (touched.has(was)) toast(`Closed the preview “${titleOf(was)}”`, { label: "Undo", run: () => showPreview(was) });
       }
+      /** A preview let go of (kept, closed): no longer kept aside. */
+      const forgetPreview = (/** @type {Chart} */ doc) => storage.get(PREVIEW_ASIDE, null)?.id === doc.id && storage.drop(PREVIEW_ASIDE);
       /** The preview, the user's: first in the list, saved (`announce`: kept by the button, the "Saved" note says so). */
-      function keepPreview(announce = true, tell = false) {
+      function keepPreview(announce = true) {
         if (!previewing) return;
         if (library.charts.some((doc) => doc.id === previewing?.id)) previewing.id = uid();
         // (Kept by its button, which goes: the focus on the chart's ⋯ beside it, not into a field where the next key would type.)
@@ -9546,11 +9649,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const kept = previewing;
         library.charts.unshift(kept);
         previewing = null;
+        forgetPreview(kept);
         save(announce);
         renderCharts();
         linkInUrl();
-        // (Kept by a change made to a chart opened with something in it, a link's, a website's: said, once.)
-        if (tell) toast(`Kept “${titleOf(kept)}” in your charts`);
       }
 
       const recent = () => {
@@ -12771,7 +12873,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const frontFirst = chart.panes.find((item) => item.id === pane)?.reverse ? shown.reverse() : shown, fill = frontFirst.find(fills);
           const host = fill ?? frontFirst[0] ?? null;
           this.markOrder = fill ? "normal" : "bottom";
-          this.marks = host?.id === this.layer && line ? [...minedHalvings().map((time, i) => ({ x: line.at + barOf(time) * line.step, n: i + 1, next: false })), ...(Number.isFinite(nextHalving()) ? [{ x: line.at + barOf(nextHalving()) * line.step, n: Math.floor(liveHeight / HALVING_BLOCKS) + 1, next: true }] : [])] : [];
+          this.marks = host?.id === this.layer && line ? [...minedHalvings().map((time, i) => ({ x: line.at + barOf(time) * line.step, n: i + 1, next: false })), ...nextHalvings().map(({ n, time }) => ({ x: line.at + barOf(time) * line.step, n, next: true }))] : [];
           this.lowest = Boolean(host) && chart.panes.filter((pane) => chart.layers.some((layer) => layer.pane === pane.id && !layer.hidden)).at(-1)?.id === host?.pane;
           const own = layerById(this.layer), trend = own?.type === "trend" && !own.hidden && line && series ? resolved?.results.get(this.layer) : null;
           this.ends = trend ? segmentEnds(trend, /** @type {{ at: number, step: number }} */ (line), series) : [];
@@ -13155,7 +13257,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const panes = view.panes(), first = panes[0]?.getHTMLElement(), last = panes.at(-1)?.getHTMLElement();
         if (!first || !last) return null;
         const canvas = $("canvas").getBoundingClientRect(), chartBox = $("chart").getBoundingClientRect();
-        const left = chartBox.left - canvas.left + view.priceScale("left", 0).width(), top = first.getBoundingClientRect().top - canvas.top;
+        // (A pane's scale not there yet, a chart being switched: no box this frame.)
+        let axis = 0;
+        try {
+          axis = view.priceScale("left", 0).width();
+        } catch {
+          return null;
+        }
+        const left = chartBox.left - canvas.left + axis, top = first.getBoundingClientRect().top - canvas.top;
         return { left, top, width: view.timeScale().width(), height: last.getBoundingClientRect().bottom - canvas.top - top };
       }
       /** The drawing tools docked on a side (⌘K's way to what dragging them does), in the middle of it. */
@@ -13637,8 +13746,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }
         if (tool) {
           take(event);
-          // Placed click by click: this press ends it, at its release.
-          if (placing) return void Object.assign(placing, { down: at, held: true });
+          // Placed click by click: this press ends it, at its release; its end where it's pressed (a finger still till
+          // it lifts moves nothing: a mouse's hovered there first).
+          if (placing) {
+            Object.assign(placing, { down: at, held: true });
+            return placeTo(event);
+          }
           // (Drawn to a value within reach: a line's ends, a box's corners, a level; not a ruler's: it reads its dates.)
           const host = hostIn(pane.index), point = host && pointFrom(at, host, { free: tool === "brush" || tool === "text", pull: (PAIRED.has(tool) && tool !== "ruler") || tool === "hline" ? !event.altKey : false });
           if (!host || !point) return;
@@ -14871,7 +14984,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         $("home-foot").hidden = !library.charts.length && !asideCount();
         // (No charts at all: nothing to filter, select, or put in a folder; only how to have one.)
         $("home-tools").hidden = !library.charts.length && !library.folders.length;
-        $("home-none").innerHTML = query ? `No charts match “${escape(query)}”` : `<p>No charts yet. A new chart, or one of the website's, is yours once you keep it.</p><div class="home-none-actions"><button class="btn small" type="button" data-action="new-chart">${ICONS.plus}New chart</button><button class="btn ghost small" type="button" data-action="import">${ICONS.upload}Import charts</button></div>`;
+        $("home-none").innerHTML = query ? `No charts match “${escape(query)}”` : `<p>No charts yet. Start a new chart, or open a preset and keep it.</p><div class="home-none-actions"><button class="btn small" type="button" data-action="new-chart">${ICONS.plus}New chart</button><button class="btn ghost small" type="button" data-action="import">${ICONS.upload}Import charts</button></div>`;
         if (focused) tileOpen(focused)?.focus({ preventScroll: true });
         renderPicked();
         schedulePreviews();
@@ -14972,7 +15085,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           deletedHere.add(doc.id);
         }
         // All of them gone (the open one with them), the preview there is stands in, else a blank one.
-        const open = chart, wasOpen = places.some(([, doc]) => doc === open), standIn = wasOpen && !library.charts.length ? previewing ?? blankChart() : null;
+        const open = chart, wasOpen = places.some(([, doc]) => doc === open), standIn = wasOpen && !library.charts.length ? previewing ?? draftChart() : null;
         if (standIn) previewing = standIn;
         if (wasOpen) openChart(standIn ?? library.charts[Math.min(places[0][0], library.charts.length - 1)]);
         save();
@@ -15471,7 +15584,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           ...(previewing && !previewing.layers.length ? [`<div class="preview-slot" data-preview-row><div class="chart-row preview ${previewing === current ? "active" : ""}">
             <button type="button" class="nav-item chart-item" data-open-chart="${previewing.id}" data-tip="A new chart: in your charts once something's in it" ${previewing === current ? 'aria-current="page"' : ""}>${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
           </div></div>`] : previewing ? [`<div class="preview-slot" data-preview-row><span class="preview-caption">Preview</span><div class="chart-row preview ${previewing === current ? "active" : ""}">
-            <button type="button" class="nav-item chart-item" data-open-chart="${previewing.id}" data-tip="${escape(titleOf(previewing))}: a preview, not in your charts (Keep, or editing it, adds it)" ${previewing === current ? 'aria-current="page"' : ""}>${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
+            <button type="button" class="nav-item chart-item${touched.has(previewing) ? " edited" : ""}" data-open-chart="${previewing.id}" data-tip="${escape(titleOf(previewing))}: a preview, not in your charts (Keep or ⌘S adds it${touched.has(previewing) ? ", your edits with it" : ""})" ${previewing === current ? 'aria-current="page"' : ""}>${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
             ${previewing !== chart || previousChart() ? `<button type="button" class="cap small chart-more" data-action="close-preview" aria-label="Close the preview" data-tip="Close the preview">${ICONS.close}</button>` : ""}
           </div></div>`] : []).map((html) => /** @type {[string, string]} */ (["preview", html])),
           ...sideItems().flatMap((item) => {
@@ -15922,7 +16035,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         library.charts.splice(index, 1);
         deletedHere.add(doc.id);
         // The last chart gone (the open one), the preview there is stands in, else a blank one.
-        const standIn = wasOpen && !library.charts.length ? previewing ?? blankChart() : null;
+        const standIn = wasOpen && !library.charts.length ? previewing ?? draftChart() : null;
         if (standIn) previewing = standIn;
         if (wasOpen) openChart(standIn ?? (next && library.charts.includes(next) ? next : library.charts[Math.min(index, library.charts.length - 1)]));
         save();
@@ -15949,8 +16062,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function newChart() {
         delete document.body.dataset.sheet;
         // (A preview until something's in it: one already open, empty, is the one.)
-        if (!(chart === previewing && !chart.layers.length && !chart.title)) showPreview(blankChart());
-        else leaveHome(() => {});
+        // (The empty preview already open taken up again: started here now, as a new one is.)
+        if (!(chart === previewing && !chart.layers.length && !chart.title)) showPreview(draftChart());
+        else (drafts.add(chart), leaveHome(() => {}));
         void until(() => !document.body.hasAttribute("data-home"), 1000).then(() => /** @type {HTMLElement | null} */ ($("empty").querySelector(".search-cta"))?.focus());
       }
       /** A template on the empty chart of yours on screen, in one undoable step (a title it has stays); else (a preview, a chart with something in it, the grid) as a preview of its own. */
@@ -16472,7 +16586,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function loadPresets() {
         return (presetsLoad ??= (async () => {
           presetsFailed = false;
-          if ($("presets")?.hasAttribute("data-none")) throw Object.assign(new Error("Built without the website's charts"), { none: true });
+          if ($("presets")?.hasAttribute("data-none")) throw Object.assign(new Error("Built without the presets"), { none: true });
           const packed = $("presets")?.textContent?.trim();
           /** @type {Preset[]} */
           let list;
@@ -16484,9 +16598,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             let deadline = 0;
             const answer = await new Promise((done, fail) => {
               worker.onmessage = (event) => done(event.data);
-              worker.onerror = (event) => fail(new Error(event.message || "The website's charts couldn't be read"));
+              worker.onerror = (event) => fail(new Error(event.message || "The presets couldn't be read"));
               // (A module that never loads answers nothing: it's let go.)
-              deadline = setTimeout(() => fail(new Error("The website's charts took too long to read")), 30_000);
+              deadline = setTimeout(() => fail(new Error("The presets took too long to load")), 30_000);
             }).finally(() => (clearTimeout(deadline), worker.terminate()));
             if (answer.error) throw new Error(answer.error);
             list = answer.presets;
@@ -16628,16 +16742,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         void loadPresets().catch(() => {});
         /** @type {Page} */
         const page = {
-          title: path.at(-1) ?? "Website charts",
+          title: path.at(-1) ?? "Presets",
           // (Its rows are its search's, best first.)
           searches: true,
-          placeholder: path.length ? `Search in ${path.at(-1)}` : "Search the website's charts",
+          placeholder: path.length ? `Search in ${path.at(-1)}` : "Search the presets",
           rows: () => {
             if (!presets) return [presetsFailed === "none"
-              ? { kind: "row", key: "presets-none", icon: ICONS.recent, label: "This page was built without the website's charts", dim: true, stay: true }
+              ? { kind: "row", key: "presets-none", icon: ICONS.recent, label: "This page was built without the presets", dim: true, stay: true }
               : presetsFailed
-              ? { kind: "row", key: "presets-retry", icon: ICONS.recent, label: "The website's charts couldn't be read", aside: "Try again", verb: "Retry", stay: true, run: retryPresets }
-              : { kind: "row", key: "presets-waiting", icon: ICONS.recent, label: "Reading the website's charts…", dim: true, stay: true }];
+              ? { kind: "row", key: "presets-retry", icon: ICONS.recent, label: "The presets couldn't be read", aside: "Try again", verb: "Retry", stay: true, run: retryPresets }
+              : { kind: "row", key: "presets-waiting", icon: ICONS.recent, label: "Loading the presets…", dim: true, stay: true }];
             const list = presets, under = (/** @type {number} */ i) => path.every((name, depth) => list[i].p[depth] === name);
             const words = palette.pages.at(-1) === page ? palette.query.toLowerCase().split(/\s+/).filter(Boolean) : [];
             if (words.length) return presetsMatching(words, 300, under).map((i) => presetRow(i, true));
@@ -16751,7 +16865,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function markersHtml() {
         // (The past ones on the chart; the next, what it can't say otherwise.)
-        const on = Boolean(chart.halvings), next = nextHalving(), years = Number.isFinite(next) ? `${ordinal(Math.floor(liveHeight / HALVING_BLOCKS) + 1)} ≈ ${monthYear(next)}` : "Every 210,000 blocks";
+        const on = Boolean(chart.halvings), [next] = nextHalvings(1), years = next ? `${ordinal(next.n)} ≈ ${monthYear(next.time)}` : "Every 210,000 blocks";
         const count = chart.drawings?.length ?? 0, drawn = !drawingsHidden;
         return `<section class="markers"><div class="markers-head"><span>Markers</span></div>
           <div class="layer-row marker-row ${on ? "" : "hidden"}">
@@ -17529,22 +17643,25 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function colorPicker(/** @type {Layer} */ layer) {
         const mode = colorModeOf(layer), name = modeName(layer, mode), source = layerById(layer.colorFrom ?? ""), ways = (COLOR_MODES[layer.type] ?? ["one"]).length > 1;
-        const way = ways ? `<button type="button" id="color-mode" class="way" data-action="color-mode" aria-haspopup="menu" aria-label="Colors: ${escape(name)}">${escape(name)}${CHEVRON}</button>` : "";
-        const colorSelect = (/** @type {string} */ key, /** @type {string} */ label) => `<button type="button" id="color-select-${key}" class="preset color-select" data-color-select="${key}" aria-haspopup="menu" aria-label="${escape(label)}: ${escape(slotName(layer, key))}"><i class="swatch" style="--c:${escape(cssColor(colorOf(layer, key)))}"></i><span class="name">${escape(slotName(layer, key))}</span>${CHEVRON}</button>`;
-        // One color, or another layer's: a row, its way on its label's line.
-        if (mode === "one") return `<div class="field"><span>Color${way}</span>${colorSelect("color", "Color")}</div>`;
-        if (mode === "from") return `<div class="field"><span>Colors${way}</span><button type="button" id="color-from" class="preset" data-action="color-from" aria-haspopup="menu" aria-label="Colors from: ${escape(source ? labelOf(source) : "")}">${source ? letterChip(source) : ""}<span class="name">${escape(source ? labelOf(source) : "")}</span>${CHEVRON}</button></div>`;
-        const head = ways ? `<div class="field color-head"><span>Colors${way}</span></div>` : "";
+        // The way: a choice, as every other, on its line's right (none to choose: its label alone).
+        const head = `<div class="field"><span>${mode === "one" ? "Color" : "Colors"}</span>${ways ? `<button type="button" id="color-mode" class="preset" data-action="color-mode" aria-haspopup="menu" aria-label="Colors: ${escape(name)}"><span class="name">${escape(name)}</span>${CHEVRON}</button>` : ""}</div>`;
+        if (mode === "from") return `${head}<div class="field color-slot"><span>Layer</span><button type="button" id="color-from" class="preset" data-action="color-from" aria-haspopup="menu" aria-label="Colors from: ${escape(source ? labelOf(source) : "")}">${source ? letterChip(source) : ""}<span class="name">${escape(source ? labelOf(source) : "")}</span>${CHEVRON}</button></div>`;
         // By its levels: its colors its levels', the one under them the first of them (none here).
         if (mode === "levels") return head;
-        // Four: a grid, its sides down, what the bar does across (growing, then fading back: each row strong, then faint).
-        if (mode === "momentum") {
-          const chip = (/** @type {string} */ key, /** @type {string} */ label) => `<button type="button" id="color-select-${key}" class="color-chip" data-color-select="${key}" aria-haspopup="menu" aria-label="${escape(label)}: ${escape(slotName(layer, key))}" data-tip="${escape(label)}: ${escape(slotName(layer, key))}" style="--c:${escape(cssColor(colorOf(layer, key)))}"></button>`;
-          return `${head}<div class="color-grid" role="group" aria-label="Four colors: above and below its base, growing and fading"><span></span><span class="head">Growing</span><span class="head">Fading</span><span>Above</span>${chip("color", "Above, growing")}${chip("colorFading", "Above, fading")}<span>Below</span>${chip("colorBelow", "Below, growing")}${chip("colorBelowFading", "Below, fading")}</div>`;
-        }
-        // Two: each on its line, under them (a baseline's: its two, the first a setting of its own).
-        return head + colorSlots(layer).map(([key, label], i) => `<div class="field${head || i ? " color-slot" : ""}"><span>${escape(label)}</span>${colorSelect(key, label)}</div>`).join("");
+        const places = colorSlots(layer), key = slotNow(layer), fading = key === "colorFading" || key === "colorBelowFading";
+        const own = key === "colorFading" ? layer.colorFading : key === "colorBelowFading" ? layer.colorBelowFading : colorOf(layer, key);
+        // Which one (two, four): a segmented row, each its color and what it's for.
+        const which = places.length > 1 ? `<div class="tabs color-slots${places.length > 2 ? " four" : ""}" role="group" aria-label="Which color">${places.map(([slot, label]) => `<button type="button" data-color-slot="${slot}" aria-pressed="${slot === key}" aria-label="${escape(label)}: ${escape(slotName(layer, slot))}" data-tip="${escape(slotName(layer, slot))}"><i class="swatch" style="--c:${escape(cssColor(colorOf(layer, slot)))}"></i>${escape(label)}</button>`).join("")}</div>` : "";
+        // Bitview's colors, a click each (the one it is ringed); then any other (Custom: the surface), and a fading one's
+        // default (its growing one's, fainter).
+        const custom = own !== undefined && !SWATCHES.includes(own);
+        const side = key === "colorFading" ? layer.color : belowOf(layer);
+        const more = `<div class="color-palette-foot"><button type="button" id="color-custom" data-palette-custom="1" aria-pressed="${custom}" aria-haspopup="menu" aria-label="Custom${custom ? `: ${escape(colorName(own ?? ""))}` : ""}" ${custom ? `data-tip="${escape(colorName(own ?? ""))}"` : ""}><i class="swatch" style="${custom ? `--c:${escape(cssColor(own ?? ""))}` : "background: conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #10b981, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f43f5e)"}"></i>${custom ? escape(ink(own ?? "")) : "Custom"}</button>${fading ? `<button type="button" data-palette-faint="1" aria-pressed="${own === undefined}"><i class="swatch" style="--c:${escape(cssColor(faintOf(side)))}"></i>Fainter ${escape(colorName(side).toLowerCase())}</button>` : ""}</div>`;
+        return `${head}${which}<div class="color-palette" data-palette="${key}">${swatchGrid(own ?? "")}${more}</div>`;
       }
+      /** Which of each layer's colors its palette sets now: the one picked (by its id), else its first. @type {Map<string, string>} */
+      const colorSlot = new Map();
+      const slotNow = (/** @type {Layer} */ layer) => ((places) => ((chosenSlot) => (places.some(([key]) => key === chosenSlot) ? /** @type {string} */ (chosenSlot) : places[0]?.[0] ?? "color"))(colorSlot.get(layer.id)))(colorSlots(layer));
       /** What a layer can take its colors from: another layer, none taking its own (no loop of two). @param {Layer} layer */
       const colorSources = (layer) => chart.layers.filter((other) => other.id !== layer.id && other.colorFrom !== layer.id);
       /** What each way of coloring does, said beside it. */
@@ -18263,11 +18380,19 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }
         if (field.id !== "formula") return;
         $("formula-editor")?.classList.remove("typing");
-        // (After the press that left it, if one did: the panel drawn anew now would lose the control pressed.)
-        const id = selected, text = field.value;
+        // (After the press that left it, if one did: the panel drawn anew now would lose the control pressed. Before
+        // anything leaves the chart, though: see leaveField.)
+        formulaLeft = { id: selected, text: field.value };
         formulaTyped++;
-        afterPress(() => applyFormula(id, text));
+        afterPress(applyFormulaLeft);
       });
+      /** A formula left (its field blurred), waiting for the press that left it to be done: applied on the chart it was typed on. */
+      let formulaLeft = /** @type {{ id: string, text: string } | null} */ (null);
+      function applyFormulaLeft() {
+        const left = formulaLeft;
+        formulaLeft = null;
+        if (left) applyFormula(left.id, left.text);
+      }
       /** A layer's formula as typed, applied whatever it is (left, or the page left): what's wrong then said. */
       function applyFormula(/** @type {string} */ id, /** @type {string} */ text) {
         const layer = layerById(id);
@@ -18326,7 +18451,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       });
       $("inspector").addEventListener("keydown", (event) => {
         // A picker (pane, format, color) opens its menu on ↑↓, as a select does: the keys don't go on to the layers.
-        if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target.matches?.(":is(.preset, .way, .color-chip)[aria-haspopup]")) {
+        if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target.matches?.(".preset[aria-haspopup]")) {
           event.preventDefault();
           event.stopPropagation();
           return event.target.click();
@@ -18399,8 +18524,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       $("inspector").addEventListener("click", (event) => {
         const button = closest(event, "button");
         if (!button) return;
-        const { type, dash, shape, fill, side, priceLine, action, insert, index, reset, colorSelect, replace, removeLevel, lineColor, lineDash, act } = button.dataset;
+        const { type, dash, shape, fill, side, priceLine, action, insert, index, reset, colorSelect, replace, removeLevel, lineColor, lineDash, act, colorSlot: slot, pickColor, paletteCustom, paletteFaint } = button.dataset;
+        const paletteKey = button.closest("[data-palette]")?.getAttribute("data-palette");
         if (index) switchInterval(index);
+        else if (slot) colorSlot.set(selected, slot), renderInspector();
+        else if (pickColor && paletteKey) editById(selected, (item) => setColor(item, paletteKey, pickColor));
+        else if (paletteFaint && paletteKey) editById(selected, (item) => setColor(item, paletteKey, ""));
+        else if (paletteCustom && paletteKey) ((layer) => layer && colorPane(button, colorOf(layer, paletteKey), `layer:${paletteKey}`, () => hideMenu(), (paletteKey === "colorFading" ? layer.colorFading : paletteKey === "colorBelowFading" ? layer.colorBelowFading : "x") === undefined))(layerById(selected));
         else if (colorSelect) layerColorMenu(button, colorSelect);
         else if (act !== undefined) {
           const row = layerActions(selected, "panel")[Number(act)], at = chart.layers.findIndex((layer) => layer.id === selected);
@@ -19318,8 +19448,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const empty = !chart.layers.length;
         return /** @type {Command[]} */ ([
           { title: "Add a layer", text: "Search every series, or browse them by topic; a formula, a cloud, a trend.", words: "add series catalog browse explore folders metric data", icon: "plus", kbd: "A", run: () => openPalette({ add: true }), suggested: true, keepOpen: true },
-          { title: "New chart", text: "A blank chart, to start from series, a website chart or a file.", words: "create blank empty", icon: "plus", kbd: "N", run: newChart, suggested: true, anywhere: true },
-          ...(previewing && previewing === chart && !home && chart.layers.length ? [{ title: "Keep this chart", text: "A preview: into your charts as it is (editing it keeps it too; looking at it, its scale, interval or layers hidden, doesn't).", words: "keep save preview add charts", icon: "keep", run: () => keepPreview(), suggested: true }] : []),
+          { title: "New chart", text: "A blank chart, to start from series, a preset or a file.", words: "create blank empty", icon: "plus", kbd: "N", run: newChart, suggested: true, anywhere: true },
+          ...(previewing && previewing === chart && !home && chart.layers.length ? [{ title: "Keep this chart", text: "A preview: into your charts, with your edits (till then, they're this preview's alone).", words: "keep save preview add charts", icon: "keep", run: () => keepPreview(), suggested: true }] : []),
           ...(previewing?.layers.length && (previewing !== chart || previousChart()) ? [{ title: "Close the preview", text: `${titleOf(previewing)}: not in your charts, let go of.`, words: "close preview discard dismiss", icon: "close", run: closePreview }] : []),
           { title: "New folder", text: "For charts that go together, named at once.", words: "create folder group organize", icon: "folderAdd", run: () => (home && ($("home-filter").value = ""), newFolder()), anywhere: true },
           // Each folder, by its name: its page (expand or collapse it, rename it, delete it, its charts).
@@ -19371,7 +19501,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             { title: `Remove ${n}`, text: "With an Undo.", words: "selected chosen drawings remove delete erase", icon: "trash", kbd: "⌫", danger: true, run: () => removeDrawings(ids), suggested: true },
             { title: "Clear the selection", text: `${n} selected.`, words: "selected chosen drawings deselect clear", icon: "close", kbd: "esc", run: () => chooseDrawings([]), suggested: true },
           ])(plural(ids.length, "drawing")))([...chosen])),
-          ...(empty ? [] : [{ title: chart.halvings ? "Hide the halvings" : "Show the halvings", text: chart.halvings ? "The lines at each halving, off this chart." : "A line at each halving, and the next, estimated.", words: "halving halvings epoch cycle reward vertical lines markers", icon: "halvings", run: toggleHalvings }]),
+          ...(empty ? [] : [{ title: chart.halvings ? "Hide the halvings" : "Show the halvings", text: chart.halvings ? "The lines at each halving, off this chart." : "A line at each halving, and at the next three, estimated.", words: "halving halvings epoch cycle reward vertical lines markers", icon: "halvings", run: toggleHalvings }]),
           ...(empty ? [] : LEGENDS.map(([id, text, tip]) => ({ title: `Legend: ${text}`, text: `${tip}.`, words: `legend names values strip caption ${{ off: "hide none no", "": "on show follow" }[id]}`, icon: "legend", ...(id === (chart.legend ?? "") ? { current: true } : { run: () => setLegend(id) }) }))),
           ...(empty && !fullOn() ? [] : [{ title: fullOn() ? "Exit full screen" : "Full screen", text: "The chart alone, on the whole screen.", words: "fullscreen full screen focus maximize expand zen present", icon: fullOn() ? "shrink" : "expand", kbd: "⇧F", run: () => setFull() }]),
           ...(empty ? [] : [{ title: panelShown() ? "Hide the layers panel" : "Show the layers panel", text: "The chart's layers and their settings.", words: "layers inspector settings", icon: "panel", kbd: "P", run: () => togglePanel() }]),
@@ -19473,7 +19603,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // Charts that match come before the series: a chart's title is a few words, matched, it's what's looked for.
         const charts = !everything ? [] : rank(library.charts.filter((doc) => home || doc !== chart).map((doc) => ({ kind: "chart", key: doc.id, group: "Charts" })), rowText, words).slice(0, 4);
         // The website's charts (once read), after yours: a few that match; all of them on their own page.
-        const website = !everything || !presets ? [] : rank(presetsMatching(words, 60).map((i) => ({ ...presetRow(i, true), group: "Website charts" })), rowText, words).slice(0, 4);
+        const website = !everything || !presets ? [] : rank(presetsMatching(words, 60).map((i) => ({ ...presetRow(i, true), group: "Presets" })), rowText, words).slice(0, 4);
         // This chart's own: the ways in, its layers and panes, by name, series or formula; then any of their settings and
         // actions, by what they're of and what they are ("price color", "mvrv base").
         // (The chart's settings, made once a search: its rows and the changes typed whole read the same ones.)
@@ -20295,8 +20425,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function renameChart(doc, title) {
         if (doc === chart) return commit((draft) => (draft.title = title), { redraw: "none" });
         Object.assign(doc, { title, updated: Date.now() });
-        // (A preview renamed is changed: it's yours.)
-        if (doc === previewing) return keepPreview(false);
+        // (A chart started here, named: it's yours; another's preview stays one till kept.)
+        if (doc === previewing && drafts.has(doc)) return keepPreview(false);
+        if (doc === previewing) return void (touched.add(doc), renderCharts());
         save();
         renderCharts();
       }
@@ -20411,7 +20542,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             { key: "page:panes", icon: ICONS.pane, label: "Panes", aside: plural(chart.panes.length, "pane"), words: "scale height resize swap move", page: panesPage },
             { key: "page:drawings", icon: ICONS.draw, label: "Drawings", aside: chart.drawings?.length ? plural(chart.drawings.length, "drawing") : "Lines, boxes, text", words: "draw drawings annotations lines shapes text brush", page: drawingsPage },
           ] : []),
-          { key: "page:presets", icon: ICONS.charts, label: "Website charts", aside: presets ? plural(presets.length, "chart") : `From ${SERVER_HOST}`, words: "website bitview presets templates examples gallery import base start browse", page: () => presetsPage([]) },
+          { key: "page:presets", icon: ICONS.charts, label: "Presets", aside: presets ? plural(presets.length, "chart") : "Loading…", words: "presets templates examples gallery ready made start browse", page: () => presetsPage([]) },
         ].filter((row) => !home || row.key === "page:charts" || row.key === "page:presets").map((row) => ({ kind: "row", group: "Browse", verb: "Open", ...row }));
       }
       /** Your charts, as ⌘K's page: those in no folder, then each folder's under its name (the sidebar's order); and making more. */
@@ -21819,7 +21950,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               for (const doc of library.charts) if (doc.folder && gone.has(doc.folder)) delete doc.folder;
               library.order = before;
               if (ids.has(chart.id)) {
-                const standIn = library.charts.length ? null : previewing ?? blankChart();
+                const standIn = library.charts.length ? null : previewing ?? draftChart();
                 if (standIn) previewing = standIn;
                 openChart(standIn ?? library.charts[0]);
               }
@@ -21841,7 +21972,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           toast(`Imported “${titleOf(doc)}”`, { label: "Undo", run: () => {
             const now = chartById(doc.id);
             if (now) (unlist(now), deletedHere.add(doc.id));
-            if (chart.id === doc.id) openChart(chartById(before.id) ?? (before === previewing ? before : null) ?? previousChart() ?? library.charts[0] ?? (previewing = blankChart()));
+            if (chart.id === doc.id) openChart(chartById(before.id) ?? (before === previewing ? before : null) ?? previousChart() ?? library.charts[0] ?? (previewing = draftChart()));
             save();
             renderCharts();
           } });
@@ -22623,9 +22754,19 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
 
       let toastTimer = 0;
-      /** The toolbar's Undo: on while ⌘Z has something to undo (the chart's last edit, or a toast's Undo). */
-      /** Undo and Redo, each pressable or not (Redo beside it always: an undo, even long after, taken back at a glance; nothing moves under a second press). */
-      const syncUndo = () => (($("undo").disabled = !edits.past.length && toastUndo?.mark !== revision), ($("redo").disabled = !edits.future.length));
+      /**
+       * Undo and Redo, each pressable or not (Redo beside it always: an undo, even long after, taken back at a glance;
+       * nothing moves under a second press); a preview's Keep marked once it's edited (the edits go with it, if kept).
+       */
+      function syncUndo() {
+        $("undo").disabled = !edits.past.length && toastUndo?.mark !== revision;
+        $("redo").disabled = !edits.future.length;
+        const edited = chart === previewing && touched.has(chart), keep = $("keep");
+        keep.classList.toggle("edited", edited);
+        keep.dataset.tip = edited ? "Your edits aren't in your charts yet: Keep puts it there, with them" : "Keep puts it in your charts, as it is";
+        if (edited) keep.setAttribute("aria-label", "Keep, edited");
+        else keep.removeAttribute("aria-label");
+      }
       /** A toast's Undo, which ⌘Z presses while it's up and nothing has changed since (a deleted chart comes back too). */
       let toastUndo = /** @type {{ press: () => void, mark: number } | null} */ (null);
       /** Something done, with its check; or (`done` false) something to know, without. @param {{ label: string, run: () => void }} [action] */
@@ -22829,7 +22970,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }
         else if (action === "import") $("import-file").click();
         else if (action === "download-all") downloadAll();
-        else if (action === "website-charts") openPresets();
+        else if (action === "presets") openPresets();
         else if (action === "toggle-sidebar") toggleSidebar();
         else if (action === "toggle-panel") togglePanel();
         else if (action === "shortcuts") showShortcuts();
@@ -22873,7 +23014,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
 
       /** Out of the field being typed into: what it holds is kept (or, a text emptied, goes), there and then. */
-      const leaveField = () => (naming?.finish(), typing(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).blur());
+      /** What's being typed kept, and a formula left by a press applied now: on the chart it was typed on (another's opening). */
+      const leaveField = () => (naming?.finish(), typing(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).blur(), applyFormulaLeft());
       /** Typing into a field (a tick isn't one: keys still do what they do). */
       const typing = (target) => (target instanceof HTMLInputElement && !["checkbox", "radio", "button"].includes(target.type)) || target instanceof HTMLTextAreaElement || target?.isContentEditable;
       function selectBy(delta) {
@@ -22908,10 +23050,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           go(numbered()[Number(event.key) - 1]);
           return;
         }
-        // Everything saves as you go: ⌘S just says so, instead of the browser saving the page.
+        // Everything saves as you go: ⌘S just says so, instead of the browser saving the page; a preview, it keeps it.
         if (mod && key === "s") {
           event.preventDefault();
           flushEdits();
+          if (chart === previewing && !home) return chart.layers.length ? keepPreview() : toast("Nothing to keep yet: add a layer");
           return save(true);
         }
         if (mod && key === "z" && !typing(event.target)) {
@@ -23619,10 +23762,19 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (!library.charts.includes(shared)) previewing = shared;
           chart = shared;
         }
+        // (Charts another tab saved while this one was starting: the first of them, as a library's first is.)
+        chart ??= chartById(library.active) ?? library.charts[0];
+        // An edited preview kept aside (left, reloaded, a tab closed): in its place again; opened, with nothing else to show.
+        const [previewAside] = shared ? [] : ((stored) => (stored && !chartById(stored.id) ? restore(stored) : []))(storage.get(PREVIEW_ASIDE, null));
+        if (previewAside) {
+          touched.add(previewAside);
+          previewing ??= previewAside;
+          chart ??= previewAside;
+        }
         // First visit: an empty chart, open as a preview, to start from a search or one of the website's charts.
         const first = !chart;
         if (first) {
-          chart = previewing = blankChart();
+          chart = previewing = draftChart();
           prefs.home = false;
           savePrefs();
         }
