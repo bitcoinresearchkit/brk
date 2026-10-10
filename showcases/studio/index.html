@@ -7409,7 +7409,7 @@
         // (A first visit, nothing kept yet, opens on its empty chart, whatever a preference or the history says.)
         // (A picture's link, #image=: the picture alone, the page out of sight while it's made.)
         if (/[#&]image=/.test(location.hash)) document.body.toggleAttribute("data-picture", true);
-        if (!/[#&](?:chart|image)=/.test(location.hash) && localStorage.getItem("bitview-studio:v2") !== null && (there ? there.home : (prefs.home ?? true))) document.body.toggleAttribute("data-home", true);
+        if (!/[#&](?:chart|image|c)=/.test(location.hash) && localStorage.getItem("bitview-studio:v2") !== null && (there ? there.home : (prefs.home ?? true))) document.body.toggleAttribute("data-home", true);
       } catch {}
     </script>
     <div class="app">
@@ -7505,7 +7505,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
 // Only if long output is cut off and nothing is saved: the same options with part: 0, then part: 1, 2…
 // ({ part, parts, mime, base64 } each; at scale 2, a PNG is six to eight).</pre>
           <h2>Changing a chart</h2>
-          <p>A link is the whole chart, not a change to one: to change it, write it again, changed. Letters follow the layers' order, so a layer added last leaves the formulas' letters as they were. A link copied from Studio (its Copy link) is written the same way, URL-encoded only where a link needs it (%20 spaces, %22 quotes, %7B %7D braces, %5B %5D brackets, %2B a plus, which a link would read as a space): it's the chart as whoever copied it has it now, their own changes in it. Read it, change it, write it back (only one past what a browser opens, about a megabyte, is compressed instead: it opens, but can't be read). Its "view", if any, is where it was zoomed and scrolled: keep it, change it, or leave it out to show the chart's "range".</p>
+          <p>A link is the whole chart, not a change to one: to change it, write it again, changed. Letters follow the layers' order, so a layer added last leaves the formulas' letters as they were. A link copied from Studio (its Copy link) is written the same way, URL-encoded only where a link needs it (%20 spaces, %22 quotes, %7B %7D braces, %5B %5D brackets, %2B a plus, which a link would read as a space): it's the chart as whoever copied it has it now, their own changes in it. Read it, change it, write it back (only one past what a browser opens, about a megabyte, is compressed instead: it opens, but can't be read; as is a Share QR code's, "#c=", compressed in capitals and digits to make the code as small as it gets). Its "view", if any, is where it was zoomed and scrolled: keep it, change it, or leave it out to show the chart's "range".</p>
           <h2>Series names</h2>
           <p>Only exact names, as Bitview's API has them now (the names on this page are examples, and can change): one it doesn't have shows as missing, with the closest offered. How to find them is at https://bitview.space/llms.txt, which follows the API as it is. Only series by date can be charted (some are only by block).</p>
           <p>An assistant without web access can't look names up: whoever uses it can, or can add Bitview's MCP server to it as a connector (https://mcp.bitview.space/, no sign-in), for the search and the data as tools.</p>
@@ -22145,8 +22145,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** lean-qr, loaded the first time a QR code is asked for (its types ambient: what's used, typed here); failing, asked again next time. */
       let qrModule = /** @type {Promise<{ generate: (text: string) => { size: number, get(x: number, y: number): boolean } }> | null} */ (null);
-      /** The most a QR code holds, in bytes (at its lowest correction): a link longer can't be one, and isn't tried. */
-      const QR_MOST = 2953;
+      /**
+       * The most a QR code holds, in characters (at its lowest correction, in its alphanumeric mode: a QR link's base32):
+       * a link longer can't be one, and isn't tried; one shorter that still doesn't fit, the library refuses.
+       */
+      const QR_MOST = 4296;
       /**
        * A link as a QR code, an SVG (its modules square, whole device pixels each, each row's runs one shape), dark on white
        * as scanners read it, its quiet zone (four modules) in. Null where it's too long for one, or it can't be made.
@@ -22390,27 +22393,57 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** The page's own address, its query and hash left out (from a file, its origin is "null": the address it is). */
       const linkBase = () => `${location.href.replace(/[?#].*$/, "")}#chart=`;
+      /** A chart as a link holds it (its sketch: what a written link writes), compressed. @param {Chart} doc */
+      async function packedBytes(doc) {
+        const stream = new Blob([JSON.stringify(toSketch(doc))]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+        return new Uint8Array(await new Response(stream).arrayBuffer());
+      }
       /** A chart's link compressed (a long one's; read the same as one written out). @param {Chart} doc */
       async function packedLink(doc) {
-        const stream = new Blob([JSON.stringify(portable(doc))]).stream().pipeThrough(new CompressionStream("deflate-raw"));
-        const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
         let binary = "";
-        for (const byte of bytes) binary += String.fromCharCode(byte);
+        for (const byte of await packedBytes(doc)) binary += String.fromCharCode(byte);
         return `${linkBase()}${btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
       }
+      const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
       /**
-       * A chart's links, made once: the one to copy (as written; compressed where that's too long), and the shorter of the
-       * two for a QR code (it holds little; compressing failed, the written one). @param {Chart} doc
+       * A chart's link for a QR code: compressed, in capitals and digits (base32, "#c="), which a QR code holds in its
+       * denser alphanumeric mode (5.5 bits a character, where base64 takes 8 in its byte mode). @param {Chart} doc
+       */
+      async function qrLink(doc) {
+        let text = "", bits = 0, value = 0;
+        for (const byte of await packedBytes(doc)) {
+          value = (value << 8) | byte;
+          bits += 8;
+          while (bits >= 5) text += BASE32[(value >>> (bits -= 5)) & 31];
+        }
+        if (bits) text += BASE32[(value << (5 - bits)) & 31];
+        return `${location.href.replace(/[?#].*$/, "")}#c=${text}`;
+      }
+      /** A QR link's bytes back (base32, any case). @param {string} text */
+      function fromBase32(text) {
+        const bytes = [];
+        let bits = 0, value = 0;
+        for (const char of text.toUpperCase()) {
+          const digit = BASE32.indexOf(char);
+          if (digit < 0) throw new Error("That link doesn't contain a chart");
+          value = ((value << 5) | digit) & 0xffff;
+          if ((bits += 5) >= 8) bytes.push((value >>> (bits -= 8)) & 255);
+        }
+        return Uint8Array.from(bytes);
+      }
+      /**
+       * A chart's links, made once: the one to copy (as written; compressed where that's too long), and the one for a QR
+       * code (compressed, in base32: the fewest modules; compressing failed, the written one). @param {Chart} doc
        */
       function linksOf(doc) {
-        const written = `${linkBase()}${linkText(doc)}`, packed = packedLink(doc);
-        const copy = new URL(written).href.length <= 1_000_000 ? Promise.resolve(written) : packed;
-        const short = packed.then((one) => (new URL(one).href.length < new URL(written).href.length ? one : written), () => written);
+        const written = `${linkBase()}${linkText(doc)}`;
+        const copy = new URL(written).href.length <= 1_000_000 ? Promise.resolve(written) : packedLink(doc);
+        const short = qrLink(doc).catch(() => written);
         return { copy, short };
       }
-      async function fromLink(encoded) {
-        const binary = atob(encoded.replace(/-/g, "+").replace(/_/g, "/"));
-        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      /** A compressed link's chart: base64url (`#chart=`), or base32 (`#c=`, a QR code's). @param {string} encoded */
+      async function fromLink(encoded, base32 = false) {
+        const bytes = base32 ? fromBase32(encoded) : Uint8Array.from(atob(encoded.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
         // A chart is a few kilobytes (its drawings at most, about a megabyte): inflating stops at two, whatever the link claims.
         const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
         const chunks = [];
@@ -22423,7 +22456,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           }
           chunks.push(value);
         }
-        const input = JSON.parse(await new Blob(chunks).text()), doc = validate(input);
+        // (A sketch, as now; a chart's whole record, as older links held it.)
+        const input = JSON.parse(await new Blob(chunks).text());
+        if (input?.v === undefined) return readChart(input);
+        const doc = validate(input);
         keepCarriedView(doc, input);
         return doc;
       }
@@ -23791,19 +23827,20 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let lostDrawings = 0;
       /**
        * The chart a link carries in the URL's hash, if any (left there: see linkInUrl): as JSON as one writes it (see
-       * the guide, the "About" section: "{" first, as typed or URL-encoded), else compressed (older links, and the longest).
+       * the guide, the "About" section: "{" first, as typed or URL-encoded), else compressed (older links, the longest, and
+       * a QR code's, "#c=", in base32).
        * A chart already kept is the one opened, at the link's window (or its range, the link having none).
        */
       async function fromHash(run = linkRun, at = 0) {
         // (The field the link starts with: what follows is its chart, whatever it holds; else the first there is.)
-        const hash = location.hash.slice(1), params = new URLSearchParams(hash), key = /^(?:chart|image)(?==)/.exec(hash)?.[0] ?? (params.has("chart") ? "chart" : params.has("image") ? "image" : "");
+        const hash = location.hash.slice(1), params = new URLSearchParams(hash), key = /^(?:chart|image|c)(?==)/.exec(hash)?.[0] ?? (params.has("chart") ? "chart" : params.has("image") ? "image" : params.has("c") ? "c" : "");
         const shared = key ? params.get(key) : null;
         if (!shared) return null;
         picturing = key === "image";
         // (The link stays in the address bar: a chart read from it, written as linkInUrl writes it, or cleared; one that
         // can't be read, as it is, to be put right there.)
         // (Written, it runs to the end, read as it is: a "+" in a formula a plus, an "&" in a name, part of it.)
-        return linked(new RegExp(`(?:^|&)${key}=(.*)$`, "s").exec(hash)?.[1] ?? "", shared, run, at);
+        return linked(new RegExp(`(?:^|&)${key}=(.*)$`, "s").exec(hash)?.[1] ?? "", shared, run, at, key === "c");
       }
       /** The address bar's writes, counted: a compressed link ready late doesn't overwrite a later one. */
       let urlWrites = 0;
@@ -23831,7 +23868,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * @param {string} written @param {string | null} shared @param {number} run @param {number} [at] the navigation it is
        *   (another after it, it's dropped, unsaid; its own may not be counted yet: a link written out is read at once)
        */
-      async function linked(written, shared, run, at = 0) {
+      async function linked(written, shared, run, at = 0, base32 = false) {
         // (Written out, as JSON, however encoded: else compressed.)
         const plain = /^(?:%20|%0a|%0d|%09|\s)*(?:\{|%7b|%257b)/i.test(written);
         try {
@@ -23844,7 +23881,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               if (!field) throw error;
               return fromWritten(written.slice(0, field.index));
             }
-          })() : await fromLink(shared);
+          })() : await fromLink(shared, base32);
           if (!doc.layers.length) throw new Error("it lists no layers");
           if (run !== linkRun || (at && navigations > at)) return null;
           const twin = library.charts.find((other) => sameChart(other, doc));
@@ -23882,7 +23919,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       addEventListener("hashchange", () => {
         const params = new URLSearchParams(location.hash.slice(1));
         // (Cleared, or another kind: a link still being read is dropped.)
-        if (!params.has("chart") && !params.has("image")) return void (++linkRun, (picturing = picturing && document.body.hasAttribute("data-picture")), document.body.hasAttribute("data-picture") && leavePicture());
+        if (!params.has("chart") && !params.has("image") && !params.has("c")) return void (++linkRun, (picturing = picturing && document.body.hasAttribute("data-picture")), document.body.hasAttribute("data-picture") && leavePicture());
         closeDialogs();
         // (The navigation this is, as navigate counts it: another chart opened meanwhile, the grid shown, this one's dropped.)
         const run = ++linkRun, at = navigations + 1;
