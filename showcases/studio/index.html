@@ -117,6 +117,8 @@
         --held-shadow: 0 12px 20px -14px light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.8));
         --hint-shadow: 0 0 0 1px light-dark(rgb(0 0 0 / 0.08), transparent), 0 4px 12px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.45));
         --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        /* The chart's own text (its axes, its value tags, the navigator): Inter a tad heavier (see chartFont). */
+        --chart-sans: "Inter Chart", var(--sans);
         --mono: Lilex, ui-monospace, SFMono-Regular, Menlo, monospace;
         /* Popovers come in quickly and leave at once; layout changes leave as they came. */
         --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1924,6 +1926,34 @@
         cursor: ew-resize;
       }
 
+      /* The magnifier's lens: round, the chart under it twice as large on the card's ground, ringed and lifted; the pointer
+         is its center (the cursor hidden over the chart). */
+      .loupe {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 7;
+        width: 168px;
+        height: 168px;
+        overflow: hidden;
+        border-radius: 50%;
+        background: var(--card);
+        box-shadow: 0 0 0 1px var(--line-strong), 0 0 0 4px light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.06)), var(--pop);
+        pointer-events: none;
+        will-change: transform;
+
+        canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+      }
+
+      /* (The chart's own cursors too, on its axes and pane edges: the lens is the pointer; a button's stays.) */
+      body[data-magnifying] :is(.chart, .chart :not(.legend, .legend *, button, button *)) {
+        cursor: none !important;
+      }
+
       /* Held, the cursor it was taken with stays wherever the pointer goes (--held: grabbing, or a corner's resize). */
       body[data-held],
       body[data-held] * {
@@ -3451,6 +3481,7 @@
         overflow-y: auto;
         margin: 0;
         padding: 4px;
+        scroll-padding-block: 4px;
         list-style: none;
 
         li {
@@ -4449,6 +4480,8 @@
         overflow-y: auto;
         margin: 0;
         padding: 6px;
+        /* (A row reached by the arrows stops as far from the edge as the first one sits.) */
+        scroll-padding-block: 6px;
         list-style: none;
         scrollbar-width: thin;
 
@@ -4888,6 +4921,7 @@
         overflow-y: auto;
         border-radius: var(--radius-lg);
         padding: 4px;
+        scroll-padding-block: 4px;
         background: var(--raise);
         box-shadow: var(--pop);
         animation: menu var(--dur-small) var(--ease);
@@ -7442,8 +7476,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           <h3>Drawing</h3>
           <dl>
             <div><dt>Draw: a line, a box, text, a stroke</dt><dd><kbd>D</kbd> then its key</dd></div>
+            <div><dt>The drawing tools shown, or put away</dt><dd><kbd>D</kbd>, <kbd>D</kbd> again</dd></div>
             <div><dt>The keys after D: trend line, horizontal, vertical; rectangle, ellipse; text; brush</dt><dd><kbd>L</kbd> <kbd>H</kbd> <kbd>V</kbd> <kbd>R</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>B</kbd></dd></div>
             <div><dt>Measure a change (the ruler: shown, not kept)</dt><dd><kbd>M</kbd> and drag</dd></div>
+            <div><dt>Magnify the chart under the pointer</dt><dd><kbd>D</kbd> then <kbd>Z</kbd></dd></div>
             <div><dt>Draw without snapping to the data</dt><dd><kbd>⌥</kbd> and draw</dd></div>
             <div><dt>Edit a text, or label a line (then drag the label along it)</dt><dd>double-click it</dd></div>
             <div><dt>Select several: one more, or a box around them</dt><dd><kbd>⇧</kbd> and click, <kbd>⌘</kbd> and drag</dd></div>
@@ -7459,6 +7495,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
 
     <div id="menu" class="menu" role="menu" hidden></div>
     <div id="submenu" class="menu" role="menu" hidden></div>
+    <div id="loupe" class="loupe" aria-hidden="true" hidden><canvas></canvas></div>
     <div id="toast" class="toast"></div>
     <div id="tip" class="tip" role="tooltip" hidden></div>
     <div id="hints" class="hints" aria-hidden="true"></div>
@@ -7586,6 +7623,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         file: svg('<path d="M4 1.5h5l3.5 3.5v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-11.5a1 1 0 0 1 1-1Z"/><path d="M9 1.5V5h3.5"/>', 14),
         check: svg('<path d="m4 8.4 2.6 2.6L12 5.4"/>', 12),
         ruler: svg('<path d="m2 11 9-9 3 3-9 9Z"/><path d="m5 8 1.5 1.5M7 6l1 1M9 4l1.5 1.5"/>'),
+        magnifier: svg('<circle cx="7" cy="7" r="4.75"/><path d="m10.5 10.5 3.5 3.5"/><path d="M5 7h4M7 5v4"/>'),
         draw: svg('<path d="m10.5 2 3 3-7 7-3.6.6.6-3.6Z"/><path d="m8.5 4 3 3"/><path d="M9.5 14h4"/>'),
         ellipse: svg('<ellipse cx="8" cy="8" rx="6" ry="4.5"/>'),
         arrow: svg('<path d="M3 13 12.5 3.5M7 3.5h5.5V9"/>'),
@@ -9363,7 +9401,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         edits.held = 0;
         revision++;
         hideMenu();
-        setTool("");
+        putDown();
         save();
         refresh(true, true);
       }
@@ -10280,7 +10318,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function axisWidth() {
         const context = /** @type {CanvasRenderingContext2D} */ (document.createElement("canvas").getContext("2d"));
-        context.font = `11px ${css("--sans")}`;
+        context.font = `500 11px ${chartSans}`;
         const width = Math.ceil(1 + 5 + (2 * 5 * 11) / 12 + 5 + context.measureText("0".repeat(AXIS_CHARS)).width);
         return width + (width % 2);
       }
@@ -10300,7 +10338,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           layout: {
             ...colors.layout,
             background: { type: LC.ColorType.Solid, color: "transparent" },
-            fontFamily: css("--sans"),
+            fontFamily: chartSans,
             fontSize: 11,
             attributionLogo: false,
             panes: { ...colors.layout.panes, enableResize: true },
@@ -10316,17 +10354,46 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         };
       }
 
+      /**
+       * The chart's Inter, a tad heavier than the page's (its labels read better, on the lines and on their colored tags):
+       * the page's own font file (no second copy of it), as "Inter Chart" from 500 up (a variable font: a canvas's
+       * regular text comes at 500, bold stays bold). The page's until it's loaded: the chart measures its labels in the
+       * font it's given, and a new one is what makes it measure them again.
+       */
+      let chartSans = css("--sans");
+      const chartFont = (async () => {
+        for (const sheet of document.styleSheets) {
+          for (const rule of sheet.cssRules) {
+            if (!(rule instanceof CSSFontFaceRule) || rule.style.getPropertyValue("font-family").replace(/["']/g, "").trim() !== "Inter") continue;
+            const url = rule.style.getPropertyValue("src").match(/url\(["']?([^"')]+)["']?\)/)?.[1];
+            if (!url) return false;
+            const face = new FontFace("Inter Chart", await (await fetch(url)).arrayBuffer(), { weight: "500 900" });
+            document.fonts.add(face);
+            return Boolean(await face.load());
+          }
+        }
+        return false;
+      })().catch(() => false);
       const view = LC.createChart($("chart"), { autoSize: true, ...chartOptions() });
       // (Its layout table is no table to read: the chart's said by its plot's keys, see placePlotKeys.)
       view.chartElement().querySelector("table")?.setAttribute("role", "presentation");
       // Its figures in Inter, as every figure here (a canvas has no tabular figures: an axis is as wide as its labels
       // with every digit a "0", see widest), set again once the font has loaded: a canvas doesn't wait for it.
-      document.fonts.load("11px Inter").then(() => {
+      chartFont.then((loaded) => {
+        if (!loaded) return;
+        chartSans = css("--chart-sans");
+        navigatorFont = "";
         const minimumWidth = axisWidth();
-        view.applyOptions({ layout: { fontFamily: css("--sans") }, leftPriceScale: { minimumWidth }, rightPriceScale: { minimumWidth } });
+        view.applyOptions({ layout: { fontFamily: chartSans }, leftPriceScale: { minimumWidth }, rightPriceScale: { minimumWidth } });
+        drawOverview();
       });
       /** @type {Map<string, any>} layer id → its series on the chart */
       const drawn = new Map();
+      /**
+       * A candle's and a bar's corners, rounded a touch, more as they're drawn wider: none under 4px apart, then 1px, a
+       * tenth of the space between bars from 10px, at most 4px (CSS pixels; the vendored chart's patch).
+       */
+      const BAR_CORNER = (/** @type {number} */ spacing) => (spacing < 4 ? 0 : Math.min(4, Math.max(1, spacing / 10)));
       /** A series' options without its format and scale (a restyle keeps both, and applying them again costs a pass over every point). */
       const lookOf = (/** @type {Record<string, any>} */ { priceFormat, priceScaleId, ...look }) => look;
       /** What each layer was drawn as (its shape, its data, stacked or not, painted date by date or not), to tell a restyle from a change. @type {Map<string, { shape: string, shown?: Vector, ohlc?: any, stacked?: boolean, painted?: any[] | null, low?: Vector }>} */
@@ -10337,14 +10404,20 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let spotlit = null;
       /** The series that carry the lines across (levels, bases): drawn under every other, drawing nothing themselves. */
       const carriers = [];
+      /** The lines across with a tag on the axis, and the layers each is for (shared, several): a spotlight fades the others', their tags hidden. */
+      const levelTags = /** @type {{ line: any, layers: Set<string>, color: string, faint: boolean }[]} */ ([]);
       /** Bars below their base, each colored on its own: their data, and their color as is and faded. */
       const barsBelow = new Map();
       const faded = (paint) => Object.fromEntries(Object.entries(paint).map(([key, color]) => [key, color.length === 9 ? `${color.slice(0, 7)}${Math.round(parseInt(color.slice(7), 16) * 0.2).toString(16).padStart(2, "0")}` : alpha(color, 0.18)]));
       /**
-       * The layers the spotlight has faded. Each is set again only as its look changes: setting a series' look recolors
-       * its every point (a search each), so from one lit layer to the next, two are set, not all.
+       * The layers the spotlight has faded, with their tags as they were (their last value's, their price line). Each is
+       * set again only as its look changes: from one lit layer to the next, two are set, not all.
        */
-      const fadedNow = new Set();
+      const fadedNow = new Map();
+      /** A series' tags as they are: its last value on its scale, its price line across. */
+      const tagsOf = (/** @type {any} */ series) => series && { lastValueVisible: series.options().lastValueVisible, priceLineVisible: series.options().priceLineVisible };
+      /** Faded, a layer's tags hide too (its levels' as well, see levelTags): the lit one's values stand alone on its scale. */
+      const NO_TAGS = { lastValueVisible: false, priceLineVisible: false };
       function spotlight(id) {
         if (id === spotlit) return;
         spotlit = id;
@@ -10352,10 +10425,22 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         for (const [layerId, series] of drawn) {
           const faint = Boolean(lighted) && layerId !== lighted, close = closes.get(layerId);
           if (fadedNow.has(layerId) === faint) continue;
-          if (faint) fadedNow.add(layerId);
-          else fadedNow.delete(layerId);
-          series.applyOptions(faint ? faded(paints.get(layerId)) : paints.get(layerId));
-          close?.series.applyOptions(faint ? faded(close.paint) : close.paint);
+          if (faint) {
+            fadedNow.set(layerId, { own: tagsOf(series), close: tagsOf(close?.series) });
+            series.applyOptions({ ...faded(paints.get(layerId)), ...NO_TAGS });
+            close?.series.applyOptions({ ...faded(close.paint), ...NO_TAGS });
+          } else {
+            const was = fadedNow.get(layerId);
+            fadedNow.delete(layerId);
+            series.applyOptions({ ...paints.get(layerId), ...was?.own });
+            close?.series.applyOptions({ ...close.paint, ...was?.close });
+          }
+        }
+        for (const tag of levelTags) {
+          const faint = Boolean(lighted) && !tag.layers.has(/** @type {string} */ (lighted));
+          if (tag.faint === faint) continue;
+          tag.faint = faint;
+          tag.line.applyOptions({ axisLabelVisible: !faint, color: faint ? fadedColor(tag.color) : tag.color });
         }
         for (const [layerId, bars] of barsBelow) {
           const faint = Boolean(lighted) && layerId !== lighted;
@@ -10536,6 +10621,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         paints.clear();
         spotlit = null;
         fadedNow.clear();
+        levelTags.length = 0;
         const paneIndex = new Map(doc.panes.map((pane, i) => [pane.id, i]));
         const stacked = stackOf(doc, data), shares = new Set(doc.panes.filter((pane) => pane.stack === "percent").map((pane) => pane.id));
         // Each layer drawn as before (its kind, place, scale and stacking the same) keeps its series, its look applied to
@@ -10613,7 +10699,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           } else if (candles) {
             // The close line stays to carry the last-value label in the layer's color (a hollow candle's would be the
             // background's); only its line and marker hide while candles show.
-            const options = { ...common, ...paint, borderVisible: true, lastValueVisible: false, priceLineVisible: false, visible: !layer.hidden && candlesFit };
+            const options = { ...common, ...paint, borderVisible: true, cornerRadius: BAR_CORNER, lastValueVisible: false, priceLineVisible: false, visible: !layer.hidden && candlesFit };
             const close = { color }, closeOptions = { ...common, ...close, ...marker, lineWidth, lineVisible: !candlesFit, crosshairMarkerVisible: !candlesFit };
             const closeAgain = again && wasCloses.get(layer.id)?.series;
             series = again ?? view.addSeries(LC.CandlestickSeries, options, pane);
@@ -10624,7 +10710,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             const radius = dotRadius(layer.width);
             const [kind, options] = layer.type === "dots" ? [LC.LineSeries, { ...common, ...paint, ...marker, lineVisible: false, pointMarkersVisible: true, pointMarkersRadius: radius }]
               : layer.type === "area" ? [LC.AreaSeries, { ...common, ...paint, ...marker, ...line, invertFilledArea: layer.fill === "above" }]
-              : layer.type === "histogram" ? [LC.HistogramSeries, { ...common, ...paint, base: layer.base ?? 0 }]
+              : layer.type === "histogram" ? [LC.HistogramSeries, { ...common, ...paint, base: layer.base ?? 0, cornerRadius: stack ? 0 : BAR_CORNER }]
               : layer.type === "baseline" ? [LC.BaselineSeries, { ...common, ...paint, ...marker, ...line, baseValue: { type: "price", price: layer.base ?? 0 } }]
               : [LC.LineSeries, { ...common, ...paint, ...marker, ...line, ...(layer.type === "trend" ? (dated ? { priceLineColor: "", crosshairMarkerBackgroundColor: "" } : { priceLineColor: color, crosshairMarkerBackgroundColor: color }) : {}) }];
             series = again ?? view.addSeries(/** @type {any} */ (kind), options, pane);
@@ -10704,7 +10790,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             carrierOf.set(key, carrier);
           }
           const shared = group.some((line) => line.layer !== first.layer), shown = group.some((line) => !line.layer.hidden);
-          carrierOf.get(key).createPriceLine({ price: first.value, color: shared ? ink("gray") : first.color, lineWidth: 1, lineStyle: /** @type {any} */ (first.dash), lineVisible: shown, axisLabelVisible: shown, title: "" });
+          const priceLine = carrierOf.get(key).createPriceLine({ price: first.value, color: shared ? ink("gray") : first.color, lineWidth: 1, lineStyle: /** @type {any} */ (first.dash), lineVisible: shown, axisLabelVisible: shown, title: "" });
+          if (shown) levelTags.push({ line: priceLine, layers: new Set(group.map((line) => line.layer.id)), color: priceLine.options().color, faint: false });
         }
         for (const series of old) view.removeSeries(series);
         // Each pane's series front to back as the panel lists them (its first layer in front; reversed, its last), over its
@@ -11502,6 +11589,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (layoutFrame) return;
         layoutFrame = requestAnimationFrame(() => {
           layoutFrame = 0;
+          // (The lens shows what the chart draws next: after this frame's changes.)
+          if (lensAt) lookAt(lensAt);
           // A preset showing shows as much of it as the new width fits.
           const width = view.timeScale().width();
           if (width !== laidWidth) {
@@ -11793,7 +11882,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         context.clearRect(0, 0, w, h);
         // (Its font set once: kept by the canvas till it's resized, setting it again would work out the page's styles.)
         if (context.font !== navigatorFont) {
-          context.font = `${11 * ratio}px ${css("--sans")}`;
+          context.font = `${11 * ratio}px ${chartSans}`;
           navigatorFont = context.font;
         }
         /** @type {{ text: string, width: number, x: number }[]} */
@@ -11847,6 +11936,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       view.timeScale().subscribeSizeChange(relayout);
       view.timeScale().subscribeVisibleLogicalRangeChange(() => {
+        // (The lens shows the view as it's drawn next, moved by a key, a range, the navigator.)
+        if (lensAt) lookAt(lensAt);
         const span = view.timeScale().getVisibleRange();
         const years = Boolean(span) && Number(span.to) - Number(span.from) > 3 * 365.25 * 86400;
         // The chart keeps labels it has formatted: a new formatter, only when the threshold is crossed, starts them over.
@@ -12751,7 +12842,75 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * else one drawing, and the chart pans again. Text is one at a time (its typing takes the keys).
        */
       let toolKept = false;
+      /**
+       * The magnifier: a round lens over the chart, what's under the pointer twice as large (the chart's own pixels: crisp
+       * on a screen of two pixels a point), the pointer itself at its center (its cursor hidden); by touch, above the
+       * finger (which would cover what it shows), and the chart held still while pressed. Shown, never kept: a tool as
+       * Select is (picking another, or the cursor, puts it down).
+       */
+      let magnifying = false, lensAt = /** @type {{ x: number, y: number, touch: boolean } | null} */ (null), lensFrame = 0;
+      /** Where the mouse was last (the magnifier shows there at once). */
+      let pointerAt = /** @type {{ x: number, y: number } | null} */ (null);
+      const LENS = 168, LENS_ZOOM = 2;
+      function setMagnifier(/** @type {boolean} */ on) {
+        if (on) (setTool(""), setSelectingArea(false));
+        magnifying = on;
+        document.body.toggleAttribute("data-magnifying", on);
+        // (On, at once where the pointer rests over the chart: no move needed to show it.)
+        lookAt(on && pointerAt && !TOUCH && $("chart").matches(":hover") ? { ...pointerAt, touch: false } : null);
+        renderBelt();
+      }
+      /** The lens on a point of the page (none: away), drawn on the next frame: after the chart's own, which it shows. */
+      function lookAt(/** @type {{ x: number, y: number, touch: boolean } | null} */ at) {
+        lensAt = magnifying ? at : null;
+        // (Asked again, it's drawn after the frames asked for meanwhile: the chart's, which it shows.)
+        cancelAnimationFrame(lensFrame);
+        lensFrame = requestAnimationFrame(drawLens);
+      }
+      function drawLens() {
+        lensFrame = 0;
+        const loupe = $("loupe"), at = lensAt;
+        if (!at) return void (loupe.hidden = true);
+        const ratio = devicePixelRatio || 1, size = Math.round(LENS * ratio), canvas = /** @type {HTMLCanvasElement} */ (loupe.firstElementChild);
+        if (canvas.width !== size) canvas.width = canvas.height = size;
+        const context = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d")), span = LENS / LENS_ZOOM / 2, k = LENS_ZOOM * ratio;
+        context.clearRect(0, 0, size, size);
+        context.imageSmoothingQuality = "high";
+        // Each of the chart's layers (its panes', its axes', the drawings'), in order, the part under the lens (not the
+        // lens itself: it would show itself again, and again).
+        for (const source of $("canvas").querySelectorAll("canvas")) {
+          if (source === canvas) continue;
+          const box = source.getBoundingClientRect();
+          const x0 = Math.max(box.left, at.x - span), y0 = Math.max(box.top, at.y - span), x1 = Math.min(box.right, at.x + span), y1 = Math.min(box.bottom, at.y + span);
+          if (!box.width || !box.height || x1 <= x0 || y1 <= y0) continue;
+          const sx = source.width / box.width, sy = source.height / box.height;
+          context.drawImage(source, (x0 - box.left) * sx, (y0 - box.top) * sy, (x1 - x0) * sx, (y1 - y0) * sy, (x0 - at.x + span) * k, (y0 - at.y + span) * k, (x1 - x0) * k, (y1 - y0) * k);
+        }
+        // Its center marked, a ring haloed to read on anything (the pointer's there).
+        const mid = size / 2, r = 3.5 * ratio;
+        context.lineWidth = 3 * ratio;
+        context.strokeStyle = alpha(css("--card"), 0.85);
+        context.beginPath();
+        context.arc(mid, mid, r, 0, 2 * Math.PI);
+        context.stroke();
+        context.lineWidth = 1.25 * ratio;
+        context.strokeStyle = css("--ink");
+        context.stroke();
+        // On the pointer; a finger's above it, else beside it, else below it: the first on screen and clear of it.
+        const room = (/** @type {number} */ value, /** @type {number} */ most) => Math.min(Math.max(8, value), most - LENS - 8);
+        let left = at.x - LENS / 2, top = at.y - LENS / 2;
+        if (at.touch) {
+          const clear = (/** @type {number} */ x, /** @type {number} */ y) => !(at.x > x - 36 && at.x < x + LENS + 36 && at.y > y - 36 && at.y < y + LENS + 36);
+          const near = at.x > innerWidth / 2 ? at.x - LENS - 36 : at.x + 36;
+          [left, top] = [[room(left, innerWidth), at.y - LENS - 36], [room(near, innerWidth), room(top, innerHeight)], [room(left, innerWidth), at.y + 36]].find(([x, y]) => y >= 8 && y <= innerHeight - LENS - 8 && clear(x, y)) ?? [room(left, innerWidth), room(at.y - LENS - 36, innerHeight)];
+        }
+        loupe.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+        loupe.hidden = false;
+      }
+      /** Whatever's in hand put down, the pointer the pointer again (another chart, the grid). */
+      const putDown = () => (setTool(""), magnifying && setMagnifier(false));
       function setTool(/** @type {DrawingKind | ""} */ kind, kept = false) {
+        if (kind && magnifying) setMagnifier(false);
         toolKept = Boolean(kind) && kept && kind !== "text";
         // A tool in hand, nothing's selected: the belt shows what it'll draw (and the drawings, if hidden).
         if (kind) chooseDrawings([]);
@@ -12770,6 +12929,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** The Select tool: a box dragged around drawings selects them (once; as ⌘ and a drag does, anytime). */
       let selectingArea = false;
       function setSelectingArea(/** @type {boolean} */ on) {
+        if (on && magnifying) setMagnifier(false);
         if (on) setTool("");
         selectingArea = on;
         document.body.toggleAttribute("data-drawing", on || Boolean(tool));
@@ -12786,6 +12946,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (next.size) revealDrawings();
         if (next.size && tool) setTool("");
         if (next.size && selectingArea) setSelectingArea(false);
+        if (next.size && magnifying) setMagnifier(false);
         if (next.size === chosen.size && [...next].every((id) => chosen.has(id))) return;
         chosen = next;
         if (next.size && layerPicks.size) clearLayerPicks();
@@ -12801,18 +12962,21 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        * the left or the right it stands, turning as it's carried there.
        */
       let beltShown = "", beltKeys = false;
-      /** The belt's tools, in order: the cursor (none in hand), Select (a box around drawings), each drawing's (the ruler last). */
-      const BELT_TOOLS = ["cursor", "select", ...KINDS];
+      /** The belt's tools, in order: the cursor (none in hand), Select (a box around drawings), each drawing's (the ruler last), the magnifier. */
+      const BELT_TOOLS = ["cursor", "select", ...KINDS, "magnifier"];
       const upright = (/** @type {string} */ side) => side === "left" || side === "right";
       /** A belt button's name, its key (after D; the ruler's is its own, M), its icon. */
       const beltTool = (/** @type {string} */ each) =>
         each === "cursor" ? { name: "Cursor", key: "", kbd: "esc", icon: ICONS.cursor }
         : each === "select" ? { name: "Select", tip: `Select: drag a box around drawings, or ${keyText("⌘")} and drag anytime`, key: "S", kbd: "D S", icon: ICONS.select }
+        : each === "magnifier" ? { name: "Magnifier", tip: "Magnifier: the chart under the pointer, twice as large", key: "Z", kbd: "D Z", icon: ICONS.magnifier }
         : { name: TOOLS[each].name, key: TOOLS[each].key, kbd: each === "ruler" ? "M" : `D ${TOOLS[each].key}`, icon: TOOLS[each].icon };
       function renderBelt() {
         const belt = $("belt"), drawings = tool ? [] : /** @type {Drawing[]} */ ([...chosen].map(drawingById).filter(Boolean)), drawing = drawings.length === 1 ? drawings[0] : undefined;
         const was = belt.hidden || belt.classList.contains("held") || reduced.matches ? null : belt.getBoundingClientRect();
-        belt.hidden = home || !chart.layers.length || !(prefs.belt.on || tool || selectingArea || drawings.length || beltKeys);
+        belt.hidden = home || !chart.layers.length || !(prefs.belt.on || tool || selectingArea || magnifying || drawings.length || beltKeys);
+        // (Its button gone, the magnifier with it.)
+        if (belt.hidden && magnifying) return setMagnifier(false);
         $("draw-toggle").setAttribute("aria-pressed", String(prefs.belt.on));
         if (belt.hidden) {
           // (What had the focus in it lets go: hidden, it can't keep it.)
@@ -12822,11 +12986,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (Carried, it turns as it goes: its side is set on release.)
         if (!belt.classList.contains("held")) belt.classList.toggle("upright", upright(prefs.belt.dock));
         const kinds = new Set(tool ? [tool] : drawings.map((item) => item.kind)), look = (/** @type {string} */ part) => lookFor(part, drawings);
-        const pressed = (/** @type {string} */ each) => (each === "cursor" ? !tool && !selectingArea : each === "select" ? selectingArea : tool === each);
+        const pressed = (/** @type {string} */ each) => (each === "cursor" ? !tool && !selectingArea && !magnifying : each === "select" ? selectingArea : each === "magnifier" ? magnifying : tool === each);
         const tools = BELT_TOOLS.map((each) => {
           const { name, tip = name, key, kbd, icon } = beltTool(each);
-          return `<button type="button" class="cap ${each === tool && toolKept ? "kept" : ""}" id="belt-${each}" data-tool="${each}" aria-pressed="${pressed(each)}" aria-label="${name}${each === tool && toolKept ? ", kept" : ""}" data-tip="${escape(tip)}" data-kbd="${kbd}">${icon}${key ? `<kbd>${key}</kbd>` : ""}</button>`;
-        }).join("") + (chart.drawings?.length ? `<i class="belt-rule"></i><button type="button" class="cap" id="belt-hide" data-belt="hide" aria-pressed="${drawingsHidden}" aria-label="${drawingsHidden ? "Show the drawings" : "Hide the drawings"}" data-tip="${drawingsHidden ? "Show the drawings" : "Hide the drawings: the chart as it is, without them"}" data-kbd="⇧ H">${drawingsHidden ? ICONS.eyeOff : ICONS.eye}</button>` : "");
+          // (The ways of looking, the magnifier and the drawings' eye, apart from the ways of drawing.)
+          return `${each === "magnifier" ? '<i class="belt-rule"></i>' : ""}<button type="button" class="cap ${each === tool && toolKept ? "kept" : ""}" id="belt-${each}" data-tool="${each}" aria-pressed="${pressed(each)}" aria-label="${name}${each === tool && toolKept ? ", kept" : ""}" data-tip="${escape(tip)}" data-kbd="${kbd}">${icon}${key ? `<kbd>${key}</kbd>` : ""}</button>`;
+        }).join("") + (chart.drawings?.length ? `<button type="button" class="cap" id="belt-hide" data-belt="hide" aria-pressed="${drawingsHidden}" aria-label="${drawingsHidden ? "Show the drawings" : "Hide the drawings"}" data-tip="${drawingsHidden ? "Show the drawings" : "Hide the drawings: the chart as it is, without them"}" data-kbd="⇧ H">${drawingsHidden ? ICONS.eyeOff : ICONS.eye}</button>` : "");
         const button = (/** @type {string} */ part, /** @type {string} */ label, /** @type {string} */ body, menu = true, kbd = "") => `<button type="button" class="cap" id="belt-${part}" data-belt="${part}" ${menu ? 'aria-haspopup="menu"' : ""} aria-label="${escape(label)}" data-tip="${escape(label)}" ${kbd ? `data-kbd="${kbd}"` : ""}>${body}</button>`;
         // Each look shown as the first drawing that has it has it; set, it's set on each that has it.
         const has = (/** @type {string} */ part) => [...kinds].some((each) => hasLook(each, part));
@@ -12854,10 +13019,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           ] : []),
         ].join("");
         const how = selectingArea ? "Drag a box around drawings to select them" : tool && (placing?.clicks ? `${capitalize(CLICK)} its ${BOXES.has(tool) ? "other corner" : "other end"}` : toolKept ? `${TOOLS[tool].tip}, as many as you like` : TOOLS[tool].tip);
-        // The tools always there (another drawing's a key away, with some selected), then what's in hand or selected.
+        // The tools, then what's in hand; drawings selected, only theirs (esc, or a click on the chart, and the tools are back).
         const html = `<button type="button" class="grip" id="belt-grip" aria-label="Move the drawing tools" data-tip="Drag it to any side of the chart">${ICONS.grip}</button>
-          <div class="belt-tools" role="group" aria-label="Tools">${tools}</div>
-          ${context ? `<i class="belt-rule"></i><div class="belt-context" role="group" aria-label="${escape(tool ? `Next ${TOOLS[tool].noun}` : drawing ? drawingNames().get(drawing.id) ?? "" : `${drawings.length} drawings`)}">${context}</div>` : ""}
+          ${drawings.length ? "" : `<div class="belt-tools" role="group" aria-label="Tools">${tools}</div>`}
+          ${context ? `${drawings.length ? "" : '<i class="belt-rule"></i>'}<div class="belt-context" role="group" aria-label="${escape(tool ? `Next ${TOOLS[tool].noun}` : drawing ? drawingNames().get(drawing.id) ?? "" : `${drawings.length} drawings`)}">${context}</div>` : ""}
           ${how ? `<p class="belt-caption">${escape(how)}<kbd>esc</kbd></p>` : ""}`;
         if (html !== beltShown) {
           const focus = focusKey(belt);
@@ -12970,16 +13135,33 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         savePrefs();
         renderBelt();
       }
-      /** D: the belt at hand from the keys (shown a moment if it's off): a tool's key picks it, arrows go along it, esc leaves. */
+      /**
+       * D: the belt, as its button: on (it stays) with its keys at hand (a tool's key picks it, arrows go along it, esc
+       * lets go); D again, while they are, puts it away (whatever's in hand with it).
+       */
       function focusBelt() {
+        if ($("belt").classList.contains("keys")) {
+          putDown();
+          if (prefs.belt.on) toggleBelt();
+          return leaveBelt();
+        }
         // (To draw: what's selected is let go, the tools come back.)
         chooseDrawings([]);
+        if (!prefs.belt.on) (prefs.belt.on = true), savePrefs();
+        beltFrom = document.activeElement instanceof HTMLElement && document.activeElement !== document.body && !$("belt").contains(document.activeElement) ? document.activeElement : null;
         beltKeys = true;
         renderBelt();
         $("belt").classList.add("keys");
         /** @type {HTMLElement | null} */ ($("belt").querySelector('[data-tool][aria-pressed="true"]'))?.focus();
       }
-      const leaveBelt = () => /** @type {HTMLElement | null} */ (document.activeElement)?.blur();
+      /** Where D was pressed: the belt's keys done, the focus goes back there (if it's still there to have it). */
+      let beltFrom = /** @type {HTMLElement | null} */ (null);
+      function leaveBelt() {
+        const back = beltFrom;
+        beltFrom = null;
+        if (back?.isConnected && back.checkVisibility()) back.focus({ preventScroll: true });
+        else /** @type {HTMLElement | null} */ (document.activeElement)?.blur();
+      }
       $("belt").addEventListener("focusout", (event) => {
         if ($("belt").contains(/** @type {Node | null} */ (event.relatedTarget))) return;
         $("belt").classList.remove("keys");
@@ -12990,6 +13172,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** A tool from the belt: the cursor puts down what's in hand, Select boxes drawings (or stops), a drawing tool's taken (or put down). */
       function pickTool(/** @type {string} */ each) {
         if (each === "select") return setSelectingArea(!selectingArea);
+        if (each === "magnifier") return setMagnifier(!magnifying);
+        setMagnifier(false);
         setSelectingArea(false);
         setTool(each === "cursor" || each === tool ? "" : /** @type {DrawingKind} */ (each));
       }
@@ -13299,7 +13483,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** The pointer a gesture under way is (a drawing placed, moved, a box drawn): another finger's moves nothing. */
       let gesturePointer = -1;
       /** A press held that's drawing, moving drawings or drawing a box. */
-      const gesturing = () => Boolean(placing?.held || moving || boxing);
+      const gesturing = () => Boolean(placing?.held || moving || boxing || lensAt?.touch);
       function take(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -13314,6 +13498,17 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         event.stopPropagation();
       }, { capture: true, passive: false });
       // Capture phase, before the chart: a press that draws, or takes a drawing, doesn't pan.
+      // The magnifier's lens on the pointer (a mouse's, over the chart; a finger's, while it presses); gone as it leaves.
+      // (A mouse's by its mousemove: the chart's own comes before it, and asks for its frame first, so the lens drawn
+      // after shows that frame, not the one before.)
+      addEventListener("mousemove", (event) => (pointerAt = { x: event.clientX, y: event.clientY }), { passive: true });
+      addEventListener("mousemove", (event) => magnifying && !lensAt?.touch && event.target instanceof Node && $("chart").contains(event.target) && lookAt(closest(event, ".legend, button") ? null : { x: event.clientX, y: event.clientY, touch: false }));
+      // (A finger's: the one pressing, another's moves and lifts nothing.)
+      $("chart").addEventListener("pointermove", (event) => lensAt?.touch && event.pointerId === gesturePointer && lookAt({ x: event.clientX, y: event.clientY, touch: true }));
+      for (const type of ["pointerleave", "pointerup", "pointercancel"]) $("chart").addEventListener(type, (event) => magnifying && (type === "pointerleave" ? event.pointerType === "mouse" && !lensAt?.touch : event.pointerType !== "mouse" && event.pointerId === gesturePointer) && lookAt(null));
+      // (A scale reset by a double-click on its axis, the pointer still: the lens after it.)
+      $("chart").addEventListener("dblclick", () => lensAt && lookAt(lensAt));
+      $("chart").addEventListener("wheel", () => lensAt && lookAt(lensAt), { passive: true });
       $("chart").addEventListener("pointerdown", (event) => {
         // (A second finger, while one draws or moves: neither a drawing's nor the chart's, which would pinch or pan.)
         if (gesturing() && event.pointerId !== gesturePointer) {
@@ -13325,6 +13520,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (writing) $("draw-text").blur();
         // (A legend takes its own presses: a click on a name, ⌘ or ⇧ too, is the layer's, not a drawing's.)
         if (event.button !== 0 || !resolved?.times.length || closest(event, ".legend, #full")) return;
+        // (The magnifier by touch, on the axes too: the lens above the finger as it moves; the chart doesn't pan meanwhile.)
+        if (magnifying && event.pointerType !== "mouse") return void (take(event), lookAt({ x: event.clientX, y: event.clientY, touch: true }));
         const pane = paneAt(event.clientY);
         if (!pane) return;
         const at = plotPoint(event.clientX, event.clientY, pane.rect);
@@ -14866,7 +15063,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const draft = cancelling === chart.id && library.charts.some((doc) => doc !== chart) ? chart : null;
         cancelling = "";
         hideMenu();
-        setTool("");
+        putDown();
         hideTip();
         if (selected) deselect();
         clearMeasure();
@@ -18966,6 +19163,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             ...(tool && tool !== "text" && !toolKept ? [{ title: "Keep drawing", text: `The ${TOOLS[tool].noun} in hand after each one: draw several, till esc (as a double-click on its tool does).`, words: "keep hold several many more again pin lock tool draw", icon: tool, run: () => setTool(tool, true) }] : []),
             ...KINDS.filter((kind) => kind !== tool).map((kind) => ({ title: TOOLS[kind].verb, text: kind === "text" ? `${TOOLS[kind].tip}.` : `${TOOLS[kind].tip}: one, then the chart pans again (to draw several, ${TOUCH ? "tap its tool twice" : "double-click its tool"}, or Keep drawing).`, words: `draw drawing annotate annotation ${TOOLS[kind].name} ${TOOLS[kind].noun}${kind === "ruler" ? " measure measuring distance difference percent" : ""}`, icon: kind, kbd: kind === "ruler" ? "M" : `D ${TOOLS[kind].key}`, run: () => setTool(kind) })),
             { title: "Select drawings", text: `Drag a box around drawings to select them (or ${keyText("⌘")} and drag anytime); esc to stop.`, words: "select drawings box marquee pick several", icon: "select", kbd: "D S", run: () => setSelectingArea(true) },
+            { title: magnifying ? "Stop the magnifier" : "Magnifier", text: magnifying ? "The pointer is the pointer again." : `The chart under the pointer, twice as large${TOUCH ? " (pressed, above the finger)" : ""}; esc to stop.`, words: "magnifier magnify magnifying glass lens loupe closer enlarge zoom", icon: "magnifier", kbd: "D Z", run: () => setMagnifier(!magnifying) },
             ...(prefs.belt.on ? [{ title: "Dock the drawing tools", text: `On a side of the chart: now the ${prefs.belt.dock}.`, words: "drawing tools belt toolbar dock move side top bottom left right", icon: "draw", keepOpen: true, run: () => pushPage(choicePage("Dock the drawing tools", () => /** @type {const} */ (["top", "bottom", "left", "right"]).map((side) => ({ key: side, label: capitalize(side), current: prefs.belt.dock === side, run: () => dockBelt(side) })))) }] : []),
             ...(chart.drawings?.length ? [{ title: drawingsHidden ? "Show the drawings" : "Hide the drawings", text: drawingsHidden ? "Back on the chart." : "The chart as it is, without them (they're kept).", words: "drawings annotations hide show visible clean", icon: drawingsHidden ? "eye" : "eyeOff", kbd: "⇧H", run: () => hideDrawings(!drawingsHidden, true) }] : []),
             ...(chart.drawings?.length ? [{ title: "Remove every drawing", text: `${plural(chart.drawings.length, "drawing")}, with an Undo.`, words: "drawings clear delete erase annotations", follows: "remove clear delete erase", icon: "trash", danger: true, run: clearDrawings }] : []),
@@ -19459,15 +19657,19 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
 
       /** The highlight, one row on (round past the ends), or several (⇧: five, stopping at the ends). */
-      function move(delta) {
+      function move(delta, scroll = true) {
         if (!palette.items.length) return;
         palette.moved = true;
         const n = palette.items.length;
         palette.active = Math.abs(delta) > 1 ? clamp(palette.active + delta, 0, n - 1) : (palette.active + delta + n) % n;
         drawOptions(palette.active + PALETTE_PAGE / 2);
         $("palette-list").querySelector('[aria-selected="true"]')?.setAttribute("aria-selected", "false");
-        $(`option-${palette.active}`)?.setAttribute("aria-selected", "true");
-        $(`option-${palette.active}`)?.scrollIntoView({ block: "nearest" });
+        const row = $(`option-${palette.active}`);
+        row?.setAttribute("aria-selected", "true");
+        // (The first of its group with its group's name: it says what the row is.)
+        const head = row?.previousElementSibling;
+        if (scroll && head?.classList.contains("group")) head.scrollIntoView({ block: "nearest" });
+        if (scroll) row?.scrollIntoView({ block: "nearest" });
         activeOption();
         preview();
       }
@@ -20246,6 +20448,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             { label: "Remove", icon: ICONS.trash, kbd: "⌫", danger: true, run: () => removeDrawing(drawing.id) },
           ] })),
           ...KINDS.map((kind) => ({ kind: "row", key: `tool:${kind}`, icon: TOOLS[kind].icon, label: TOOLS[kind].verb, aside: TOOLS[kind].tip, kbd: kind === "ruler" ? "M" : `D ${TOOLS[kind].key}`, verb: "Draw", group: "Draw", run: () => setTool(kind) })),
+          { kind: "row", key: "tool:magnifier", icon: ICONS.magnifier, label: "Magnifier", aside: "The chart under the pointer, twice as large", kbd: "D Z", verb: magnifying ? "Stop" : "Use", group: "Draw", run: () => setMagnifier(!magnifying) },
           ...(chart.drawings?.length ? [
             { kind: "row", key: "select-box", icon: ICONS.select, label: "Select drawings with a box", aside: "Drag a box around them", kbd: "D S", verb: "Select", group: "Select", run: () => setSelectingArea(true) },
             { kind: "row", key: "select-all", icon: ICONS.select, label: "Select every drawing", aside: plural(chart.drawings.length, "drawing"), verb: "Select", group: "Select", run: () => chooseDrawings((chart.drawings ?? []).map((drawing) => drawing.id)) },
@@ -20668,7 +20871,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       });
       $("palette-list").addEventListener("mousemove", (event) => {
         const option = closest(event, "[data-option]");
-        if (option && Number(option.dataset.option) !== palette.active) move(Number(option.dataset.option) - palette.active);
+        if (option && Number(option.dataset.option) !== palette.active) move(Number(option.dataset.option) - palette.active, false);
       });
       $("palette-enter").addEventListener("click", () => {
         choose(false);
@@ -22607,6 +22810,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           } else if (placing || moving || boxing) stopDrawing();
           else if (tool) setTool("");
           else if (selectingArea) setSelectingArea(false);
+          else if (magnifying) setMagnifier(false);
           else if (chosen.size) chooseDrawings([]);
           else if (layerPicks.size) clearLayerPicks(true);
           else if (selected) deselect();
@@ -22894,6 +23098,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           painted.points[at] = point;
           series?.update(painted.faint ? fadedPoint(point) : point);
         }
+        if (lensAt) lookAt(lensAt);
         if (!moved) return;
         liveMoves++;
         // (The view's change windows were read from the old value.)
