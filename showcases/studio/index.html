@@ -9072,16 +9072,17 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       };
       /**
        * The charts, their folders, and the sidebar's own order: its top level, folders and the charts in none, as arranged
-       * ("f:" a folder's id, "c:" a chart's; see sideItems).
-       * @type {{ charts: Chart[], active: string, folders: Folder[], order: string[] }}
+       * ("f:" a folder's id, "c:" a chart's; see sideItems); and the charts deleted, by id, when (see `discard`).
+       * @type {{ charts: Chart[], active: string, folders: Folder[], order: string[], deleted: Record<string, number> }}
        */
       let library = storage.get(STORE, null);
       /**
-       * The library's shape, as this Studio writes it (raised with what `validate` learns to read): one saved by a newer
+       * The library's shape, as this Studio writes it (raised with what `validate` learns to read, and with what's kept:
+       * 5, the deletions, so a Studio that doesn't record them can't save over them): one saved by a newer
        * Studio (a later number), or stored in a shape it can't read at all (damaged, another's), is opened read-only here,
        * said so, and kept as it is: it may hold what this one would drop, or lose entirely, if it saved over it.
        */
-      const SCHEMA = 4;
+      const SCHEMA = 5;
       let readOnly = Number(/** @type {any} */ (library)?.schema) > SCHEMA || (!Array.isArray(library?.charts) && (() => {
         try {
           return localStorage.getItem(STORE) !== null;
@@ -9089,9 +9090,15 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           return false;
         }
       })());
-      if (!Array.isArray(library?.charts)) library = { charts: [], active: "", folders: [], order: [] };
+      if (!Array.isArray(library?.charts)) library = { charts: [], active: "", folders: [], order: [], deleted: {} };
       /** The sidebar's order as stored, read: its keys, once each. */
       const orderOf = (/** @type {any} */ stored) => [...new Set((Array.isArray(stored) ? stored : []).filter((key) => typeof key === "string" && /^[fc]:[a-z0-9]{1,16}$/.test(key)))];
+      /** Deletions as stored, read: a chart's or a folder's id, when; each kept a month (every other tab has heard long before). */
+      const deletedOf = (/** @type {any} */ stored) => {
+        const since = Date.now() - 30 * 86400000;
+        return Object.assign(/** @type {Record<string, number>} */ (Object.create(null)), Object.fromEntries(Object.entries(stored && typeof stored === "object" ? stored : {}).filter(([id, at]) => /^[a-z0-9]{1,16}$/.test(id) && Number.isFinite(at) && at > since)));
+      };
+      library.deleted = deletedOf(library.deleted);
       /** Saved charts this version couldn't read, kept aside as they were: never lost to the next save. */
       const UNREAD = "bitview-studio:unread";
       /** A stored chart, validated like any import but keeping its identity; throws if it isn't one. @returns {Chart} */
@@ -9118,7 +9125,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           return [];
         }
       }
-      library.charts = library.charts.flatMap(restore);
+      library.charts = library.charts.flatMap(restore).filter((doc) => !(library.deleted[doc.id] >= doc.updated));
       /** Folders as stored, read: each named (at most 60 characters), once; a chart's folder that's gone, none. */
       function foldersOf(/** @type {any} */ stored, /** @type {Chart[]} */ charts) {
         const seen = new Set(), folders = /** @type {Folder[]} */ ((Array.isArray(stored) ? stored : []).flatMap((folder) => {
@@ -9139,7 +9146,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           for (const stored of aside) {
             try {
               const doc = read(stored);
-              if (ids.has(doc.id) || here.has(alike(doc))) continue;
+              if (ids.has(doc.id) || here.has(alike(doc)) || library.deleted[doc.id] >= doc.updated) continue;
               ids.add(doc.id);
               here.add(alike(doc));
               back.push(doc);
@@ -9166,11 +9173,30 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let previewing = null;
       /** A link that couldn't be read, left in the address bar to be put right (until another chart's opened). */
       let brokenLink = "";
-      /** A chart taken out of the list, if it's there (a preview isn't). */
+      /** A chart taken out of the list, if it's there (a preview isn't): to put it back elsewhere (see `discard`). */
       const unlist = (/** @type {Chart} */ doc) => {
         const at = library.charts.indexOf(doc);
         if (at >= 0) library.charts.splice(at, 1);
       };
+      /**
+       * A chart deleted: out of the list, and when, kept with the library, so that another tab's copy of it (saved before
+       * that tab heard) doesn't bring it back. Edited after that (an Undo, an edit in a tab where it's open), it's back.
+       */
+      const discard = (/** @type {Chart} */ doc) => {
+        const at = library.charts.indexOf(doc);
+        if (at < 0) return;
+        library.charts.splice(at, 1);
+        library.deleted[doc.id] = Math.max(Date.now(), doc.updated, library.deleted[doc.id] ?? 0);
+      };
+      /** A deleted chart back (its Undo): edited now, after its deletion, wherever that's known. @param {Chart} doc */
+      const recover = (doc) => {
+        stampEdit(doc);
+        delete library.deleted[doc.id];
+      };
+      /** A chart edited, stamped: now, and past its last stamp and any deletion of it (a clock set back). @param {Chart} doc */
+      const stampEdit = (doc) => (doc.updated = Math.max(Date.now(), doc.updated + 1, (library.deleted[doc.id] ?? 0) + 1));
+      /** Whether a chart was deleted after its last edit (here or in another tab). @param {{ id: string, updated: number }} doc */
+      const isDeleted = (doc) => library.deleted[doc.id] >= doc.updated;
       /** @returns {Chart | undefined} */
       const chartById = (id) => library.charts.find((doc) => doc.id === id) ?? (previewing?.id === id ? previewing : undefined);
       /** The catalog indexed (see below): a series added waits for it, as for its info, its path kept with its name at once. */
@@ -9292,20 +9318,55 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       let saveTimer = 0, savedTimer = 0;
       /** Writes the library soon; `announce` shows a brief "Saved" after an edit. A failure stays on screen. */
       let announcing = false;
+      /** The library as this tab last wrote it: storage still holding it, no other tab has saved since. */
+      let lastWritten = "";
+      /** The library as stored now, if another tab saved since this one: read, or `null` (none since, or none). */
+      function storedSince() {
+        let text = null;
+        try {
+          text = localStorage.getItem(STORE);
+        } catch {}
+        if (text === null || text === lastWritten) return null;
+        try {
+          const stored = JSON.parse(text);
+          // (Another tab's, newer or unreadable here: kept, and none of this one's saved over it.)
+          if (!(Number(stored?.schema) > SCHEMA) && Array.isArray(stored?.charts)) return stored;
+        } catch {}
+        readOnly = true;
+        return null;
+      }
       /**
        * The library written, its shape's number with it; storage full, the cached previews and marks (drawn again) give
        * way to it. Whether it was. Read-only (see SCHEMA), it isn't, and that's said once.
        */
       function persist() {
+        // Another tab's save since this one's, not heard yet (its storage event to come, or never: two tabs closed at once,
+        // one back from the browser's history), taken in first: what's written holds both.
+        const stored = storedSince();
+        if (stored) reconcile(stored, true);
         if (readOnly) {
           if (!readOnlyTold) notice("Read-only: these charts were saved by a newer Studio, or in a form this one can't read. Reload to keep changes", { label: "Reload", run: () => location.reload() });
           readOnlyTold = true;
           return false;
         }
-        const written = { ...library, schema: SCHEMA };
+        // (A deletion the chart open here still stands under kept past its month: else it'd be saved back.)
+        const pruned = deletedOf(library.deleted);
+        for (const doc of library.charts) if (isDeleted(doc)) pruned[doc.id] = library.deleted[doc.id];
+        library.deleted = pruned;
+        // (The open chart, deleted in another tab, stays here unsaved: edited, it's saved again.)
+        const written = JSON.stringify({ ...library, charts: library.charts.filter((doc) => !isDeleted(doc)), schema: SCHEMA });
         // (An edited preview, with it: never in the list, never lost.)
         if (previewing && touched.has(previewing) && previewing.layers.length) storage.set(PREVIEW_ASIDE, previewing);
-        return storage.set(STORE, written) || (storage.drop(PREVIEWS, THUMBS), storage.set(STORE, written));
+        const write = () => {
+          try {
+            localStorage.setItem(STORE, written);
+            lastWritten = written;
+            return true;
+          } catch {
+            return false;
+          }
+        };
+        return write() || (storage.drop(PREVIEWS, THUMBS), write());
       }
       let readOnlyTold = false;
       /** What's being typed where it shows (a drawing's text or label, a name), kept now: before a save, a page left. */
@@ -9341,56 +9402,58 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }, 250);
       }
 
-      // Another tab saved: take its charts, keeping ours where ours were edited later. Charts it deleted go, except the
-      // one open here. Our next save then writes the union instead of erasing its work.
-      /** Charts deleted in this tab: another tab's older save doesn't bring them back. */
-      const deletedHere = new Set();
-      addEventListener("storage", (event) => {
-        if (event.key !== STORE || !event.newValue) return;
-        let stored;
-        try {
-          stored = JSON.parse(event.newValue);
-        } catch {
-          // (Unreadable, another tab's: kept, and none of this one's saved over it.)
-          return void (readOnly = true);
-        }
-        // (Another tab's, newer or unreadable here: kept, and none of this one's saved over it.)
-        if (Number(stored?.schema) > SCHEMA || !Array.isArray(stored?.charts)) return void (readOnly = true);
-        const ours = new Map(library.charts.map((doc) => [doc.id, doc]));
-        const merged = stored.charts.flatMap(restore).filter((doc) => !deletedHere.has(doc.id)).map((doc) => (ours.get(doc.id)?.updated >= doc.updated ? ours.get(doc.id) : doc));
-        let before = [];
-        try {
-          before = JSON.parse(event.oldValue ?? "")?.charts ?? [];
-        } catch {}
-        const removed = new Set(Array.isArray(before) ? before.map((doc) => doc?.id) : []);
-        for (const doc of merged) removed.delete(doc.id);
-        // Ours alone: kept unless the other tab just deleted it (the open chart always stays).
-        // (Ours alone are new here, not yet saved: like every new chart, they start the list.)
-        merged.unshift(...library.charts.filter((doc) => !merged.some((item) => item.id === doc.id) && (doc === chart || !removed.has(doc.id))));
-        // (Its folders, and which chart's in which, as that tab saved them: one state, the library's, not a chart's edit.)
-        const theirs = new Map(stored.charts.map((item) => [item?.id, item]));
-        for (const doc of merged) {
-          if (!theirs.has(doc.id)) continue;
-          const folder = theirs.get(doc.id)?.folder;
-          if (typeof folder === "string") doc.folder = folder;
+      /**
+       * What a library holds, as one key: its charts as last edited, and its folders. (Not its deletions: a save takes in
+       * storage's first, and one lost there brings back what it deleted, a difference here.)
+       * @param {any[]} charts @param {Folder[]} folders @param {Record<string, number>} deleted
+       */
+      const holdings = (charts, folders, deleted) => JSON.stringify([charts.filter((doc) => !(deleted[doc?.id] >= doc?.updated)).map((doc) => `${doc?.id}@${doc?.updated}`).sort(), folders.map((folder) => folder.id).sort()]);
+      /**
+       * Another tab's save, taken in. Its charts, ours kept where ours were edited later or it hasn't them; its folders, ours
+       * it hasn't kept; every tab's deletions, what was deleted after its last edit gone (but the chart open here). The
+       * arrangement (the charts' order, which is in which folder, the sidebar's order, a folder's name) as that tab saved
+       * it; `saving` (taken in by a save of this tab's), as this one has it: it's what's being saved. Storage then without
+       * what's here (two tabs saving at once: the last one's library alone), the two, merged, saved over it.
+       */
+      function reconcile(stored = storedSince(), saving = false) {
+        if (!stored) return;
+        const deleted = deletedOf(stored.deleted), incoming = stored.charts.flatMap(restore), folders = foldersOf(stored.folders, []);
+        for (const [id, at] of Object.entries(deleted)) if (!(library.deleted[id] >= at)) library.deleted[id] = at;
+        const ours = new Map(library.charts.map((doc) => [doc.id, doc])), theirs = new Map(incoming.map((doc) => [doc.id, doc]));
+        /** A chart's later copy, in its folder as the arrangement has it. @param {Chart | undefined} own @param {Chart | undefined} other */
+        const later = (own, other) => {
+          if (!own || !other) return /** @type {Chart} */ (own ?? other);
+          const doc = own.updated >= other.updated ? own : other, by = saving ? own : other;
+          if (by.folder) doc.folder = by.folder;
           else delete doc.folder;
-        }
+          return doc;
+        };
+        // In the arrangement's order; the other's alone first (new there: like every new chart, they start the list).
+        const [lead, others] = saving ? [library.charts, incoming] : [incoming, library.charts], leading = new Set(lead.map((doc) => doc.id));
+        const merged = [...others.filter((doc) => !leading.has(doc.id)), ...lead.map((doc) => later(ours.get(doc.id), theirs.get(doc.id)))];
         for (const doc of merged) if (ours.get(doc.id) !== doc) histories.delete(doc.id);
-        library.charts = merged;
-        library.folders = foldersOf(stored.folders, merged);
-        library.order = orderOf(stored.order);
+        // (The open chart, whichever copy, stays.)
+        library.charts = merged.filter((doc) => doc.id === chart?.id || !isDeleted(doc));
+        const [first, second] = saving ? [library.folders, folders] : [folders, library.folders], firstIds = new Set(first.map((folder) => folder.id));
+        library.folders = foldersOf([...first, ...second.filter((folder) => !firstIds.has(folder.id))].filter((folder) => !Object.hasOwn(library.deleted, folder.id)), library.charts);
+        if (!saving) library.order = orderOf(stored.order);
+        // (Its charts this tab can't read, set aside: not counted, or each tab would save over the other's.)
+        if (!saving && holdings(library.charts, library.folders, library.deleted) !== holdings(incoming, folders, deleted)) save();
         // (Still starting, a link being read: the library's taken, and start shows what's open once it's ready.)
         if (!chart) return;
-        const current = chart === previewing ? chart : merged.find((doc) => doc.id === chart.id);
+        const current = chart === previewing ? chart : library.charts.find((doc) => doc.id === chart.id);
         drawThumbs();
         if ($("palette").open) showPalette();
         if (current === chart) return renderCharts();
-        chart = current;
+        chart = /** @type {Chart} */ (current);
         edits.past = [];
         edits.future = [];
         revision++;
         refresh(true);
-      });
+      }
+      addEventListener("storage", (event) => event.key === STORE && reconcile());
+      // (Back from the browser's history as it was left, another tab's saves unheard: taken in now.)
+      addEventListener("pageshow", (event) => event.persisted && reconcile());
 
       // Leaving: what's being typed kept, and what's not yet written written now (as a save would, full storage too).
       addEventListener("pagehide", () => {
@@ -9424,7 +9487,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         edits.key = coalesce;
         edits.at = now;
         edits.held = holding;
-        chart.updated = now;
+        stampEdit(chart);
         if (chart === previewing && JSON.stringify({ ...JSON.parse(before), range: 0 }) !== JSON.stringify({ ...chart, range: 0 })) touched.add(chart);
         if (chart === previewing && drafts.has(chart) && !quiet && !look) keepPreview(false);
         changed(!quiet, redraw, keepMenu);
@@ -9445,13 +9508,15 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         to.push(JSON.stringify(chart));
         // The chart as it was, all of it (what it didn't have then, it hasn't now); the range is a view, as a pan is: it
         // stays as it is.
-        const was = JSON.parse(state), folder = chart.folder;
+        const was = JSON.parse(state), folder = chart.folder, stamped = chart.updated;
         for (const key of Object.keys(chart)) if (!(key in was)) delete chart[key];
         // (The range is a view, as a pan is; its folder, the library's: both stay as they are.)
         Object.assign(chart, was, { range: chart.range });
         if (folder) chart.folder = folder;
         else delete chart.folder;
-        chart.updated = Date.now();
+        // (Stamped past the copy as it was: this step is its latest edit.)
+        chart.updated = stamped;
+        stampEdit(chart);
         edits.key = "";
         changed(true);
         // (Said, for a screen reader: nothing else on screen says it.)
@@ -9631,7 +9696,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (The focus on the chart gone back to: its row, else its title.)
         keepFocus(null, () => $("chart-list").querySelector(`[data-open-chart="${CSS.escape(back.id)}"]`), () => $("plot-keys"), () => $("new-chart"));
         if (chart === previewing) return openChart(back);
-        unlist(chart);
+        discard(chart);
         openChart(back);
       }
       /** @param {Chart} doc */
@@ -9671,13 +9736,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** The preview, the user's: first in the list, saved (`announce`: kept by the button, the "Saved" note says so). */
       function keepPreview(announce = true) {
         if (!previewing) return;
-        if (library.charts.some((doc) => doc.id === previewing?.id)) previewing.id = uid();
+        forgetPreview(previewing);
+        // (Its id another's, listed or deleted: a new one.)
+        if (library.charts.some((doc) => doc.id === previewing?.id) || Object.hasOwn(library.deleted, previewing.id)) previewing.id = uid();
         // (Kept by its button, which goes: the focus on the chart's ⋯ beside it, not into a field where the next key would type.)
         if (document.activeElement === $("keep")) keepFocus(null, () => $("chart-more"), () => $("plot-keys"));
         const kept = previewing;
         library.charts.unshift(kept);
         previewing = null;
-        forgetPreview(kept);
         save(announce);
         renderCharts();
         linkInUrl();
@@ -15106,10 +15172,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function deleteCharts(docs) {
         if (docs.length === 1) return deleteChart(docs[0]);
         const places = docs.map((doc) => /** @type {[number, Chart]} */ ([library.charts.indexOf(doc), doc])).filter(([at]) => at >= 0).sort((a, b) => a[0] - b[0]);
-        for (const [, doc] of places) {
-          unlist(doc);
-          deletedHere.add(doc.id);
-        }
+        for (const [, doc] of places) discard(doc);
         // All of them gone (the open one with them), the preview there is stands in, else a blank one.
         const open = chart, wasOpen = places.some(([, doc]) => doc === open), standIn = wasOpen && !library.charts.length ? previewing ?? draftChart() : null;
         if (standIn) previewing = standIn;
@@ -15120,11 +15183,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           label: "Undo",
           run: () => {
             for (const [at, doc] of places) {
-              if (library.charts.includes(doc)) continue;
-              deletedHere.delete(doc.id);
+              if (library.charts.some((other) => other.id === doc.id)) continue;
+              recover(doc);
               library.charts.splice(Math.min(at, library.charts.length), 0, doc);
             }
-            if (wasOpen) openChart(open);
+            if (wasOpen) openChart(chartById(open.id) ?? open);
             save();
             renderCharts();
           },
@@ -15318,7 +15381,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // Once the page as it was is pictured (the new chart, empty), it's taken back and the one before it goes under
           // the grid (else that one's foot would show, fading, as the page leaves).
           if (draft) {
-            unlist(draft);
+            discard(draft);
             openChart(previousChart() ?? library.charts[0]);
           }
           document.body.toggleAttribute("data-home", true);
@@ -15865,6 +15928,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (!folder) return;
         const members = library.charts.filter((doc) => doc.folder === id), keys = sideItems().map(sideKey);
         library.folders.splice(at, 1);
+        // (Kept with the library, as a chart's: another tab's copy of it doesn't bring it back.)
+        library.deleted[id] = Date.now();
         // (Its charts where it was in the sidebar, in their order.)
         for (const doc of members) delete doc.folder;
         library.order = keys.flatMap((key) => (key === `f:${id}` ? members.map((doc) => `c:${doc.id}`) : [key]));
@@ -15872,11 +15937,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         renderCharts();
         toast(`Deleted “${folder.name}”${members.length ? `; its ${plural(members.length, "chart")} kept` : ""}`, { label: "Undo", run: () => {
           if (folderById(id)) return;
+          // (Back as a folder anew, its deletion standing: wherever that's been heard, this one isn't it.)
+          const again = { ...folder, id: uid() };
           const back = new Set(members.map((doc) => doc.id)), now = sideItems().map(sideKey), first = now.findIndex((key) => back.has(key.slice(2)));
-          const order = now.filter((key) => !back.has(key.slice(2)) && key !== `f:${id}`);
-          library.folders.splice(Math.min(at, library.folders.length), 0, folder);
-          for (const doc of library.charts) if (back.has(doc.id) && !doc.folder) doc.folder = id;
-          order.splice(first >= 0 ? first : Math.min(keys.indexOf(`f:${id}`), order.length), 0, `f:${id}`);
+          const order = now.filter((key) => !back.has(key.slice(2)));
+          library.folders.splice(Math.min(at, library.folders.length), 0, again);
+          for (const doc of library.charts) if (back.has(doc.id) && !doc.folder) doc.folder = again.id;
+          order.splice(first >= 0 ? first : Math.min(keys.indexOf(`f:${id}`), order.length), 0, `f:${again.id}`);
           library.order = order;
           save();
           renderCharts();
@@ -16020,7 +16087,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         toast(copies.length === 1 ? `Duplicated “${titleOf(docs[0])}”` : `Duplicated ${copies.length} charts`, { label: "Undo", run: () => {
           const ids = copies.map((copy) => copy.id), open = ids.indexOf(chart.id);
           if (open >= 0) openChart(chartById(docs[open].id) ?? previousChart() ?? library.charts[0]);
-          for (const doc of library.charts.filter((doc) => ids.includes(doc.id))) (unlist(doc), deletedHere.add(doc.id));
+          for (const doc of library.charts.filter((doc) => ids.includes(doc.id))) discard(doc);
           save();
           renderCharts();
         } });
@@ -16058,8 +16125,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (Where the focus goes, asked before what has it goes: the row after, else the one before, else New chart.)
         const neighbor = library.charts[index + 1] ?? library.charts[index - 1];
         keepFocus(null, () => (neighbor && library.charts.includes(neighbor) ? $("chart-list").querySelector(`[data-open-chart="${CSS.escape(neighbor.id)}"]`) : null), () => $("new-chart"));
-        library.charts.splice(index, 1);
-        deletedHere.add(doc.id);
+        discard(doc);
         // The last chart gone (the open one), the preview there is stands in, else a blank one.
         const standIn = wasOpen && !library.charts.length ? previewing ?? draftChart() : null;
         if (standIn) previewing = standIn;
@@ -16069,8 +16135,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         toast(`Deleted “${titleOf(doc)}”`, {
           label: "Undo",
           run: () => {
-            if (library.charts.includes(doc)) return;
-            deletedHere.delete(doc.id);
+            if (library.charts.some((other) => other.id === doc.id)) return;
+            recover(doc);
             library.charts.splice(Math.min(index, library.charts.length), 0, doc);
             save();
             if (!wasOpen) return renderCharts();
@@ -21969,9 +22035,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               // (As a delete takes them, by their ids: another tab may have saved one anew since; the open one among them,
               // another opens.)
               const ids = new Set(docs.map((doc) => doc.id));
-              for (const doc of library.charts.filter((doc) => ids.has(doc.id))) (unlist(doc), deletedHere.add(doc.id), picked.delete(doc.id));
+              for (const doc of library.charts.filter((doc) => ids.has(doc.id))) (discard(doc), picked.delete(doc.id));
               const gone = new Set([...folders.values()].map((folder) => folder.id));
               library.folders = library.folders.filter((folder) => !gone.has(folder.id));
+              for (const id of gone) library.deleted[id] = Date.now();
               for (const doc of library.charts) if (doc.folder && gone.has(doc.folder)) delete doc.folder;
               library.order = before;
               if (ids.has(chart.id)) {
@@ -21992,11 +22059,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           }
           // Onto an untouched new chart, the file takes its place.
           const before = chart;
-          if (isDraft(chart)) unlist(chart);
+          if (isDraft(chart)) discard(chart);
           adopt(doc);
           toast(`Imported “${titleOf(doc)}”`, { label: "Undo", run: () => {
             const now = chartById(doc.id);
-            if (now) (unlist(now), deletedHere.add(doc.id));
+            if (now) discard(now);
             if (chart.id === doc.id) openChart(chartById(before.id) ?? (before === previewing ? before : null) ?? previousChart() ?? library.charts[0] ?? (previewing = draftChart()));
             save();
             renderCharts();
