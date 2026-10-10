@@ -4034,9 +4034,75 @@
         }
       }
 
-      .color-selects {
+      /* How a layer's colored, on its label's line beside the word (Color · One ⌄): quiet as the label, a choice once pointed at. */
+      .way {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        height: 20px;
+        margin: -2px auto -2px 6px;
+        border: 0;
+        border-radius: var(--radius-xs);
+        padding: 0 4px 0 5px;
+        color: var(--text);
+        background: none;
+        font: 510 12px var(--sans);
+
+        svg {
+          width: 9px;
+          height: 9px;
+          color: var(--muted);
+        }
+
+        &:is(:hover, [aria-expanded="true"]) {
+          color: var(--ink);
+          background: var(--hover);
+        }
+
+        @media (pointer: coarse) {
+          height: 32px;
+          margin-block: -8px;
+          padding-inline: 8px;
+        }
+      }
+
+      /* A layer's colors, under how they're chosen: close to it, one setting. */
+      .field.color-slot {
+        margin-top: 4px;
+      }
+
+      /* Four colors: its sides (rows) across its directions (columns), each a bar of its color. */
+      .color-grid {
         display: grid;
-        gap: 6px;
+        grid-template-columns: auto 1fr 1fr;
+        align-items: center;
+        gap: 6px 8px;
+        margin-top: 8px;
+        color: var(--muted);
+        font: 510 12px var(--sans);
+
+        > .head {
+          text-align: center;
+        }
+
+        > .color-chip {
+          height: 18px;
+          border: 0;
+          border-radius: 9px;
+          background: var(--c);
+          box-shadow: inset 0 0 0 1px light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.08));
+          cursor: pointer;
+
+          &:is(:hover, [aria-expanded="true"]) {
+            box-shadow: 0 0 0 2px var(--card), 0 0 0 3px var(--line-strong);
+          }
+
+          /* (A finger's.) */
+          @media (pointer: coarse) {
+            height: 32px;
+            border-radius: 16px;
+          }
+        }
       }
 
       .color-select .swatch {
@@ -4951,7 +5017,7 @@
             background: var(--active);
           }
 
-          &:disabled {
+          &:is(:disabled, [aria-disabled="true"]) {
             opacity: 0.35;
             cursor: default;
           }
@@ -4994,6 +5060,15 @@
 
           kbd {
             font: 510 12px var(--sans);
+          }
+
+          /* (Its ›, leading to another menu: at its end, after what it says.) */
+          > span:not(.sub, .letter) + .sub {
+            margin-left: 6px;
+          }
+
+          > .swatch {
+            margin-inline: 1px;
           }
         }
 
@@ -7187,6 +7262,7 @@
             <li>"color": one of Bitview's (gray, red, orange, amber, yellow, avocado, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose, or ink, the page's text color) a six-digit hex such as #ff8800, or oklch as Studio writes it, "oklch(0.7 0.15 45)", each as the dark theme (the default) shows it: the light one turns every color's lightness over, white showing as black; "colorBelow": a baseline's or bars' second color, under their base, or a trend's on support (its own color if none).</li>
             <li>"colorFrom": "B" on a line, dots, an area, bars, a cloud or a trend: its colors taken from layer B date by date, as B is drawn (a baseline's above or below its base, bars' too, a trend's on resistance or support, by its levels if it's colored by them, else B's one color).</li>
             <li>"byLevels": true on a line, dots, an area or bars with levels: colored by them, date by date: above each level, that level's color (give each one its "color"); under them all, its own.</li>
+            <li>"colors": 1 or 4 on bars: their one color; or four: above and below their base, each side's own where a bar grows from it ("color", "colorBelow"), fainter where it fades back toward it ("colorFading" above, "colorBelowFading" below; each side's own, fainter, if none). Unset, their two: "color" above, "colorBelow" under. 1 on a trend with a "colorBelow": its one color, that second kept.</li>
             <li>"type": line, dots, area, histogram (bars), baseline, or candles (for an OHLC series such as price_ohlc).</li>
             <li>"width": 0.5 to 5, by halves (1.5 if none); "dash": its line (0 solid, 1 dotted, 2 dashed, 3 long dashes, 4 sparse dots); "shape": straight, steps or curved; "opacity": 0.1 to 1, by tenths (1 if none; a cloud's 0.2, solid at 1).</li>
             <li>"fill": "above", an area filled from its line up; "base": a baseline's or bars' base value; "baseLine": {"color": "gray", "dash": 4}, that base's line.</li>
@@ -7831,8 +7907,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }
         return capitalize([...words, best.name].join(" "));
       }
-      /** A layer's second color: a baseline's or bars' under their base (red, unset); a trend's on a support (its own, unset). */
-      const belowOf = (layer) => layer.colorBelow ?? (layer.type === "trend" ? layer.color : "red");
+      /** A layer's second color: a baseline's or bars' under their base (red, unset; bars of one color, theirs); a trend's on a support (its own, unset). */
+      const belowOf = (layer) => ((layer.type === "histogram" || layer.type === "trend") && layer.colors === 1 ? layer.color : layer.colorBelow ?? (layer.type === "trend" ? layer.color : "red"));
       /** OKLCH to sRGB: its chroma lowered until it fits, so hue and lightness hold. @returns {string} */
       function oklchToHex(l, c, h) {
         let chroma = c, rgb = oklchToLinear(l, chroma, h);
@@ -7901,10 +7977,17 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const lineTypeOf = (layer) => SHAPES.find(([id]) => id === layer.shape)?.[2] ?? LC.LineType.Simple;
       /** A type's two colors, where it has two: what each is called. */
       const PAIRS = { baseline: ["Above", "Below"], histogram: ["Above", "Below"], trend: ["Resistance", "Support"] };
-      /** The types that can take their colors from another layer (a baseline's are its base's, candles' their rise and fall). */
-      const COLORED_FROM = new Set(["line", "dots", "area", "histogram", "cloud", "trend"]);
-      /** The types that can be colored by their levels (each level's color above it; a cloud and a trend have none). */
-      const BY_LEVELS = new Set(["line", "dots", "area", "histogram"]);
+      /**
+       * How a layer's colors can be chosen, by its type (see colorModeOf): one color; two ("sides": a baseline's or bars'
+       * above and below their base, a trend's on resistance and on support); four (bars', MACD's: each side's own, paler
+       * where a bar falls back toward the base); by its levels; from another layer, date by date. A baseline's are its two,
+       * candles' their one (rising hollow).
+       * @type {Record<string, string[]>}
+       */
+      const COLOR_MODES = { line: ["one", "levels", "from"], dots: ["one", "levels", "from"], area: ["one", "levels", "from"], histogram: ["one", "sides", "momentum", "levels", "from"], baseline: ["sides"], trend: ["one", "sides", "from"], cloud: ["one", "from"], candles: ["one"] };
+      /** The types that can take their colors from another layer, and those that can be colored by their levels. */
+      const COLORED_FROM = new Set(Object.keys(COLOR_MODES).filter((type) => COLOR_MODES[type].includes("from")));
+      const BY_LEVELS = new Set(Object.keys(COLOR_MODES).filter((type) => COLOR_MODES[type].includes("levels")));
       /**
        * The chart's line styles, lightest to most broken up: each with its name, and its dash and gap as drawn on whole
        * pixels at 16×12 (in the proportions the chart dashes them).
@@ -8598,7 +8681,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
 
       /**
        * @typedef {{ id: string, letter: string, series?: string, formula?: string, label?: string, color: string,
-       *   type: string, width: number, dash: number, pane: string, side: string, hidden?: boolean, priceLine?: boolean, colorBelow?: string, opacity?: number,
+       *   type: string, width: number, dash: number, pane: string, side: string, hidden?: boolean, priceLine?: boolean, colorBelow?: string, colors?: 1 | 4, colorFading?: string, colorBelowFading?: string, opacity?: number,
        *   format?: string, base?: number, path?: string, paths?: Record<string, string>,
        *   shape?: string, levels?: Level[], fill?: string, baseLine?: { color?: string, dash?: number }, from?: string[], ref?: string, colorFrom?: string, byLevels?: boolean }} Layer
        *   Made from layers (`from`: the ids of the layers it's made of, none itself made from layers; a cloud's, then its
@@ -8610,6 +8693,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        *   bars', a cloud's or a trend's (not a baseline's, nor candles').
        *   `byLevels`: colored by its levels instead, date by date: above each, that level's color; under them all, its own
        *   (a line's, dots', an area's or bars'; never with `colorFrom`).
+       *   `colors`: bars' (their two, above and below their base, unset): 1, their one; 4, MACD's, each side's own where a
+       *   bar grows from the base, fainter where it fades back toward it (`colorFading` above, `colorBelowFading` below;
+       *   unset, each side's color fainter: see fadingOf). A trend's 1: its one, its second (`colorBelow`) kept. Colors
+       *   picked stay, whichever way it's colored.
        * @typedef {{ value: number, color?: string, dash?: number }} Level A line across at a value: its color (else its
        *   layer's) and its line style (else long dashes). A baseline's base draws one too (`baseLine`: gray, in sparse dots).
        * @typedef {{ id: string, mode: number, size?: number, stack?: "stack" | "percent", reverse?: boolean }} Pane `reverse`:
@@ -8799,6 +8886,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (Colors from another layer: one there, not itself, for a type that takes them.)
         for (const layer of doc.layers) if (layer.colorFrom && (!COLORED_FROM.has(layer.type) || layer.colorFrom === layer.id || !doc.layers.some((other) => other.id === layer.colorFrom))) delete layer.colorFrom;
         for (const layer of doc.layers) if (layer.byLevels && (!BY_LEVELS.has(layer.type) || !layer.levels?.length || layer.colorFrom)) delete layer.byLevels;
+        // (How many colors: bars' one or four, a trend's one with a second kept; the colors picked kept, whatever's used.)
+        for (const layer of doc.layers) if (layer.colors !== undefined && (!(layer.type === "histogram" ? layer.colors === 1 || layer.colors === 4 : layer.type === "trend" && layer.colors === 1 && layer.colorBelow !== undefined) || layer.colorFrom || layer.byLevels)) delete layer.colors;
         for (const layer of doc.layers) if (layer.ref && (layer.type !== "trend" || !refsFor(doc, layer).some((other) => other.id === layer.ref))) delete layer.ref;
         if (!doc.panes.length) doc.panes.push({ id: uid(), mode: 1 });
         const ids = new Set(doc.panes.map((pane) => pane.id));
@@ -10755,7 +10844,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             const paintAt = paintWith && dated && ((/** @type {number} */ i) => paintWith(dated(i)));
             const points = layer.from && fromUnfit(doc, layer) ? [] : data.times.map((time, i) => (drawable(shown[i]) ? (result.breaks?.[i] ? { time, value: shown[i], color: "transparent" } : paintAt ? { time, value: shown[i], ...paintAt(i) } : { time, value: shown[i] }) : { time }));
             if (paintWith) paintedPoints.set(layer.id, { points, faint: false, paintWith });
-            if (layer.type === "histogram" && !paintAt) {
+            if (layer.type === "histogram" && !paintAt && layer.colors !== 1) {
               // Bars below their base take the second color, each its own (the rest take the series').
               const tint = alpha(under, 0.75 * op), from = layer.base ?? 0;
               const bars = points.map((point) => ("value" in point && point.value < from ? { ...point, color: tint } : point));
@@ -11265,6 +11354,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             return color;
           };
         }
+        // Bars of four colors (MACD's): each side's own, fainter where a bar falls back toward the base from the one before.
+        if (layer.type === "histogram" && layer.colors === 4 && values) {
+          const base = layer.base ?? 0, fallsAbove = fadingOf(layer, false), fallsBelow = fadingOf(layer, true);
+          return (i) => {
+            const value = values[i];
+            if (!Number.isFinite(value)) return null;
+            let before = i - 1;
+            while (before >= 0 && !Number.isFinite(values[before])) before--;
+            const back = before >= 0 && values[before] < base === value < base && Math.abs(value - base) < Math.abs(values[before] - base);
+            return value < base ? (back ? fallsBelow : under) : back ? fallsAbove : top;
+          };
+        }
         if (!values || ink(top) === ink(under)) return null;
         const base = layer.base ?? 0;
         if (layer.type === "baseline" || layer.type === "histogram") return (i) => (!Number.isFinite(values[i]) ? null : values[i] < base ? under : top);
@@ -11283,13 +11384,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         for (const seen = new Set(); at && !seen.has(at.id); at = at.colorFrom ? doc.layers.find((item) => item.id === at?.colorFrom) : undefined) {
           seen.add(at.id);
           const result = data.results.get(at.id);
-          sig.push(ink(at.color), ink(belowOf(at)), at.base, at.type, result?.shown, result?.sides, at.byLevels ? JSON.stringify(at.levels) : "");
+          sig.push(ink(at.color), ink(belowOf(at)), at.base, at.type, result?.shown, result?.sides, at.byLevels ? JSON.stringify(at.levels) : "", at.colors === 4 ? `${ink(fadingOf(at, false))} ${ink(fadingOf(at, true))}` : "");
         }
         return sig;
       }
       const samePaint = (/** @type {any[] | null | undefined} */ a, /** @type {any[]} */ b) => Boolean(a) && a?.length === b.length && b.every((value, i) => a?.[i] === value);
       /** Where a layer's colors vary date by date as the chart paints them (its colors another's, a trend's two): its colorsAt. */
-      const paintOf = (/** @type {Chart} */ doc, /** @type {Layer} */ layer, /** @type {{ times: number[], results: Map<string, any> }} */ data) => (layer.colorFrom || layer.byLevels || layer.type === "trend" ? colorsAt(doc, layer, /** @type {Resolved} */ (data)) : null);
+      const paintOf = (/** @type {Chart} */ doc, /** @type {Layer} */ layer, /** @type {{ times: number[], results: Map<string, any> }} */ data) => (layer.colorFrom || layer.byLevels || layer.type === "trend" || (layer.type === "histogram" && layer.colors === 4) ? colorsAt(doc, layer, /** @type {Resolved} */ (data)) : null);
       /** The color a layer is drawn in at its latest value (its name), where it varies (its colors another's, a trend's two); else null. @param {Layer} layer */
       function colorNow(layer) {
         const at = resolved ? paintOf(chart, layer, resolved) : null;
@@ -14159,7 +14260,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         }
       };
       /** What a mini chart depends on: its layers, its panes, and the day. @param {Chart} doc */
-      const thumbKey = (doc) => JSON.stringify([new Date().toISOString().slice(0, 10), doc.index, doc.panes.map((pane) => [pane.mode, pane.size, pane.stack, pane.reverse]), doc.layers.map((layer) => [layer.id, layer.series, layer.formula, layer.hidden, layer.color, layer.side, doc.panes.findIndex((pane) => pane.id === layer.pane), layer.letter, layer.type, layer.base, layer.colorBelow, layer.fill, layer.from, layer.ref, layer.colorFrom, layer.byLevels ? layer.levels : null])]);
+      const thumbKey = (doc) => JSON.stringify([new Date().toISOString().slice(0, 10), doc.index, doc.panes.map((pane) => [pane.mode, pane.size, pane.stack, pane.reverse]), doc.layers.map((layer) => [layer.id, layer.series, layer.formula, layer.hidden, layer.color, layer.side, doc.panes.findIndex((pane) => pane.id === layer.pane), layer.letter, layer.type, layer.base, layer.colorBelow, layer.fill, layer.from, layer.ref, layer.colorFrom, layer.byLevels ? layer.levels : null, ...fadingKey(layer)])]);
+      /** Four-color bars' fading colors as drawn (their default the theme's): what a picture of them depends on. */
+      const fadingKey = (/** @type {Layer} */ layer) => (layer.type === "histogram" ? [layer.colors, ...(layer.colors === 4 ? [ink(fadingOf(layer, false)), ink(fadingOf(layer, true))] : [])] : []);
       /**
        * A layer's shape: its values as its pane scales them (log, or from the first value), averaged down to the mini
        * charts' points and lightly smoothed (at this size, the trend is what reads), with the range of the full values;
@@ -14378,7 +14481,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** @type {Map<string, Preview & { key: string }>} */
       const previews = new Map(Object.entries(storage.get(PREVIEWS, {})).filter(([, item]) => validPreview(item)));
       /** What a card depends on: what the chart's mark does, its range, its layers' looks, the view it was left at and how much the chart shows. @param {Chart} doc */
-      const previewKey = (doc) => JSON.stringify([thumbKey(doc), doc.range, doc.layers.map((layer) => [layer.type, layer.base, layer.colorBelow, layer.dash, layer.fill, layer.opacity, layer.levels, layer.baseLine]), doc.panes.map((pane) => [pane.stack, pane.reverse]), leftView(doc.id), FINE.has(doc.index) ? Math.round(view.timeScale().width() / 50) : 0]);
+      const previewKey = (doc) => JSON.stringify([thumbKey(doc), doc.range, doc.layers.map((layer) => [layer.type, layer.base, layer.colorBelow, layer.colors, layer.dash, layer.fill, layer.opacity, layer.levels, layer.baseLine]), doc.panes.map((pane) => [pane.stack, pane.reverse]), leftView(doc.id), FINE.has(doc.index) ? Math.round(view.timeScale().width() / 50) : 0]);
       /**
        * How many bars a chart's preview shows at most (its data at `index`): all of them at a day or coarser (Max there is
        * the whole history); finer, as many as fit the chart's width at four a pixel.
@@ -15323,7 +15426,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function seriesMark(layer) {
         const thumb = thumbs.get(chart.id), ys = thumb && Object.hasOwn(thumb.marks, layer.id) ? thumb.marks[layer.id] : undefined;
         const level = thumb?.bases && Object.hasOwn(thumb.bases, layer.id) ? thumb.bases[layer.id] : 0;
-        const now = colorNow(layer), color = escape(ink(now ?? layer.color)), below = now ? color : escape(ink(belowOf(layer)));
+        const now = layer.type === "histogram" && layer.colors === 4 ? null : colorNow(layer), color = escape(ink(now ?? layer.color)), below = now ? color : escape(ink(belowOf(layer)));
         const x = (i) => 0.8 + (i / (ys.length - 1)) * 14.4, y = (value) => 11 - value * 10;
         let body = `<path d="M1.5 6.5h13" stroke="${color}" stroke-opacity=".4" stroke-width="1.4" stroke-dasharray="2 2"/>`;
         // A cloud's, a band in its color.
@@ -17274,16 +17377,60 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       sliders($("inspector"), { valueOf: (id) => ((layer) => (layer ? SLIDERS[id].of(layer) : undefined))(layerById(selected)), set: setSlider });
 
-      const colorOf = (layer, key) => (key === "colorBelow" ? belowOf(layer) : layer.color);
+      /** How a layer's colors are chosen now (see COLOR_MODES). @param {Layer} layer */
+      function colorModeOf(layer) {
+        if (layer.colorFrom) return "from";
+        if (layer.byLevels) return "levels";
+        if (layer.type === "histogram") return layer.colors === 1 ? "one" : layer.colors === 4 ? "momentum" : "sides";
+        if (layer.type === "baseline" || (layer.type === "trend" && layer.colors !== 1 && layer.colorBelow !== undefined)) return "sides";
+        return "one";
+      }
+      /** A way of coloring, named for a layer of its type (a pair, by what its two are for). */
+      const modeName = (/** @type {Layer} */ _layer, /** @type {string} */ mode) => (mode === "one" ? "One" : mode === "sides" ? "Two" : mode === "momentum" ? "Four" : mode === "levels" ? "By its levels" : "From a layer");
       /**
-       * A layer's color, set: picked as its color, its one (no other layer's, nor its levels', any more); under its levels
-       * ("under"), its own, its levels still coloring it; its second, kept only where it isn't its default (red below a
-       * baseline's base, bars' too; a trend's own one on a support).
+       * A layer's colors in its way of coloring, each with what it's for: [its key (a Layer's field; "from", the layer it
+       * takes them from), its label].
+       * @param {Layer} layer @returns {[string, string][]}
        */
-      function setColor(layer, key, color) {
-        if (key === "color") (layer.color = color), delete layer.colorFrom, delete layer.byLevels;
-        else if (key === "under") layer.color = color;
-        else layer.colorBelow = color === (layer.type === "trend" ? layer.color : "red") ? undefined : color;
+      function colorSlots(layer) {
+        const mode = colorModeOf(layer), pair = PAIRS[layer.type];
+        return mode === "from" ? [["from", "Layer"]] : mode === "levels" ? [["color", "Under its levels"]]
+          : mode === "sides" ? [["color", pair[0]], ["colorBelow", pair[1]]]
+          : mode === "momentum" ? [["color", "Above, growing"], ["colorFading", "Above, fading"], ["colorBelow", "Below, growing"], ["colorBelowFading", "Below, fading"]]
+          : [["color", "Color"]];
+      }
+      /** A color fainter, as the card shows it (MACD's bars falling back): halfway to the card, its chroma halved. */
+      function faintOf(/** @type {string} */ color) {
+        const [l, c, h] = shownOklch(color), [card] = oklchOf(css("--card"));
+        return kept(oklchToHex(l + (card - l) * 0.5, c * 0.5, h));
+      }
+      /** Bars' color where they fall back toward their base, above it or below (four colors): theirs, else their side's fainter. @param {Layer} layer */
+      const fadingOf = (layer, /** @type {boolean} */ below) => (below ? layer.colorBelowFading : layer.colorFading) ?? faintOf(below ? belowOf(layer) : layer.color);
+      const colorOf = (/** @type {Layer} */ layer, /** @type {string} */ key) => (key === "colorBelow" ? belowOf(layer) : key === "colorFading" ? fadingOf(layer, false) : key === "colorBelowFading" ? fadingOf(layer, true) : layer.color);
+      /**
+       * One of a layer's colors, set (its way of coloring as it is): its own; its second, kept only where it isn't its
+       * default (red below a baseline's base, bars' too; a trend's, as picked); a fading one of four (empty: its side's
+       * fainter again).
+       */
+      function setColor(/** @type {Layer} */ layer, /** @type {string} */ key, /** @type {string} */ color) {
+        if (key === "colorFading") layer.colorFading = color || undefined;
+        else if (key === "colorBelowFading") layer.colorBelowFading = color || undefined;
+        else if (key === "colorBelow") layer.colorBelow = layer.type !== "trend" && color === "red" ? undefined : color;
+        else layer.color = color;
+      }
+      /**
+       * A layer's way of coloring, set (`from`: the layer it takes its colors from); the colors picked kept, for when it's
+       * colored that way again (a trend's second, given one apart from its first the first time it gets two).
+       */
+      function setColorMode(/** @type {Layer} */ layer, /** @type {string} */ mode, from = "") {
+        delete layer.colorFrom;
+        delete layer.byLevels;
+        delete layer.colors;
+        if (mode === "levels") (layer.byLevels = true), colorLevels(layer);
+        else if (mode === "from") layer.colorFrom = from;
+        else if (layer.type === "histogram" && (mode === "one" || mode === "momentum")) layer.colors = mode === "one" ? 1 : 4;
+        else if (layer.type === "trend" && mode === "sides") layer.colorBelow ??= layer.color === "red" ? "green" : "red";
+        else if (layer.type === "trend" && mode === "one" && layer.colorBelow !== undefined) layer.colors = 1;
       }
       /**
        * The surface, one plane, every point (u across, t down, 0 to 1) a color. Down, lightness, white at the top to
@@ -17365,59 +17512,98 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const share = 100 / colors.length;
         return `<i class="swatch" style="background: linear-gradient(to top, ${colors.map((color, k) => `${escape(cssColor(color))} ${(k * share).toFixed(1)}% ${((k + 1) * share).toFixed(1)}%`).join(", ")})"></i>`;
       }
+      /** A way of coloring a layer, as a swatch: its colors top to bottom (by its levels, its bands; from a layer, its letter). */
+      function modeSwatch(/** @type {Layer} */ layer, /** @type {string} */ mode) {
+        if (mode === "levels") return bandsSwatch(layer);
+        // (From a layer: which, once there is one; none chosen yet, no letter that would say one was.)
+        if (mode === "from") return ((source) => (source ? letterChip(source) : ICONS.series))(layerById(layer.colorFrom ?? ""));
+        const colors = mode === "momentum" ? [layer.color, fadingOf(layer, false), fadingOf(layer, true), belowOf(layer)] : mode === "sides" ? [layer.color, belowOf(layer)] : [layer.color];
+        const share = 100 / colors.length;
+        return `<i class="swatch" style="background: linear-gradient(to bottom, ${colors.map((color, k) => `${escape(cssColor(color))} ${(k * share).toFixed(1)}% ${((k + 1) * share).toFixed(1)}%`).join(", ")})"></i>`;
+      }
+      /** A layer's color in one of its places, named (a fading one of four not set: its side's, paler). */
+      const slotName = (/** @type {Layer} */ layer, /** @type {string} */ key) => ((own) => (own === undefined && (key === "colorFading" || key === "colorBelowFading") ? `Fainter ${colorName(key === "colorFading" ? layer.color : belowOf(layer)).toLowerCase()}` : colorName(colorOf(layer, key))))(key === "colorFading" ? layer.colorFading : key === "colorBelowFading" ? layer.colorBelowFading : "");
       /**
-       * A layer's color, a select: Bitview's colors by name, Custom (the surface), and (one that can) its levels' or another
-       * layer's, date by date. A two-color type's two, one under the other, each said by what it's for; by its levels or
-       * taken from another, one, saying so.
+       * A layer's colors: how they're chosen (those its type has; one way only, none to choose), then the colors that way
+       * takes, each on its line, said by what it's for (from a layer: which).
        */
-      function colorPicker(layer) {
-        const source = layer.colorFrom ? layerById(layer.colorFrom) : null, pair = PAIRS[layer.type];
-        const selectFor = (/** @type {string} */ key, /** @type {string} */ label) => ((color) => `<button type="button" id="color-select-${key}" class="preset color-select" data-color-select="${key}" aria-haspopup="menu" aria-label="${escape(label ? `${label} color` : "Color")}: ${escape(colorName(color))}"><i class="swatch" style="--c:${escape(cssColor(color))}"></i><span class="name">${label ? `${escape(label)}: ` : ""}${escape(colorName(color))}</span>${CHEVRON}</button>`)(colorOf(layer, key));
-        const body = source
-          ? `<button type="button" id="color-select-color" class="preset color-select" data-color-select="color" aria-haspopup="menu" aria-label="Colors from ${escape(labelOf(source))}">${letterChip(source)}<span class="name">From ${escape(labelOf(source))}</span>${CHEVRON}</button>`
-          : layer.byLevels ? `<button type="button" id="color-select-color" class="preset color-select" data-color-select="color" aria-haspopup="menu" aria-label="Colors by its levels">${bandsSwatch(layer)}<span class="name">By its levels</span>${CHEVRON}</button>`
-          : pair ? `<div class="color-selects">${selectFor("color", pair[0])}${selectFor("colorBelow", pair[1])}</div>` : selectFor("color", "");
-        return `<div class="field"><span>Color</span>${body}</div>`;
+      function colorPicker(/** @type {Layer} */ layer) {
+        const mode = colorModeOf(layer), name = modeName(layer, mode), source = layerById(layer.colorFrom ?? ""), ways = (COLOR_MODES[layer.type] ?? ["one"]).length > 1;
+        const way = ways ? `<button type="button" id="color-mode" class="way" data-action="color-mode" aria-haspopup="menu" aria-label="Colors: ${escape(name)}">${escape(name)}${CHEVRON}</button>` : "";
+        const colorSelect = (/** @type {string} */ key, /** @type {string} */ label) => `<button type="button" id="color-select-${key}" class="preset color-select" data-color-select="${key}" aria-haspopup="menu" aria-label="${escape(label)}: ${escape(slotName(layer, key))}"><i class="swatch" style="--c:${escape(cssColor(colorOf(layer, key)))}"></i><span class="name">${escape(slotName(layer, key))}</span>${CHEVRON}</button>`;
+        // One color, or another layer's: a row, its way on its label's line.
+        if (mode === "one") return `<div class="field"><span>Color${way}</span>${colorSelect("color", "Color")}</div>`;
+        if (mode === "from") return `<div class="field"><span>Colors${way}</span><button type="button" id="color-from" class="preset" data-action="color-from" aria-haspopup="menu" aria-label="Colors from: ${escape(source ? labelOf(source) : "")}">${source ? letterChip(source) : ""}<span class="name">${escape(source ? labelOf(source) : "")}</span>${CHEVRON}</button></div>`;
+        const head = ways ? `<div class="field color-head"><span>Colors${way}</span></div>` : "";
+        // By its levels: its colors its levels', the one under them the first of them (none here).
+        if (mode === "levels") return head;
+        // Four: a grid, its sides down, what the bar does across (growing, then fading back: each row strong, then faint).
+        if (mode === "momentum") {
+          const chip = (/** @type {string} */ key, /** @type {string} */ label) => `<button type="button" id="color-select-${key}" class="color-chip" data-color-select="${key}" aria-haspopup="menu" aria-label="${escape(label)}: ${escape(slotName(layer, key))}" data-tip="${escape(label)}: ${escape(slotName(layer, key))}" style="--c:${escape(cssColor(colorOf(layer, key)))}"></button>`;
+          return `${head}<div class="color-grid" role="group" aria-label="Four colors: above and below its base, growing and fading"><span></span><span class="head">Growing</span><span class="head">Fading</span><span>Above</span>${chip("color", "Above, growing")}${chip("colorFading", "Above, fading")}<span>Below</span>${chip("colorBelow", "Below, growing")}${chip("colorBelowFading", "Below, fading")}</div>`;
+        }
+        // Two: each on its line, under them (a baseline's: its two, the first a setting of its own).
+        return head + colorSlots(layer).map(([key, label], i) => `<div class="field${head || i ? " color-slot" : ""}"><span>${escape(label)}</span>${colorSelect(key, label)}</div>`).join("");
       }
       /** What a layer can take its colors from: another layer, none taking its own (no loop of two). @param {Layer} layer */
       const colorSources = (layer) => chart.layers.filter((other) => other.id !== layer.id && other.colorFrom !== layer.id);
+      /** What each way of coloring does, said beside it. */
+      const MODE_ASIDES = { one: "The same all along", sides: "Above and below its base", momentum: "Growing and fading", levels: "Each level's color above it", from: "Another layer's, by date" };
+      /** What each way of coloring is found by in ⌘K (a type's own ways only). */
+      const MODE_WORDS = { one: "one single", sides: "two above below sign", momentum: "four growing fading rising falling macd momentum", levels: "levels", from: "from layer" };
       /**
-       * A layer's color from its select: Bitview's colors, Custom, and (its own color, of a type that can) by its levels
-       * (once it has some) or from another layer.
+       * A layer's ways of coloring as choices (its menu's, ⌘K's): those its type has, each said; by its levels once it has
+       * some; from a layer, which (a page of them). @returns {Action[]}
        */
+      function colorModeChoices(/** @type {string} */ id) {
+        const layer = layerById(id);
+        if (!layer) return [];
+        const mode = colorModeOf(layer);
+        return (COLOR_MODES[layer.type] ?? ["one"]).map((each) => ({
+          key: `mode:${each}`, icon: ((copy) => (setColorMode(copy, each), modeSwatch(copy, each)))(structuredClone(layer)), label: modeName(layer, each), aside: each === "sides" && layer.type === "trend" ? "Resistance and support" : /** @type {Record<string, string>} */ (MODE_ASIDES)[each], current: mode === each,
+          ...(each === "from" ? (colorSources(layer).length ? { page: () => choicePage("Colors from", () => fromChoices(id)) } : { disabled: "There's no other layer to take them from" })
+            : each === "levels" && !layer.levels?.length ? { disabled: "Add a level first" }
+            : { run: () => editById(id, (item) => setColorMode(item, each)), look: (/** @type {Chart} */ doc) => ((item) => item && setColorMode(item, each))(doc.layers.find((other) => other.id === id)) }),
+        }));
+      }
+      /** The layers another can take its colors from, as choices. @returns {Action[]} */
+      function fromChoices(/** @type {string} */ id) {
+        const layer = layerById(id);
+        if (!layer) return [];
+        const gives = { one: "Its color", sides: "Its two colors", momentum: "Its four colors", levels: "Its levels' colors", from: "The colors it takes" };
+        return colorSources(layer).map((other) => ({ key: `from:${other.id}`, icon: letterChip(other), label: labelOf(other), aside: /** @type {Record<string, string>} */ (gives)[colorModeOf(other)], current: layer.colorFrom === other.id, run: () => editById(id, (item) => setColorMode(item, "from", other.id)), look: (/** @type {Chart} */ doc) => ((item) => item && setColorMode(item, "from", other.id))(doc.layers.find((one) => one.id === id)) }));
+      }
+      /** A layer's color from its select: Bitview's colors, Custom; a fading one of four, its side's fainter too (its default). */
       function layerColorMenu(/** @type {HTMLElement} */ button, /** @type {string} */ key) {
         const layer = layerById(selected);
         if (!layer) return;
-        const id = layer.id, own = key === "color", from = own && COLORED_FROM.has(layer.type) ? colorSources(layer) : [], levels = own && BY_LEVELS.has(layer.type);
-        const rows = [
-          levels ? `<button type="button" data-pick-levels="1" aria-checked="${Boolean(layer.byLevels)}" ${layer.levels?.length ? 'data-tip="Above each of its levels, that level&#39;s color; under them all, its own"' : "disabled"}>${tick(Boolean(layer.byLevels))}${dashGlyph(5, 3)}By its levels${layer.levels?.length ? "" : "<span>Add a level first</span>"}</button>` : "",
-          from.length ? `<div class="menu-group">From a layer</div>${from.map((other) => `<button type="button" data-pick-from="${other.id}" aria-checked="${layer.colorFrom === other.id}" data-tip="Its colors, date by date">${tick(layer.colorFrom === other.id)}${letterChip(other)}${escape(labelOf(other))}</button>`).join("")}` : "",
-        ].filter(Boolean);
+        const id = layer.id, fading = key === "colorFading" || key === "colorBelowFading", unset = fading && (key === "colorFading" ? layer.colorFading : layer.colorBelowFading) === undefined;
+        const side = key === "colorFading" ? layer.color : belowOf(layer);
+        const paler = fading ? `<div class="menu-rule"></div><button type="button" data-pick-paler="1" aria-checked="${unset}">${tick(unset)}<i class="swatch" style="--c:${escape(cssColor(faintOf(side)))}"></i>Fainter ${escape(colorName(side).toLowerCase())}<span>The growing one's</span></button>` : "";
         colorMenu(button, colorOf(layer, key), `layer:${key}`, (color) => {
           refocus(`#inspector [data-color-select="${key}"]`);
           editById(id, (item) => setColor(item, key, color));
-        }, rows.length ? `<div class="menu-rule"></div>${rows.join("")}` : "", ({ pickFrom, pickLevels }) => {
-          refocus(`#inspector [data-color-select="color"]`);
-          editById(id, (item) => {
-            if (pickFrom) (item.colorFrom = pickFrom), delete item.byLevels;
-            else if (pickLevels) (item.byLevels = true), delete item.colorFrom, colorLevels(item);
-          });
-        }, Boolean((layer.colorFrom || layer.byLevels) && own), () => {
+        }, paler, ({ pickPaler }) => {
+          if (!pickPaler) return;
+          refocus(`#inspector [data-color-select="${key}"]`);
+          editById(id, (item) => setColor(item, key, ""));
+        }, unset, () => {
           const now = $(`color-select-${key}`);
           if (now) layerColorMenu(now, key);
-        });
+        }, key === "under" ? "Under its levels" : colorSlots(layer).find(([one]) => one === key)?.[1] ?? "");
       }
       /**
        * A color from a select, its dropdown: Bitview's colors (a grid, at a glance), then Custom (any other: the surface, a
        * page of its own), then what else picks it (`extra`, its picks to `onExtra`). One is ticked: colored otherwise (`borrowed`: by its levels, from
        * another), none of the colors. Back from Custom, `again` opens it as things are then (a pick there redraws it).
        */
-      function colorMenu(/** @type {HTMLElement} */ anchor, /** @type {string} */ current, /** @type {string} */ target, /** @type {(color: string) => void} */ apply, extra = "", /** @type {(picked: DOMStringMap) => void} */ onExtra = () => {}, borrowed = false, again = () => colorMenu(anchor, current, target, apply, extra, onExtra, borrowed)) {
+      function colorMenu(/** @type {HTMLElement} */ anchor, /** @type {string} */ current, /** @type {string} */ target, /** @type {(color: string) => void} */ apply, extra = "", /** @type {(picked: DOMStringMap) => void} */ onExtra = () => {}, borrowed = false, again = () => colorMenu(anchor, current, target, apply, extra, onExtra, borrowed), title = "") {
         const own = !borrowed && !SWATCHES.includes(current);
         // (A dropdown as wide as its select, under it: Bitview's colors at a glance, each named on hover.)
         const colors = `<div class="color-drop" style="width: ${Math.max(232, Math.round(anchor.getBoundingClientRect().width) - 8)}px">${swatchGrid(borrowed ? "" : current)}</div><div class="menu-rule"></div>`;
         const custom = `<button type="button" data-pick-custom="1" aria-checked="${own}" aria-haspopup="menu">${tick(own)}<i class="swatch" style="${own ? `--c:${escape(cssColor(current))}` : "background: conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #10b981, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f43f5e)"}"></i>Custom${own ? `<span>${escape(ink(current))}</span>` : ""}</button>`;
-        showMenu(anchor, `${colors}${custom}${extra}`, (hit) => {
+        // (A phone's sheet says what it's the color of: one of several, which.)
+        showMenu(anchor, `${title && phone.matches ? `<div class="menu-group">${escape(title)}</div>` : ""}${colors}${custom}${extra}`, (hit) => {
           if (hit.pickCustom) colorPane(anchor, current, target, again, borrowed);
           else if (hit.pickColor && (hit.pickColor !== current || borrowed)) apply(hit.pickColor);
           else if (!hit.pickColor) onExtra(hit);
@@ -18140,7 +18326,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       });
       $("inspector").addEventListener("keydown", (event) => {
         // A picker (pane, format, color) opens its menu on ↑↓, as a select does: the keys don't go on to the layers.
-        if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target.matches?.(".preset[aria-haspopup]")) {
+        if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target.matches?.(":is(.preset, .way, .color-chip)[aria-haspopup]")) {
           event.preventDefault();
           event.stopPropagation();
           return event.target.click();
@@ -18228,6 +18414,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         else if (action === "pane-menu") paneMenu(button, [selected], undefined, () => refocus("#pane"));
         else if (button.id === "trend-ref") refMenu(button, selected);
         else if (action === "format-menu") formatMenu(button);
+        else if (action === "color-mode") menuOf(button, colorModeChoices(selected));
+        else if (action === "color-from") menuOf(button, fromChoices(selected));
         else if (type && button.getAttribute("aria-disabled") === "true") notice(/** @type {string} */ (button.dataset.tip));
         else if (type) editLayer((layer) => (layer.type = type));
         else if (button.dataset.cloudOf) {
@@ -20344,30 +20532,24 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // Grouped as the inspector's sections are, named as they are.
           const first = layer.series ? "Series" : "Formula";
           const style = dashOf(layer.dash);
-          const fromLayer = layer.colorFrom ? layerById(layer.colorFrom) : null, oneColor = fromLayer || layer.byLevels;
-          const color = (key, label, of, put) => ({ key, icon: key === "color" && fromLayer ? letterChip(fromLayer) : key === "color" && layer.byLevels ? bandsSwatch(layer) : swatchOf(of(layer)), label, aside: key === "color" && fromLayer ? `From ${labelOf(fromLayer)}` : key === "color" && layer.byLevels ? "By its levels" : colorName(of(layer)), group: "Style", page: () => choicePage(label, () => [
-            ...colorRows(key === "color" && (now().colorFrom || now().byLevels) ? "" : of(now()), (name) => set((item) => put(item, name))(), (doc, name) => {
+          // A choice of its colors (a color, a way of coloring) previewed as it would draw: its look on a copy, its colors date by date.
+          const lookOfChoice = (/** @type {HTMLElement} */ panel, /** @type {Action} */ option) => {
+            if (!option.look || !resolved) return previewLayer(panel, id);
+            const doc = structuredClone(chart);
+            option.look(doc);
+            const item = doc.layers.find((one) => one.id === id);
+            return item ? previewLayer(panel, id, item.color, colorsAt(doc, item, resolved)) : previewLayer(panel, id);
+          };
+          // A color of it, its page: Bitview's colors, another; a fading one of four, its side's fainter too.
+          const ROW_KEYS = /** @type {Record<string, string>} */ ({ color: "color", colorBelow: "color-below", colorFading: "color-fading", colorBelowFading: "color-below-fading" });
+          const color = (/** @type {string} */ key, /** @type {string} */ label) => ({ key: ROW_KEYS[key], icon: swatchOf(colorOf(layer, key)), label, aside: slotName(layer, key), group: "Style", page: () => choicePage(label, () => [
+            ...colorRows(key === "colorFading" ? now().colorFading ?? "" : key === "colorBelowFading" ? now().colorBelowFading ?? "" : colorOf(now(), key), (name) => set((item) => setColor(item, key, name))(), (doc, name) => {
               const item = doc.layers.find((other) => other.id === id);
-              if (item) put(item, name);
+              if (item) setColor(item, key, name);
             }),
-            ...(key === "color" && BY_LEVELS.has(now().type) && now().levels?.length ? [{ key: "by-levels", icon: dashGlyph(5, 3), label: "By its levels", aside: "Above each level, its color", current: Boolean(now().byLevels), run: set((item) => ((item.byLevels = true), delete item.colorFrom, colorLevels(item))), look: (/** @type {Chart} */ doc) => {
-              const item = doc.layers.find((one) => one.id === id);
-              if (item) (item.byLevels = true), delete item.colorFrom, colorLevels(item);
-            } }] : []),
-            ...(key === "color" && COLORED_FROM.has(now().type) ? colorSources(now()).map((other) => ({ key: `from:${other.id}`, icon: letterChip(other), label: labelOf(other), aside: "Its colors, date by date", group: "From a layer", current: now().colorFrom === other.id, run: set((item) => ((item.colorFrom = other.id), delete item.byLevels)), look: (/** @type {Chart} */ doc) => {
-              const item = doc.layers.find((one) => one.id === id);
-              if (item) (item.colorFrom = other.id), delete item.byLevels;
-            } })) : []),
-          ], (panel, option) => {
-            // (By its levels, from a layer: as that row would draw it.)
-            if (option.look && (option.key === "by-levels" || option.key.startsWith("from:"))) {
-              const doc = structuredClone(chart);
-              option.look(doc);
-              const item = doc.layers.find((one) => one.id === id);
-              return previewLayer(panel, id, null, item && resolved ? paintOf(doc, item, resolved) : null);
-            }
-            previewLayer(panel, id, key === "color" && option.key !== "other" ? option.key : null);
-          }) });
+            ...(key === "colorFading" || key === "colorBelowFading" ? [((side) => ({ key: "paler", icon: swatchOf(faintOf(side)), label: `Fainter ${colorName(side).toLowerCase()}`, aside: "The growing one's", current: (key === "colorFading" ? now().colorFading : now().colorBelowFading) === undefined, run: set((item) => setColor(item, key, "")), look: (/** @type {Chart} */ doc) => ((item) => item && setColor(item, key, ""))(doc.layers.find((one) => one.id === id)) }))(key === "colorFading" ? now().color : belowOf(now()))] : []),
+          ], lookOfChoice) });
+          const source = layerById(layer.colorFrom ?? "");
           const rows = [
             layer.from
               ? { key: "between", icon: fromIcon(layer.type), label: "Between", aside: fromSpan(layer), group: typeName(layer.type), leads: true, page: () => fromPage(layer.type, id) }
@@ -20381,10 +20563,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             ] : []),
             { key: "name", icon: ICONS.pencil, label: "Name", aside: labelOf(layer), group: first, page: () => renamePage("Name", layer.label ?? "", labelOf({ ...layer, label: undefined }), (text) => editById(id, (item) => (item.label = text || undefined), { redraw: "none" })) },
             { key: "type", icon: glyph(layer.type), label: "Type", aside: TYPES.find(([type]) => type === layer.type)?.[1], group: "Style", page: () => choicePage("Type", () => TYPES.filter(([type]) => type !== "candles" || result?.ohlc).map(([type, text]) => ({ key: type, icon: glyph(type), label: text, current: now().type === type, ...both((item) => (item.type = type)) }))) },
-            ...(pair
-              ? [color("color", oneColor ? "Color" : `Color ${pair[0].toLowerCase()}`, (item) => item.color, (item, name) => setColor(item, "color", name)), ...(oneColor ? [] : [color("color-below", `Color ${pair[1].toLowerCase()}`, belowOf, (item, name) => setColor(item, "colorBelow", name))])]
-              : [color("color", "Color", (item) => item.color, (item, name) => setColor(item, "color", name))]),
-            ...(layer.byLevels ? [color("color-under", "Color under its levels", (item) => item.color, (item, name) => setColor(item, "under", name))] : []),
+            ...((COLOR_MODES[layer.type] ?? []).length > 1 ? [{ key: "colors", icon: modeSwatch(layer, colorModeOf(layer)), label: "Colors", aside: modeName(layer, colorModeOf(layer)), words: `colors color way ${(COLOR_MODES[layer.type] ?? []).map((mode) => /** @type {Record<string, string>} */ (MODE_WORDS)[mode] + (mode === "sides" && layer.type === "trend" ? " resistance support" : "")).join(" ")}`, group: "Style", page: () => choicePage("Colors", () => colorModeChoices(id), lookOfChoice) }] : []),
+            ...colorSlots(layer).map(([key, label]) => (key === "from"
+              ? { key: "color-from", icon: source ? letterChip(source) : ICONS.series, label: "Colors from", aside: source ? labelOf(source) : "", group: "Style", page: () => choicePage("Colors from", () => fromChoices(id), lookOfChoice) }
+              : color(key, colorSlots(layer).length > 1 || colorModeOf(layer) === "levels" ? `Color ${label.toLowerCase()}` : "Color"))),
             { key: "opacity", icon: ICONS.sliders, label: "Opacity", aside: `${Math.round(opacityOf(layer) * 100)}%`, group: "Style", page: () => choicePage("Opacity", () => OPACITIES.map((opacity) => ({ key: String(opacity), icon: ICONS.sliders, label: `${Math.round(opacity * 100)}%`, current: opacityOf(now()) === opacity, ...both((item) => (item.opacity = opacity === defaultOpacity(item) ? undefined : opacity)) }))) },
             ...(layer.type !== "histogram" ? [{ key: "width", icon: ICONS.sliders, label: "Width", aside: `${layer.width}px`, group: "Style", page: () => choicePage("Width", () => WIDTHS.map((width) => ({ key: String(width), icon: ICONS.sliders, label: `${width}px`, current: now().width === width, ...both((item) => (item.width = width)) }))) }] : []),
             ...(lineish ? [
@@ -20940,8 +21122,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         for (const rule of all$(".menu-rule", menu)) rule.setAttribute("role", "separator");
         for (const button of all$("button", menu)) {
           if (!button.hasAttribute("role")) button.setAttribute("role", button.hasAttribute("aria-checked") ? "menuitemradio" : "menuitem");
-          // (One leading to another menu: its ›, where nothing else is at its end.)
-          if (button.getAttribute("aria-haspopup") === "menu" && !button.querySelector("span, kbd")) button.insertAdjacentHTML("beforeend", `<span class="sub">${ICONS.next}</span>`);
+          // (One leading to another menu: its › at its end, after what it says.)
+          if (button.getAttribute("aria-haspopup") === "menu" && !button.querySelector(".sub")) button.insertAdjacentHTML("beforeend", `<span class="sub">${ICONS.next}</span>`);
           // Its key, kept while a second press is asked for (that replaces what it says).
           const key = button.querySelector("kbd")?.textContent;
           if (key) button.dataset.key = key;
@@ -20978,7 +21160,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           const before = list[i - 1], apart = i > 0 && (row.apart || (row.group ?? "") !== (before.group ?? "") || (row.danger && !before.danger));
           const head = heads && row.group && row.group !== before?.group ? `<div class="menu-group">${escape(row.group)}</div>` : "";
           const choice = row.current !== undefined;
-          return `${apart ? '<div class="menu-rule"></div>' : ""}${head}<button type="button" data-pick="${escape(row.key ?? String(i))}"${choice ? ` aria-checked="${Boolean(row.current)}"` : ""}${row.danger ? ' class="danger"' : ""}${row.disabled ? ` aria-disabled="true" data-tip="${escape(row.disabled)}"` : ""}${row.page ? ' aria-haspopup="menu"' : ""}>${choice ? tick(Boolean(row.current)) : ""}${row.icon ?? ""}${escape(row.label)}${row.kbd ? `<kbd>${escape(keyText(row.kbd))}</kbd>` : row.aside ? `<span>${escape(row.aside)}</span>` : ""}</button>`;
+          return `${apart ? '<div class="menu-rule"></div>' : ""}${head}<button type="button" data-pick="${escape(row.key ?? String(i))}"${choice ? ` aria-checked="${Boolean(row.current)}"` : ""}${row.danger ? ' class="danger"' : ""}${row.disabled ? ` aria-disabled="true" data-tip="${escape(row.disabled)}"` : ""}${row.page ? ' aria-haspopup="menu"' : ""}>${choice ? tick(Boolean(row.current)) : ""}${row.icon ?? ""}${escape(row.label)}${row.kbd ? `<kbd>${escape(keyText(row.kbd))}</kbd>` : row.disabled || row.aside ? `<span>${escape(row.disabled || row.aside || "")}</span>` : ""}</button>`;
         }).join("");
         showMenu(anchor, `${title ? `<div class="menu-group">${escape(title)}</div>` : ""}${html}`, ({ pick: key }) => {
           const row = list.find((item, i) => (item.key ?? String(i)) === key);
@@ -21941,6 +22123,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             hidden: layer.hidden === true || undefined,
             priceLine: layer.priceLine === true || undefined,
             colorBelow: isColor(layer.colorBelow) ? layer.colorBelow : undefined,
+            colors: layer.colors === 1 || layer.colors === 4 ? layer.colors : undefined,
+            colorFading: isColor(layer.colorFading) ? layer.colorFading : undefined,
+            colorBelowFading: isColor(layer.colorBelowFading) ? layer.colorBelowFading : undefined,
             opacity: OPACITIES.includes(layer.opacity) && layer.opacity !== defaultOpacity({ type: made ?? "line" }) ? layer.opacity : undefined,
             letter: typeof layer.letter === "string" && /^[A-Z]{1,2}$/.test(layer.letter) ? layer.letter : undefined,
             ...(layer.format !== "auto" && FORMATS.some(([id]) => id === layer.format) ? { format: layer.format } : {}),
