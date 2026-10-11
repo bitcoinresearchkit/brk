@@ -4,8 +4,9 @@ Applied by hand to `dist/lightweight-charts.standalone.production.mjs`, the only
 it, the build inlines it). A fresh download loses them: apply each again at its anchor (minified names are 5.2.1's),
 then open `tests.html` (served from the repo) and check it says 0 failing and every step the same.
 
-The plots draw exactly what the library does, but for the log marks (1) and the rounded bars (7, only where a radius is
-set); the axes' tags are rounded (6). The rest (2–5, 8) draw the same, faster. `tests.html` runs the patched file and 5.2.1 as published side by side through every
+The plots draw exactly what the library does, but for the log marks (1, 12) and the rounded bars (7, only where a radius
+is set); the axes' tags are rounded (6), the time axis's labels fade before its ends (10), a price axis's tags stay inside
+its pane (11). The rest (2–5, 8, 9) draw the same, faster. `tests.html` runs the patched file and 5.2.1 as published side by side through every
 series type, every price scale mode (inverted too), pans, jumps, zooms, the crosshair, restyles, live updates, new data,
 resizes, margins, moves between scales, a held price range and conflation, and compares their plots pixel for pixel, the
 axes left out (713 steps).
@@ -153,6 +154,46 @@ series held; then a live update, the whole set again, and an emptied series give
 Measured (Chromium, a chunk of 8,000 points reached back at ten minutes, with Studio's build only giving the new
 points): 39 layers 721 → 162 ms (patch 8 alone: 328); 10 layers with 11 chunks held (87,000 points) 317 → 161 ms.
 Mullvad, 10 layers: 250 → 133 ms at 3 chunks, 583 → 250 at 7.
+
+## 10. The time axis's labels never cut at its ends
+
+A date label centered on its tick near either end of the time axis was drawn across it, cut in half ("20" for 2020 at
+the plot's left, after a pan). Each label now fades out over the last 12 px before either end (its alpha the share of
+that distance left) and isn't drawn once it would reach one: as the chart pans, a label fades away at an end instead of
+being cut there, and fades in as it comes back.
+
+- `class` of the time axis widget (the one with `tg()`, the library's label nudge for fixed edges): `bvLabel(t,l,x,y)`
+  added before `tg()`; its two label loops (`weight<s`, `weight>=s`) call it instead of `t.fillText(e.label,n,i)`,
+  but for a label the library moves inside an end itself (`needAlignCoordinate`: `fixLeftEdge`/`fixRightEdge`, or
+  scrolling and scaling off), drawn as it was.
+
+`tests.html` leaves the axes out of its pictures. Checked in Studio by recording every label the time axis draws through
+40 pans (264 labels: none crossing an end, 9 faded near one).
+
+## 11. A price axis's tags inside their pane
+
+The library pulls a tag in when its value sits within half a tag of the pane's edge, then spreads overlapping tags
+apart, which can push one back across the edge with nothing to shift the rest by (a short pane: MVRV's base-line tag
+"1" pushed under its last value's, cut in half by the pane's foot). After the spread, the tags of values in view (within
+half a tag of the pane) and those the spread put in it are now moved inside where one crosses an edge, from the foot up (each above the one under it,
+none past the foot), then from the top down: those beside one moved with it, none overlapping where they fit.
+
+- `class Wn` (a price axis widget), the overlap fix (it calls `Fn` twice): `,this.bvInside(t,i)` after them;
+  `bvInside(t,i)` added after it.
+
+`tests.html` leaves the axes out of its pictures. Checked in Studio on the phone at its side (MVRV's tags in a short
+pane) and squeezed log scales.
+
+## 12. No log mark under the price's least move
+
+Where patch 1 leaves a log scale to the library (a range reaching zero or below: a log axis dragged short, its foot past
+nothing), the library steps it linearly, and its marks there read "0" and "−0.02" on a log scale. A log scale's marks
+under the price's least move (the format's `minMove`), zero or below, now go, as patch 1's never go there.
+
+- `class pi`, `Kl()` (rebuilding the marks): after the edge marks, `if(this.Ki.ho()){…filter…}`.
+
+`tests.html`'s log marks are patch 1's (its own never go there). Checked in Studio: a log axis dragged short by 80 and
+200 px (the phone review's repro, its "0" and "−0.02" gone), and a scale of values under one squeezed by 120 to 300 px.
 
 ## Measured (Chromium, CPU time in script; scratch benchmarks, before → after)
 
