@@ -93,7 +93,8 @@
         --ring: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.14));
         --sweep: light-dark(rgb(0 0 0 / 0.035), rgb(255 255 255 / 0.03));
         /* A surface's top edge catching the light; a field typed in, its edge lit with a halo around. */
-        --sheen: inset 0 1px 0 light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.04));
+        --sheen-color: light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.04));
+        --sheen: inset 0 1px 0 var(--sheen-color);
         --field-focus: inset 0 0 0 1px var(--edge), 0 0 0 3px var(--line);
         /* The interface's own emphasis: the primary action, focus and indicators, in ink rather than a hue. */
         --primary: var(--ink);
@@ -114,7 +115,9 @@
            ring made it, so over a chart's bright tags it's still its edge, not a gap: a submenu as close to its menu
            everywhere.) */
         --pop: inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.05)), 0 0 0 1px light-dark(color-mix(in srgb, var(--app), black 7%), color-mix(in srgb, var(--app), white 8%)), 0 24px 64px -12px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.7)), 0 8px 20px -8px light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.5));
-        --card-shadow: 0 0 0 2px light-dark(transparent, rgb(0 0 0 / 0.2)), 0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 24px 60px -30px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.6));
+        --card-shadow: 0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 24px 60px -30px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.6));
+        /* (Its ring, around its edge: an outline, not a shadow's spread, which Firefox redraws dearly as the card resizes.) */
+        --card-ring: 2px solid light-dark(transparent, rgb(0 0 0 / 0.2));
         --lift: 0 1px 3px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.3)), 0 0 0 1px light-dark(rgb(0 0 0 / 0.07), transparent);
         --held-shadow: 0 12px 20px -14px light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.8));
         --hint-shadow: 0 0 0 1px light-dark(rgb(0 0 0 / 0.08), transparent), 0 4px 12px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.45));
@@ -1598,8 +1601,11 @@
         overflow: hidden;
         border: 1px solid var(--line);
         border-radius: var(--radius-xl);
-        background: var(--card);
-        box-shadow: var(--sheen), var(--card-shadow);
+        /* (Its sheen a line of its background, its ring an outline: resized, as the sidebar and the panel move, a box with
+           an inset shadow and a spread one costs Firefox half its frames.) */
+        background: linear-gradient(var(--sheen-color), var(--sheen-color)) 0 0 / 100% 1px no-repeat padding-box, var(--card);
+        box-shadow: var(--card-shadow);
+        outline: var(--card-ring);
         isolation: isolate;
         container: card / inline-size;
 
@@ -1861,35 +1867,40 @@
         position: absolute;
         inset: 0 0 8px 0;
         z-index: 0;
+        /* (Sized ahead of a layout's motion, larger than its box till the motion's end: nothing past its edge.) */
+        overflow: clip;
 
         /* (Every layer hidden: an empty plot's scales would say nothing true.) */
         &:is(.waiting, .unseen) {
           visibility: hidden;
         }
 
-        &.reveal {
-          -webkit-mask-image: linear-gradient(90deg, #000 42%, transparent 58%);
-          mask-image: linear-gradient(90deg, #000 42%, transparent 58%);
-          -webkit-mask-size: 260% 100%;
-          mask-size: 260% 100%;
+        /* Revealed left to right: the card's color slid off it, a soft edge first (moved, not a mask: a masked chart is
+           painted anew each frame, in Firefox a third of a second of slow frames). */
+        &.reveal::after {
+          content: "";
+          position: absolute;
+          inset: 0 auto 0 0;
+          z-index: 10;
+          width: 260%;
+          background: linear-gradient(90deg, transparent 42%, var(--card) 58%);
+          pointer-events: none;
           animation: wipe 1150ms cubic-bezier(0.32, 0.72, 0.2, 1) both;
+        }
 
-          /* (A chart switched to: the same wipe, at a page's pace; the page's first, unhurried.) */
-          &.quick {
-            animation-duration: var(--dur-page);
-          }
+        /* (A chart switched to: the same wipe, at a page's pace; the page's first, unhurried.) */
+        &.reveal.quick::after {
+          animation-duration: var(--dur-page);
         }
       }
 
       @keyframes wipe {
         from {
-          -webkit-mask-position: 100% 0;
-          mask-position: 100% 0;
+          transform: translateX(-61.5385%);
         }
 
         to {
-          -webkit-mask-position: 0 0;
-          mask-position: 0 0;
+          transform: none;
         }
       }
 
@@ -2006,9 +2017,17 @@
         margin: auto;
       }
 
-      /* The time axis: a label cut by the plot's left edge fades into it (as a strip's edges do). */
-      #chart table tr:last-child > td:nth-child(2) {
-        mask-image: linear-gradient(90deg, transparent, #000 14px);
+      /* The time axis: a label cut by the plot's left edge fades into it (as a strip's edges do), under the card's color
+         fading out: no mask (a masked layer in the card, repainted as the crosshair's date moves, costs Firefox a third of
+         its frames). */
+      #chart table tr:last-child > td:nth-child(2)::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        z-index: 5;
+        width: 14px;
+        background: linear-gradient(90deg, var(--card), transparent);
+        pointer-events: none;
       }
 
       .legend {
@@ -5451,6 +5470,7 @@
           border-color: transparent;
           background: none;
           box-shadow: none;
+          outline: none;
 
           &::before {
             display: none;
@@ -6212,7 +6232,9 @@
           margin: 0;
           border: 0;
           border-radius: 0;
+          background: var(--card);
           box-shadow: none;
+          outline: none;
         }
 
         .home {
@@ -7372,6 +7394,7 @@
           border: 0;
           background: none;
           box-shadow: none;
+          outline: none;
           container-type: normal;
           animation: none;
         }
@@ -10804,6 +10827,56 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         return false;
       })().catch(() => false);
       const view = LC.createChart($("chart"), { autoSize: true, ...chartOptions() });
+      /**
+       * A layout's motion (the sidebar's, the panel's, full screen's, a peek's): the chart sized once for it, not at each
+       * of its frames (each a new size: its canvases made anew, every series drawn again; Firefox shows a third of them).
+       * It takes the larger of its sizes now and at the motion's end at once, pinned to the edges of its box that move
+       * least (the sidebar's motion moves the left one: pinned right), so it stays where it is as the moving edges cover
+       * or uncover it. At the end, it follows its box again.
+       */
+      let motionsSized = 0, sizeHeld = false;
+      function sizeOnce() {
+        const box = $("chart"), inMotion = /** @type {CSSTransition[]} */ (document.querySelector(".app")?.getAnimations({ subtree: true }).filter((motion) => motion instanceof CSSTransition && /^(width|height|margin|padding|border|inset|left|right|top|bottom)/.test(motion.transitionProperty)) ?? []);
+        if (!inMotion.length) return;
+        // (Its box now and the chart's own size: the same, unless a motion before this one's still holding it.)
+        const run = ++motionsSized, at = inMotion.map((motion) => motion.currentTime), now = box.getBoundingClientRect(), own = view.chartElement().getBoundingClientRect();
+        // (Its box at their end: each motion there for a moment, read, and back where it was; nothing's drawn between.)
+        for (const motion of inMotion) motion.currentTime = motion.effect?.getComputedTiming().endTime ?? null;
+        const end = box.getBoundingClientRect();
+        inMotion.forEach((motion, i) => (motion.currentTime = at[i]));
+        const width = Math.max(own.width, end.width), height = Math.max(own.height, end.height);
+        const side = Math.abs(end.left - now.left) <= Math.abs(end.right - now.right) ? "left" : "right", edge = Math.abs(end.top - now.top) <= Math.abs(end.bottom - now.bottom) ? "top" : "bottom";
+        view.applyOptions({ autoSize: false });
+        sizeHeld = true;
+        chartHeight = height;
+        Object.assign(view.chartElement().style, { position: "absolute", left: "", right: "", top: "", bottom: "", [side]: "0", [edge]: "0", width: `${width}px`, height: `${height}px` });
+        if (width > own.width || height > own.height) {
+          // (Drawn at its new size now, the motions held at their start meanwhile: they start on the next frame, from
+          // their start, not a long frame in.)
+          for (const motion of inMotion) motion.pause();
+          view.resize(width, height, true);
+          // (Those another toggle has replaced meanwhile left be: started again, they'd come back.)
+          requestAnimationFrame((time) => inMotion.forEach((motion, i) => motion.playState === "paused" && (motion.startTime = time - Number(at[i] ?? 0))));
+        }
+        Promise.allSettled(inMotion.map((motion) => motion.finished)).then(() => run === motionsSized && releaseSize());
+      }
+      /** The chart following its box again (a window resized meanwhile, at once): what's laid out by its size, again. */
+      function releaseSize() {
+        if (!sizeHeld) return;
+        sizeHeld = false;
+        // (Back in its box, the whole of it, as the library made it.)
+        Object.assign(view.chartElement().style, { position: "", left: "", right: "", top: "", bottom: "", width: "100%", height: "100%" });
+        view.applyOptions({ autoSize: true });
+        chartHeight = $("chart").getBoundingClientRect().height;
+        relayout();
+      }
+      // Whatever lays the page out anew (a button, a key, ⌘K, a peek, another tab's settings): its motion, sized once.
+      {
+        const laidOut = new MutationObserver(sizeOnce);
+        laidOut.observe(document.body, { attributes: true, attributeFilter: ["data-sidebar", "data-panel", "data-peek"] });
+        laidOut.observe(/** @type {HTMLElement} */ (document.querySelector(".app")), { attributes: true, attributeFilter: ["data-full"] });
+      }
+      addEventListener("resize", releaseSize);
       // (Its layout table is no table to read: the chart's said by its plot's keys, see placePlotKeys.)
       view.chartElement().querySelector("table")?.setAttribute("role", "presentation");
       // Its figures in Inter, as every figure here (a canvas has no tabular figures: an axis is as wide as its labels
@@ -12189,7 +12262,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         all.forEach((margins, i) => ["left", "right"].forEach((side) => view.priceScale(side, i).applyOptions({ scaleMargins: margins })));
       }
       const resized = new ResizeObserver((entries) => {
-        for (const entry of entries) if (entry.target === $("chart")) chartHeight = entry.contentRect.height;
+        // (Its size held through a layout's motion: the chart's own height, not its box's, till it follows it again.)
+        for (const entry of entries) if (entry.target === $("chart") && !sizeHeld) chartHeight = entry.contentRect.height;
         relayout();
       });
       resized.observe($("chart"));
@@ -13623,7 +13697,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       function plotBox() {
         const panes = view.panes(), first = panes[0]?.getHTMLElement(), last = panes.at(-1)?.getHTMLElement();
         if (!first || !last) return null;
-        const canvas = $("canvas").getBoundingClientRect(), chartBox = $("chart").getBoundingClientRect();
+        const canvas = $("canvas").getBoundingClientRect(), chartBox = $("chart").getBoundingClientRect(), element = view.chartElement().getBoundingClientRect();
         // (A pane's scale not there yet, a chart being switched: no box this frame.)
         let axis = 0;
         try {
@@ -13631,8 +13705,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         } catch {
           return null;
         }
-        const left = chartBox.left - canvas.left + axis, top = first.getBoundingClientRect().top - canvas.top;
-        return { left, top, width: view.timeScale().width(), height: last.getBoundingClientRect().bottom - canvas.top - top };
+        // (What shows of it: held larger than its box through a layout's motion, the chart's cut at the box's edges.)
+        const left = Math.max(element.left + axis, chartBox.left), right = Math.min(element.left + axis + view.timeScale().width(), chartBox.right);
+        const top = Math.max(first.getBoundingClientRect().top, chartBox.top), bottom = Math.min(last.getBoundingClientRect().bottom, chartBox.bottom);
+        return { left: left - canvas.left, top: top - canvas.top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
       }
       /** The drawing tools docked on a side (⌘K's way to what dragging them does), in the middle of it. */
       function dockBelt(/** @type {"top" | "bottom" | "left" | "right"} */ side) {
@@ -13916,7 +13992,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         repaintDrawings();
       }
       /** A point of the chart in its pane's plot, where drawings are drawn, in pixels. */
-      const plotPoint = (clientX, clientY, rect) => ({ x: clientX - $("chart").getBoundingClientRect().left - view.priceScale("left", 0).width(), y: clientY - rect.top });
+      const plotPoint = (clientX, clientY, rect) => ({ x: clientX - view.chartElement().getBoundingClientRect().left - view.priceScale("left", 0).width(), y: clientY - rect.top });
       /** The drawing under a point of the chart: a point of one first, else the last drawn. */
       function drawingAt(clientX, clientY, reach = REACH) {
         const pane = shownDrawings.length ? paneAt(clientY) : null, id = pane && chart.panes[pane.index]?.id;
@@ -14501,7 +14577,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const field = /** @type {HTMLTextAreaElement} */ ($("draw-text")), drawing = writing?.drawing, layer = drawing && layerById(drawing.layer);
         const series = layer && drawn.get(layer.id), line = timeLine(), pane = layer && view.panes()[chart.panes.findIndex((item) => item.id === layer.pane)]?.getHTMLElement();
         if (!drawing || !series || !line || !pane) return;
-        const canvasBox = $("canvas").getBoundingClientRect(), plotLeft = $("chart").getBoundingClientRect().left + view.priceScale("left", 0).width();
+        const canvasBox = $("canvas").getBoundingClientRect(), plotLeft = view.chartElement().getBoundingClientRect().left + view.priceScale("left", 0).width();
         if (writing.label) {
           // A label: centered where it sits (a trend line's at its angle; its field level).
           const size = sketches.get(series)?.size, place = size && labelPlace(drawing, onScreen(drawing, series, line), size, field.value || " ");
@@ -23106,7 +23182,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (button.classList.contains("hidden") && !folded.has(/** @type {HTMLElement | null} */ (button.closest(".legend"))?.dataset.pane ?? "")) button.style.display = "none";
           button.classList.remove("selected", "lit");
         }
-        const origin = $("chart").getBoundingClientRect();
+        const origin = view.chartElement().getBoundingClientRect();
         const box = (element) => {
           const rect = element.getBoundingClientRect();
           return { x: (rect.left - origin.left) * scale, y: (rect.top - origin.top) * scale, width: rect.width * scale, height: rect.height * scale };
