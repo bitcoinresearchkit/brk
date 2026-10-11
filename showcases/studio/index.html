@@ -1981,7 +1981,7 @@
        * Where a scroller hides more, its edge fades (sideways on a strip, up and down on the chart list), as deep as
        * there's more beyond it, up to 28px: scrolling, it eases in and out with the content, gone at the very end.
        */
-      :is(.strip, .chart-list).overflows {
+      :is(.strip, .chart-list, .belt-row).overflows {
         mask-image: linear-gradient(var(--along, to right), transparent, #000 var(--edge-start, 0px), #000 calc(100% - var(--edge-end, 0px)), transparent);
       }
 
@@ -2015,19 +2015,6 @@
         inset: 0;
         z-index: 4;
         margin: auto;
-      }
-
-      /* The time axis: a label cut by the plot's left edge fades into it (as a strip's edges do), under the card's color
-         fading out: no mask (a masked layer in the card, repainted as the crosshair's date moves, costs Firefox a third of
-         its frames). */
-      #chart table tr:last-child > td:nth-child(2)::before {
-        content: "";
-        position: absolute;
-        inset: 0 auto 0 0;
-        z-index: 5;
-        width: 14px;
-        background: linear-gradient(90deg, var(--card), transparent);
-        pointer-events: none;
       }
 
       .legend {
@@ -2074,11 +2061,12 @@
             }
           }
 
-          /* Its words edged in a hairline of the card's color: unseen on the plain plot, over a solid cloud what keeps
-             them apart from it (bright enough that the edge never sits on grey). */
+          /* Its words edged in the card's color, 2px around: unseen on the plain plot, over a solid cloud what keeps them
+             apart from it (bright enough that the edge never sits on grey), and a level's line or the data crossing them
+             (a short pane's) stops short of them. */
           :is(.name, .legend-value, .legend-error) {
             paint-order: stroke fill;
-            -webkit-text-stroke: 2px var(--card);
+            -webkit-text-stroke: 4px var(--card);
           }
 
           &.selected {
@@ -2321,6 +2309,11 @@
         align-items: center;
         gap: 2px;
         min-width: 0;
+      }
+
+      /* (Its tools and what's in hand, one row: laid out as the belt's own here; on a phone, the row that slides.) */
+      .belt-row {
+        display: contents;
       }
 
       /* A tool kept in hand (double-clicked): a dot under it, as long as it's kept. */
@@ -4675,6 +4668,13 @@
           color: var(--ink);
         }
 
+        /* (Its ›, leading to another page: a menu's own, as every row leading on ends with.) */
+        .item-next svg {
+          width: 14px;
+          height: 14px;
+          color: var(--muted);
+        }
+
         /* A row's tick and ›, after its aside (which is cut, they aren't). */
         .item-mark {
           flex-shrink: 0;
@@ -6304,12 +6304,10 @@
           display: none;
         }
 
-        /* The drawing belt: in the stage foot's place (see placeBelt), one row sliding sideways. */
+        /* The drawing belt: in the stage foot's place (see placeBelt), one row sliding sideways, its edges fading where
+           there's more past them (its caption, above it, outside the row). */
         .belt {
           flex-wrap: nowrap;
-          overflow-x: auto;
-          overscroll-behavior-x: contain;
-          scrollbar-width: none;
           border-radius: 0;
           padding: 2px 6px;
           background: var(--card);
@@ -6317,6 +6315,20 @@
 
           .grip {
             display: none;
+          }
+
+          .belt-row {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: 2px;
+            min-width: 0;
+            /* (Room above and under its buttons for their focus rings and keys: a row that slides cuts what passes it.) */
+            margin-block: -4px;
+            padding-block: 4px;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
           }
 
           :is(.belt-tools, .belt-context) {
@@ -12895,11 +12907,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       const ordinal = (/** @type {number} */ n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
       /** The halvings across a pane, faint and dashed, behind its series; in the lowest pane, named at their foot by number. */
-      function paintHalvings(context, size, /** @type {{ x: number, n: number, next: boolean }[]} */ marks, /** @type {boolean} */ named) {
+      function paintHalvings(context, size, /** @type {{ x: number, n: number, next: boolean }[]} */ marks) {
         const soft = css("--soft");
         context.save();
         context.lineWidth = 1;
-        for (const { x, n, next } of marks) {
+        for (const { x, next } of marks) {
           if (x < -1 || x > size.width + 1) continue;
           const at = Math.round(x) + 0.5;
           context.strokeStyle = alpha(soft, next ? 0.3 : 0.45);
@@ -12908,21 +12920,34 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           context.moveTo(at, 0);
           context.lineTo(at, size.height);
           context.stroke();
-          if (!named) continue;
+        }
+        context.restore();
+      }
+      /** Their names, up beside them, over the series (a halo in the card's color, as a drawing's words: the data under them stays out of them). */
+      function paintHalvingNames(context, size, /** @type {{ x: number, n: number, next: boolean }[]} */ marks) {
+        const soft = css("--soft");
+        context.save();
+        context.font = `510 10px ${SANS}`;
+        context.textBaseline = "top";
+        context.lineJoin = "round";
+        context.lineWidth = 3;
+        context.strokeStyle = css("--card");
+        for (const { x, n, next } of marks) {
+          if (x < -1 || x > size.width + 1) continue;
+          const name = `${ordinal(n)} halving${next ? " ≈" : ""}`;
           context.save();
-          context.translate(at + 4, size.height - 8);
+          context.translate(Math.round(x) + 4.5, size.height - 8);
           context.rotate(-Math.PI / 2);
-          context.font = `510 10px ${SANS}`;
-          context.textBaseline = "top";
           context.fillStyle = alpha(soft, next ? 0.6 : 0.85);
-          context.fillText(`${ordinal(n)} halving${next ? " ≈" : ""}`, 0, 0);
+          context.strokeText(name, 0, 0);
+          context.fillText(name, 0, 0);
           context.restore();
         }
         context.restore();
       }
       /** A drawing on its pane (a line's label in a gap of it). */
       function paintDrawing(context, drawing, points, size, card) {
-        const color = ink(drawing.color), [a, b] = points, words = { color, back: drawing.back ?? "", on: drawing.back === "solid" ? contrastOn(drawing.color) : color, card };
+        const color = ink(drawing.color), [a, b] = points, words = { color, back: drawing.back ?? "", on: wordsColor(drawing, card), card };
         const label = drawing.label && drawing.id !== labelTyping ? labelPlace(drawing, points, size) : null;
         context.save();
         context.globalAlpha = drawing.kind === "ruler" ? 1 : drawing.opacity ?? 1;
@@ -13244,6 +13269,41 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /** Words on a color: dark on a light one, white on a dark one. */
       const contrastOn = (/** @type {string} */ color) => (shownOklch(color)[0] > 0.7 ? "#08090a" : "#ffffff");
+      /** A color's luminance as WCAG reads it (sRGB hex), and two colors' contrast. */
+      const luminance = (/** @type {string} */ hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+      const contrastOf = (/** @type {string} */ a, /** @type {string} */ b) => ((x, y) => (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05))(luminance(a), luminance(b));
+      /** A color laid over another at a share, as a canvas lays it (sRGB hex). */
+      const laidOver = (/** @type {string} */ base, /** @type {string} */ top, /** @type {number} */ share) => `#${[1, 3, 5].map((i) => Math.round(parseInt(base.slice(i, i + 2), 16) * (1 - share) + parseInt(top.slice(i, i + 2), 16) * share).toString(16).padStart(2, "0")).join("")}`;
+      const wordsTones = new Map();
+      /**
+       * Words in a color, as they read on their ground: its hue and chroma, its lightness moved (darker on a light ground,
+       * lighter on a dark one) as little as reaching 4.5:1 takes; already there, the color itself (sRGB hex, both).
+       */
+      function wordsOn(/** @type {string} */ color, /** @type {string} */ ground) {
+        const key = `${color}|${ground}`, wordsKnown = wordsTones.get(key);
+        if (wordsKnown) return wordsKnown;
+        let tone = color;
+        if (contrastOf(color, ground) < 4.5) {
+          const [l, c, h] = hexToOklch(color), down = luminance(ground) > 0.18;
+          // (The lightness nearest its own that reads, halved toward.)
+          let lo = down ? 0 : l, hi = down ? l : 1;
+          for (let i = 0; i < 14; i++) {
+            const mid = (lo + hi) / 2, reads = contrastOf(oklchToHex(mid, c, h), ground) >= 4.5;
+            if (down === reads) lo = mid;
+            else hi = mid;
+          }
+          tone = oklchToHex(down ? lo : hi, c, h);
+        }
+        if (wordsTones.size > 200) wordsTones.clear();
+        wordsTones.set(key, tone);
+        return tone;
+      }
+      /** A drawing's words' color: on its own color (a solid back), black or white; else its color, as reads on what's under them (the card; a soft back, its tint). */
+      function wordsColor(/** @type {Drawing} */ drawing, card = css("--card")) {
+        if (drawing.back === "solid") return contrastOn(drawing.color);
+        const color = ink(drawing.color);
+        return wordsOn(color, drawing.back === "soft" || drawing.back === "soft-outline" ? laidOver(card, color, 0.16) : card);
+      }
       /** A tick on a color, in contrast, as a background image. */
       const tickOn = (/** @type {string} */ color) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8.2 2.6 2.6L12 5.4' fill='none' stroke='${encodeURIComponent(contrastOn(color))}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`;
       /** A label on an axis, in a drawing's color as drawn (see colorOfDrawing: not toned again). @param {number} coordinate @param {string} text @param {string} color */
@@ -13269,21 +13329,19 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           this.size = { width: 0, height: 0 };
           /** The halvings in this pane, in pixels across, each its number (`next`: the estimated one), if this layer draws them for its pane. @type {{ x: number, n: number, next: boolean }[]} */
           this.marks = [];
-          this.lowest = false;
+          /** The same, if this layer names them (the lowest pane's backmost layer: its top views drawn first, every drawing over them). @type {{ x: number, n: number, next: boolean }[]} */
+          this.names = [];
           /** Where the halvings draw: just over this layer's series (it's the pane's frontmost fill), else under every one. @type {"bottom" | "normal"} */
           this.markOrder = "bottom";
-          this.markView = { zOrder: () => this.markOrder, renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context, mediaSize }) => paintHalvings(context, mediaSize, this.marks, this.lowest)) }) };
-          this.marksOnly = [this.markView];
-          this.views = [{ zOrder: () => /** @type {const} */ ("top"), renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context, mediaSize }) => this.draw(context, mediaSize)) }) }];
-          this.both = [this.markView, ...this.views];
+          this.markView = { zOrder: () => this.markOrder, renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context, mediaSize }) => paintHalvings(context, mediaSize, this.marks)) }) };
+          this.namesView = { zOrder: () => /** @type {const} */ ("top"), renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context, mediaSize }) => paintHalvingNames(context, mediaSize, this.names)) }) };
+          this.drawingsView = { zOrder: () => /** @type {const} */ ("top"), renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context, mediaSize }) => this.draw(context, mediaSize)) }) };
           /** A trend's segments' ends, dotted (where one starts after a switch, or ends before one), as the series draws. @type {{ x: number, y: number, i: number }[]} */
           this.ends = [];
           this.endsLook = /** @type {{ color: string, radius: number, at?: ((i: number) => string) | null }} */ ({ color: "", radius: 1.5 });
           this.endsView = { zOrder: () => /** @type {const} */ ("normal"), renderer: () => ({ draw: (target) => target.useMediaCoordinateSpace(({ context }) => paintEnds(context, this.ends, this.endsLook)) }) };
-          this.endsOnly = [this.endsView];
-          this.endsMarks = [this.endsView, this.markView];
-          this.endsViews = [this.endsView, ...this.views];
-          this.endsBoth = [this.endsView, ...this.both];
+          /** What it draws, by which of its parts it has (made once each: asked for every frame). @type {Map<number, any[]>} */
+          this.viewSets = new Map();
         }
         attached({ series, requestUpdate }) {
           this.series = series;
@@ -13299,10 +13357,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // so none hides them; under the lines in front of it. No fill: under every series.)
           const pane = layerById(this.layer)?.pane, shown = chart.halvings && line && series ? chart.layers.filter((layer) => drawn.has(layer.id) && !layer.hidden && layer.pane === pane) : [];
           const frontFirst = chart.panes.find((item) => item.id === pane)?.reverse ? shown.reverse() : shown, fill = frontFirst.find(fills);
-          const host = fill ?? frontFirst[0] ?? null;
+          const host = fill ?? frontFirst[0] ?? null, back = frontFirst.at(-1) ?? null;
           this.markOrder = fill ? "normal" : "bottom";
-          this.marks = host?.id === this.layer && line ? [...minedHalvings().map((time, i) => ({ x: line.at + barOf(time) * line.step, n: i + 1, next: false })), ...nextHalvings().map(({ n, time }) => ({ x: line.at + barOf(time) * line.step, n, next: true }))] : [];
-          this.lowest = Boolean(host) && chart.panes.filter((pane) => chart.layers.some((layer) => layer.pane === pane.id && !layer.hidden)).at(-1)?.id === host?.pane;
+          const lowest = Boolean(host) && chart.panes.filter((pane) => chart.layers.some((layer) => layer.pane === pane.id && !layer.hidden)).at(-1)?.id === host?.pane;
+          const marks = line && (host?.id === this.layer || (lowest && back?.id === this.layer)) ? [...minedHalvings().map((time, i) => ({ x: line.at + barOf(time) * line.step, n: i + 1, next: false })), ...nextHalvings().map(({ n, time }) => ({ x: line.at + barOf(time) * line.step, n, next: true }))] : [];
+          this.marks = host?.id === this.layer ? marks : [];
+          this.names = lowest && back?.id === this.layer ? marks : [];
           const own = layerById(this.layer), trend = own?.type === "trend" && !own.hidden && line && series ? resolved?.results.get(this.layer) : null;
           this.ends = trend ? segmentEnds(trend, /** @type {{ at: number, step: number }} */ (line), series) : [];
           if (this.ends.length && own) {
@@ -13317,8 +13377,10 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           }) : [];
         }
         paneViews() {
-          if (!this.ends.length) return this.marks.length ? (this.shown.length ? this.both : this.marksOnly) : this.shown.length ? this.views : NONE;
-          return this.marks.length ? (this.shown.length ? this.endsBoth : this.endsMarks) : this.shown.length ? this.endsViews : this.endsOnly;
+          const parts = [this.ends.length && this.endsView, this.marks.length && this.markView, this.names.length && this.namesView, this.shown.length && this.drawingsView];
+          const key = parts.reduce((sum, part, i) => sum + (part ? 1 << i : 0), 0);
+          if (!key) return NONE;
+          return this.viewSets.get(key) ?? (this.viewSets.set(key, parts.filter(Boolean)), /** @type {any[]} */ (this.viewSets.get(key)));
         }
         /** Each line across's value; a selected line's or box's, each point's (and as it's drawn): as the axis reads it. */
         priceAxisViews() {
@@ -13657,8 +13719,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const how = selectingArea ? "Drag a box around drawings to select them" : tool && (placing?.clicks ? (byKeys ? `Arrows to its ${other}, ↵ to place it` : `${capitalize(CLICK)} its ${other}`) : `${byKeys ? TOOLS[tool].keys : TOOLS[tool].tip}${toolKept ? ", as many as you like" : ""}`);
         // The tools, then what's in hand; drawings selected, only theirs (esc, or a click on the chart, and the tools are back).
         const html = `<button type="button" class="grip" id="belt-grip" aria-label="Move the drawing tools" data-tip="Drag it to any side of the chart">${ICONS.grip}</button>
-          ${drawings.length ? "" : `<div class="belt-tools" role="group" aria-label="Tools">${tools}</div>`}
-          ${context ? `${drawings.length ? "" : '<i class="belt-rule"></i>'}<div class="belt-context" role="group" aria-label="${escape(tool ? `Next ${TOOLS[tool].noun}` : drawing ? drawingNames().get(drawing.id) ?? "" : `${drawings.length} drawings`)}">${context}</div>` : ""}
+          <div class="belt-row">${drawings.length ? "" : `<div class="belt-tools" role="group" aria-label="Tools">${tools}</div>`}
+          ${context ? `${drawings.length ? "" : '<i class="belt-rule"></i>'}<div class="belt-context" role="group" aria-label="${escape(tool ? `Next ${TOOLS[tool].noun}` : drawing ? drawingNames().get(drawing.id) ?? "" : `${drawings.length} drawings`)}">${context}</div>` : ""}</div>
           ${how ? '<p class="belt-caption"><span></span><kbd>esc</kbd></p>' : ""}`;
         // (Its words set in place: the plot taking the focus or giving it up, as a belt's button is pressed, changes only
         // them, and the button pressed stays the one clicked.)
@@ -13667,8 +13729,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (caption && caption.textContent !== how) caption.textContent = how || "";
         };
         if (html !== beltShown) {
-          const focus = focusKey(belt);
+          const focus = focusKey(belt), slid = belt.querySelector(".belt-row")?.scrollLeft ?? 0;
           belt.innerHTML = beltShown = html;
+          // (On a phone, where its row slid to: still there.)
+          const row = belt.querySelector(".belt-row");
+          if (row && slid) row.scrollLeft = slid;
           writeHow();
           drawKeys(belt);
           restoreFocus(belt, focus);
@@ -13691,7 +13756,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (Math.abs(now.left - was.left) + Math.abs(now.top - was.top) + Math.abs(now.width - was.width) + Math.abs(now.height - was.height) < 2) return;
         const timing = { duration: MOTION.small, easing: MOTION.ease }, left = parseFloat(belt.style.left), top = parseFloat(belt.style.top);
         belt.animate({ left: [`${left + was.left - now.left}px`, `${left}px`], top: [`${top + was.top - now.top}px`, `${top}px`], width: [`${was.width}px`, `${now.width}px`], height: [`${was.height}px`, `${now.height}px`], overflow: ["hidden", "hidden"] }, timing);
-        for (const part of belt.children) if (!part.classList.contains("belt-caption")) part.animate({ opacity: [0, 1] }, timing);
+        for (const part of all$(":scope > .grip, .belt-row > *", belt)) part.animate({ opacity: [0, 1] }, timing);
       }
       /** The plot, in the canvas' coordinates: from its first pane's top to its last pane's foot, between the price axes. */
       function plotBox() {
@@ -13736,6 +13801,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           belt.dataset.dock = "bottom";
           Object.assign(belt.style, { maxWidth: "", width: `${foot.width}px`, height: `${foot.height}px`, left: `${foot.left - canvas.left}px`, top: `${foot.top - canvas.top}px` });
           belt.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: "nearest", block: "nearest" });
+          // (More past an edge: that edge fades, as a strip's.)
+          const row = /** @type {HTMLElement | null} */ (belt.querySelector(".belt-row"));
+          if (row) fitStrip(row);
           const caption = /** @type {HTMLElement | null} */ (belt.querySelector(".belt-caption"));
           if (caption) Object.assign(caption.style, { position: "fixed", top: "auto", right: "auto", left: `${foot.left + 10}px`, bottom: `${innerHeight - foot.top + 6}px`, translate: "none", transform: "none" });
           return;
@@ -13818,6 +13886,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const to = back?.isConnected && back.checkVisibility() ? back : [$("plot-keys"), $("draw-toggle")].find((element) => element?.checkVisibility());
         to?.focus({ preventScroll: true });
       }
+      $("belt").addEventListener("scroll", (event) => event.target instanceof HTMLElement && event.target.classList.contains("belt-row") && fitSoon(event.target), { capture: true, passive: true });
       $("belt").addEventListener("focusout", (event) => {
         if ($("belt").contains(/** @type {Node | null} */ (event.relatedTarget))) return;
         $("belt").classList.remove("keys");
@@ -14529,7 +14598,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         field.dataset.k = String(k);
         field.style.scale = k === 1 ? "" : String(1 / k);
         field.style.setProperty("--c", cssColor(drawing.color));
-        field.style.setProperty("--on", drawing.back === "solid" ? contrastOn(drawing.color) : "var(--c)");
+        field.style.setProperty("--on", wordsColor(drawing));
         field.style.setProperty("--size", `${size * k}px`);
         field.style.setProperty("--line", `${Math.round(size * 1.33) * k}px`);
         field.dataset.back = drawing.back ?? "";
@@ -15006,20 +15075,22 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const drawThumbs = serial(async () => {
         for (const id of [...thumbs.keys()]) if (orphan(id)) thumbs.delete(id);
         let drew = false;
-        for (const doc of [...library.charts, ...(previewing ? [previewing] : [])]) {
-          const key = thumbKey(doc), failed = thumbsFailed.get(doc.id);
-          if (thumbs.get(doc.id)?.key === key || (failed?.key === key && Date.now() - failed.at < 30_000)) continue;
-          const drawing = doc.layers.length ? await drawThumb(structuredClone(doc)).catch(() => null) : { lines: [], marks: {} };
-          if (!drawing) thumbsFailed.set(doc.id, { key, at: Date.now() });
-          // Edited or deleted meanwhile: the next run draws what it has become.
-          if (!drawing || thumbKey(doc) !== key || chartById(doc.id) !== doc) continue;
-          thumbs.set(doc.id, { key, ...drawing });
-          updateMark(doc);
-          drew = true;
-        }
+        for (const doc of [...library.charts, ...(previewing ? [previewing] : [])]) drew = (await freshThumb(doc)) || drew;
         // Stored a moment after (passes follow each edit: one write for many).
         if (drew) saveThumbsSoon();
       });
+      /** A chart's mini chart drawn again where it's out of date, its marks with it (its row's, its legends'): whether it was. @param {Chart} doc */
+      async function freshThumb(doc) {
+        const key = thumbKey(doc), failed = thumbsFailed.get(doc.id);
+        if (thumbs.get(doc.id)?.key === key || (failed?.key === key && Date.now() - failed.at < 30_000)) return false;
+        const drawing = doc.layers.length ? await drawThumb(structuredClone(doc)).catch(() => null) : { lines: [], marks: {} };
+        if (!drawing) thumbsFailed.set(doc.id, { key, at: Date.now() });
+        // Edited or deleted meanwhile: the next run draws what it has become.
+        if (!drawing || thumbKey(doc) !== key || chartById(doc.id) !== doc) return false;
+        thumbs.set(doc.id, { key, ...drawing });
+        updateMark(doc);
+        return true;
+      }
       // Drawings another tab made.
       addEventListener("storage", (event) => {
         if (event.key !== THUMBS || !event.newValue) return;
@@ -16185,6 +16256,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           // (Every chart's plot on screen in its tones: the tiles, the cards of charts to start from, ⌘K's preview.)
           for (const [id, drawn] of previews) paint(id, drawn, true);
           if (/** @type {HTMLDialogElement} */ ($("palette")).open) renderPalette();
+          // (Words being typed on the chart: in their tone on this surface.)
+          if (writing) dressField(writing.drawing);
         };
         if (document.startViewTransition && !reduced.matches) document.startViewTransition(swap);
         else swap();
@@ -20498,7 +20571,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           }
           const icon = item.kind === "widen" ? ICONS.browse : item.kind === "folder" ? ICONS.folder : item.kind === "command" ? ICONS[item.command.icon] ?? ICONS.series : doc ? chartMark(doc) : ICONS.series;
           const name = item.kind === "widen" ? `Search all series for “${escape(palette.query.trim())}”` : item.kind === "folder" ? escape(humanizeKey(item.key)) : item.kind === "command" ? (searching ? highlightMatch(item.command.title, palette.query) : escape(item.command.title)) : doc ? (searching ? highlightMatch(titleOf(doc), palette.query) : escape(titleOf(doc))) : "";
-          const meta = item.kind === "folder" ? `<span class="item-meta">›</span>` : item.kind === "command" ? (item.command.current ? `<span class="item-mark" role="img" aria-label="In effect">${ICONS.check}</span>` : item.command.kbd && item.command.run && answers(item.command.kbd) ? `<kbd>${escape(keyText(item.command.kbd))}</kbd>` : "") : doc ? `<span class="item-meta">${plural(doc.layers.length, "layer")}</span>` : "";
+          const meta = item.kind === "folder" ? `<span class="item-mark"><span class="item-next" aria-hidden="true">${ICONS.next}</span></span>` : item.kind === "command" ? (item.command.current ? `<span class="item-mark" role="img" aria-label="In effect">${ICONS.check}</span>` : item.command.kbd && item.command.run && answers(item.command.kbd) ? `<kbd>${escape(keyText(item.command.kbd))}</kbd>` : "") : doc ? `<span class="item-meta">${plural(doc.layers.length, "layer")}</span>` : "";
           const idle = item.kind === "command" && !item.command.run && !item.command.current;
           return `${header}<li role="option" id="option-${i}" aria-posinset="${i + 1}" aria-setsize="${palette.items.length}" data-kind="${item.kind}" data-option="${i}" aria-selected="${i === palette.active}" ${idle ? 'class="dim" aria-disabled="true"' : ""}>${icon}<span class="item-name">${name}</span>${meta}</li>`;
         }).join("");
@@ -20883,7 +20956,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       /** A row: its icon, its label, at its end its value (or a check for the choice in effect), › if it opens a page. */
       function rowHtml(item) {
         const aside = item.aside ? (item.mono ? `<code>${escape(item.aside)}</code>` : escape(item.aside)) : "";
-        const end = aside, marks = [item.current ? `<span role="img" aria-label="In effect">${ICONS.check}</span>` : "", item.page || item.leads ? '<span aria-hidden="true">›</span>' : ""].filter(Boolean).join(" ");
+        const end = aside, marks = [item.current ? `<span role="img" aria-label="In effect">${ICONS.check}</span>` : "", item.page || item.leads ? `<span class="item-next" aria-hidden="true">${ICONS.next}</span>` : ""].filter(Boolean).join(" ");
         const query = palette.pages.at(-1)?.input ? "" : palette.query.trim();
         return `${item.icon ?? (item.current === undefined ? "" : '<i class="menu-space"></i>')}<span class="item-name">${query ? highlightMatch(item.label, query) : escape(item.label)}</span>${end ? `<span class="item-meta">${end}</span>` : ""}${marks ? `<span class="item-mark">${marks}</span>` : ""}${item.kbd ? `<kbd>${escape(keyText(item.kbd))}</kbd>` : ""}`;
       }
@@ -24194,9 +24267,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         $("picture-open").hidden = true;
         $("picture-note").hidden = false;
         try {
-          // (The chart as the window lays it out: a link's picture, across it.)
+          // (The chart as the window lays it out: a link's picture, across it; its legends' marks its own lines, not the
+          // faint ones they show till its mini chart's drawn.)
           await studio.ready();
-          const at = navigations, url = (await chartImage()).toDataURL("image/png");
+          const at = navigations;
+          if (await freshThumb(chart)) saveThumbsSoon();
+          const url = (await chartImage()).toDataURL("image/png");
           if (at !== navigations) throw new Error("Another chart was opened meanwhile");
           if (run !== pictureRun || !picturing) return;
           image.src = url;
