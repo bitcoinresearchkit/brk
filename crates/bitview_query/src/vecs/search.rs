@@ -34,13 +34,34 @@ fn matches<'a>(
     let mut result = Vec::with_capacity(limit);
     let mut seen = FxHashSet::default();
 
-    // Each field gets its own tier. Description scores never compete with
-    // complete name-word matches, and fuzzy matches cannot outrank exact ones.
+    // Five tiers: a name's whole words; a name every word of which matches
+    // (its starts, joined words, a plural); a description's whole words; a
+    // name some word of which only a typo matches; a description's starts and
+    // slips. What a series' name says comes first, unless it takes a typo to.
     append(
         matcher
             .matches_exact_with_ids_and_matched_words(&query, &config)
             .into_iter()
             .map(|(id, _)| SeriesId(id)),
+        &mut result,
+        &mut seen,
+        limit,
+    );
+    if result.len() >= limit {
+        return result.into_iter().map(|id| names[id.as_usize()]).collect();
+    }
+    // The words as the matcher splits them, once each.
+    let count = query
+        .split(['_', '-', ' ', ':', '/'])
+        .filter(|word| !word.is_empty())
+        .collect::<FxHashSet<_>>()
+        .len();
+    let (whole, typos): (Vec<_>, Vec<_>) = matcher
+        .matches_with_ids_and_matched_words(&query, &config)
+        .into_iter()
+        .partition(|&(_, matched)| matched as usize >= count);
+    append(
+        whole.into_iter().map(|(id, _)| SeriesId(id)),
         &mut result,
         &mut seen,
         limit,
@@ -71,17 +92,12 @@ fn matches<'a>(
             &mut seen,
             limit,
         );
-        if result.len() < limit {
-            append(
-                matcher
-                    .matches_with_ids_and_matched_words(&query, &config)
-                    .into_iter()
-                    .map(|(id, _)| SeriesId(id)),
-                &mut result,
-                &mut seen,
-                limit,
-            );
-        }
+        append(
+            typos.into_iter().map(|(id, _)| SeriesId(id)),
+            &mut result,
+            &mut seen,
+            limit,
+        );
         if result.len() < limit {
             append(
                 rank_descriptions(
