@@ -21,12 +21,12 @@ metadata methods also accept an optional configuration. IDs are positions in
 the original input array; duplicate names retain separate IDs. The constructor
 copies the input array and configuration.
 
-Query words match in any order, including prefixes and joined adjacent words.
+Query words match in any order, including prefixes and joined adjacent words; a word of four letters or more also matches one a letter shorter (a plural, "prices" for "price").
 Bounded adjacent-letter corrections run before the trigram fallback and must match whole indexed words.
 Results sort by matched-word count, fuzzy score, first match position, item
 length, then text. Identical items tie-break by original ID.
 `matchesExactWithIdsAndMatchedWords(query, config)` matches whole words only,
-with no prefixes or typos. Set `unionFallback` to `false` to require every query word.
+with no prefixes or typos. Set `unionFallback` to `false` to require every query word: one the index doesn't hold and that is no typo of anything leaves no results.
 The best-tier method returns only results with the highest matched-word count,
 subject to the same limit. Union fallback defaults to `true`.
 

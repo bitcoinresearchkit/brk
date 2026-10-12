@@ -193,10 +193,17 @@ impl<'a> QuickMatch<'a> {
         let sep = sep_table(SEPARATORS);
 
         let mut query_words: Vec<&str> = vec![];
+        let mut too_long = false;
         for w in words(&query, &sep) {
-            if (EXACT_WORDS || w.len() <= self.max_word_len) && !query_words.contains(&w) {
+            if !EXACT_WORDS && w.len() > self.max_word_len {
+                too_long = true;
+            } else if !query_words.contains(&w) {
                 query_words.push(w);
             }
+        }
+        // Every word asked for: one too long for anything to hold leaves nothing.
+        if too_long && !config.union_fallback() {
+            return vec![];
         }
 
         if query_words.is_empty() || (!EXACT_WORDS && query_words.len() > self.max_word_count) {
@@ -210,8 +217,27 @@ impl<'a> QuickMatch<'a> {
         let mut unmatched: Vec<&str> = vec![];
         let mut known_lists: Vec<&[ItemId]> = vec![];
 
-        for &word in &query_words {
-            if let Some(items) = self.word_index.get(word) {
+        // A word one letter past another's end, a plural or a slip there
+        // ("prices"): that one's items too.
+        let widened: Vec<Option<Vec<ItemId>>> = query_words
+            .iter()
+            .map(|&word| {
+                if EXACT_WORDS || word.len() < 4 {
+                    return None;
+                }
+                let shorter = self.word_index.get(&word[..word.len() - 1])?;
+                Some(match self.word_index.get(word) {
+                    Some(own) => {
+                        let mut both = Self::union_lists(&[own.as_slice(), shorter.as_slice()]);
+                        both.sort_unstable();
+                        both
+                    }
+                    None => shorter.clone(),
+                })
+            })
+            .collect();
+        for (&word, wide) in query_words.iter().zip(&widened) {
+            if let Some(items) = wide.as_deref().or_else(|| self.word_index.get(word).map(Vec::as_slice)) {
                 known_lists.push(items)
             } else if word.len() >= 3 {
                 unmatched.push(word);
@@ -246,8 +272,12 @@ impl<'a> QuickMatch<'a> {
         let pool = Self::intersect_lists(&known_lists);
 
         // A swapped pair often shares no trigrams ("prcie" → "price").
-        // Probe indexed corrections before the broader trigram fallback.
-        if !unknown_words.is_empty() && trigram_budget > 0 {
+        // Probe indexed corrections before the broader trigram fallback (every
+        // word asked for: only when each unheld word is probed).
+        if !unknown_words.is_empty()
+            && trigram_budget > 0
+            && (config.union_fallback() || unknown_words.len() == unmatched.len())
+        {
             let mut corrections: Vec<Vec<ItemId>> = vec![vec![]; unknown_words.len()];
             let mut budget = trigram_budget;
             for round in 0..trigram_budget {
@@ -322,6 +352,12 @@ impl<'a> QuickMatch<'a> {
             if !results.is_empty() {
                 return results;
             }
+        }
+
+        // Every word asked for (no union): one neither held nor a typo of
+        // anything's leaves nothing, not the others' matches.
+        if !config.union_fallback() && !unmatched.is_empty() {
+            return Vec::new();
         }
 
         // Rank known candidates (intersection, or union as fallback)
@@ -521,6 +557,12 @@ fn words<'s>(text: &'s str, sep: &'s [bool; 256]) -> impl Iterator<Item = &'s st
     })
 }
 
+/// Whether a query word runs one letter past an item word's end (four letters
+/// or more): a plural, a slip there.
+fn past(query_word: &str, item_word: &str) -> bool {
+    query_word.len() >= 4 && query_word.len() == item_word.len() + 1 && query_word.starts_with(item_word)
+}
+
 /// Matches query words in any order against item words or adjacent joined pairs.
 /// Returns the matched count and earliest item position, or the item's word
 /// count when nothing matches.
@@ -542,7 +584,7 @@ fn word_match(item: &str, query_words: &[&str], sep: &[bool; 256], exact: bool) 
             if (if exact {
                 iw == *qw
             } else {
-                iw.starts_with(*qw)
+                iw.starts_with(*qw) || past(qw, iw)
             }) || joined
             {
                 matched += 1;

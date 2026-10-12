@@ -234,7 +234,7 @@ export class QuickMatch {
           joined = rest > 0 && qw.startsWith(previous)
             && (exact ? word.length === rest : word.length >= rest) && word.startsWith(qw.slice(previous.length));
         }
-        if ((exact ? word === qw : word.startsWith(qw)) || joined) {
+        if ((exact ? word === qw : word.startsWith(qw) || past(qw, word)) || joined) {
           matched++;
           position = Math.min(position, joined ? k - from - 1 : k - from);
           break;
@@ -331,6 +331,8 @@ export class QuickMatch {
 
     const qwords = splitWords(q, sep, exactWords ? Infinity : this.maxWordLen);
     if (!qwords.length || (!exactWords && qwords.length > this.maxWords)) return [];
+    // (Every word asked for: one too long for anything to hold leaves nothing.)
+    if (!exactWords && !config.unionFallback && splitWords(q, sep, Infinity).length !== qwords.length) return [];
 
     const known = [];
     const unknown = [];
@@ -340,7 +342,12 @@ export class QuickMatch {
     const unmatched = [];
 
     for (const w of qwords) {
-      const hits = this._postings(w);
+      let hits = this._postings(w);
+      // (A word one letter past another's end, a plural or a slip there, "prices": that one's items too.)
+      if (!exactWords && w.length >= 4) {
+        const shorter = this._postings(w.slice(0, -1));
+        if (shorter) hits = hits ? this._merge([hits, shorter]) : shorter;
+      }
       if (hits) {
         known.push(hits);
       } else if (w.length >= 3) {
@@ -361,8 +368,9 @@ export class QuickMatch {
     const pool = intersect(known);
 
     // A swapped pair often shares no trigrams ("prcie" → "price").
-    // Probe indexed corrections before the broader trigram fallback.
-    if (unknown.length && trigramBudget) {
+    // Probe indexed corrections before the broader trigram fallback (every
+    // word asked for: only when each unheld word is probed).
+    if (unknown.length && trigramBudget && (config.unionFallback || unknown.length === unmatched.length)) {
       /** @type {Ids[][]} */
       const corrections = unknown.map(() => []);
       let budget = trigramBudget;
@@ -416,6 +424,9 @@ export class QuickMatch {
 
       if (result.length > 0) return result;
     }
+
+    // Every word asked for (no union): one neither held nor a typo of anything's leaves nothing, not the others' matches.
+    if (!config.unionFallback && unmatched.length) return [];
 
     // Rank known candidates (intersection, or union as fallback)
     const candidates = pool || (config.unionFallback ? union(known) : []);
@@ -670,7 +681,7 @@ function wordMatch(item, qwords, sep, exact = false) {
       const previous = words[i - 1];
       const joined = previous !== undefined && qw.length > previous.length
         && qw.startsWith(previous) && (exact ? words[i] === qw.slice(previous.length) : words[i].startsWith(qw.slice(previous.length)));
-      if ((exact ? words[i] === qw : words[i].startsWith(qw)) || joined) {
+      if ((exact ? words[i] === qw : words[i].startsWith(qw) || past(qw, words[i])) || joined) {
         matched++;
         position = Math.min(position, joined ? i - 1 : i);
         break;
@@ -678,6 +689,11 @@ function wordMatch(item, qwords, sep, exact = false) {
     }
   }
   return [matched, position];
+}
+
+/** Whether a query word runs one letter past an item word's end (four letters or more): a plural, a slip there. @param {string} qw @param {string} word */
+function past(qw, word) {
+  return qw.length >= 4 && qw.length === word.length + 1 && qw.startsWith(word);
 }
 
 /**
