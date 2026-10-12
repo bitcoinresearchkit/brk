@@ -19637,8 +19637,9 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /**
        * The series search as bitview.space runs it (crates/bitview_query/src/vecs/search.rs, on the same quickmatch): the
-       * query normalized, then whole name words, whole description words, name prefixes and typos, description prefixes
-       * and typos; a description several series share ranks them by how few other words their names carry. Before it, what
+       * query normalized, then whole name words, names matching every word (starts, joined words, plurals), whole
+       * description words, names a typo matches, description starts and typos; a description several series share ranks
+       * them by how few other words their names carry. Before it, what
        * people type is said as the names say it ("200 day moving average" is "200d sma"), the query as typed searched
        * after. Series only by block (none of `dated`, the intervals Studio charts) come last, their day's (a 24h sum, an
        * average) in their place. It runs in a worker started from this function's own source: the catalog's names and
@@ -19713,14 +19714,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               }
             }
           };
-          // (What's said, then as typed: the whole words of both before the starts and slips of either.)
+          // (Stage by stage, what's said, then as typed: a name's whole words in either before its starts and slips.)
           const queries = (said === typed ? [typed] : [said, typed]).filter(Boolean).map((words) => stages(found, words, limit));
-          for (const half of [0, 2]) for (const run of queries) for (const stage of run.slice(half, half + 2)) if (result.length < limit) append(stage());
+          for (let stage = 0; stage < 5; stage++) for (const run of queries) if (result.length < limit) append(run[stage]());
           return [...result, ...last].slice(0, limit).map((id) => found.names[id]);
         }
         /**
-         * The server's four stages for a query, each run when asked (while there's room): whole name words, whole
-         * description words, then name and description starts and slips. @param {Awaited<typeof index>} found
+         * The server's five stages for a query, each run when asked (while there's room): a name's whole words; a name
+         * every word of which matches (its starts, joined words, a plural); a description's whole words; a name some
+         * word of which only a typo matches; a description's starts and slips. What a series' name says first, unless
+         * it takes a typo to: then a description saying it whole leads. @param {Awaited<typeof index>} found
          * @param {string} query @param {number} limit @returns {(() => number[])[]}
          */
         function stages({ names, wordCounts, seriesOf, matcher, descriptionMatcher }, query, limit) {
@@ -19736,10 +19739,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           /** @type {Map<number, number> | null} */
           let nameWords = null;
           const words = () => (nameWords ??= new Map(matcher.matchesExactWithIdsAndMatchedWords(query, new QuickMatchConfig().withLimit(names.length))));
+          // (The words as the matcher splits them, once each: a name matching all of them, by word, is a whole match.)
+          const count = new Set(query.split(/[_\-\s:/]+/).filter(Boolean)).size;
+          /** @type {[number, number][] | null} */
+          let fuzzy = null;
+          const slips = () => (fuzzy ??= matcher.matchesWithIdsAndMatchedWords(query, config));
           return [
             () => matcher.matchesExactWithIdsAndMatchedWords(query, config).map(([id]) => id),
+            () => slips().filter(([, matched]) => matched >= count).map(([id]) => id),
             () => ranked(descriptionMatcher.matchesExactWithIdsAndMatchedWords(query, descriptionConfig), words()),
-            () => matcher.matchesWithIdsAndMatchedWords(query, config).map(([id]) => id),
+            () => slips().filter(([, matched]) => matched < count).map(([id]) => id),
             () => ranked(descriptionMatcher.matchesWithIdsAndMatchedWords(query, descriptionConfig), words()),
           ];
         }
@@ -20041,7 +20050,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (palette.replacing) chip.disabled = !path.length;
         if (!palette.replacing || path.length) Object.assign(chip.dataset, { tip: path.length ? "Back to the catalog" : "Back to everything", kbd: "⌫" });
         else delete chip.dataset.tip;
-        if (path.length) $("palette-input").placeholder = `Search in ${humanizeKey(path.at(-1))}`;
+        if (path.length) $("palette-input").placeholder = "Search this folder, then every series";
         else applyScope();
       }
 
@@ -20162,7 +20171,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         renderPath();
         if (palette.formula) return showFormula();
         if (palette.pages.length) return showPage();
-        // In a folder, a search searches that folder, at once: the crumbs say where it looks.
+        // In a folder, a search searches it first, at once (the crumbs say which), then every series, as the search answers:
+        // one list, one ↵ (browsing, a last row searches everything, commands and charts too).
         if (query && palette.path.length) {
           const words = query.toLowerCase().split(/[\s_]+/).filter(Boolean);
           const found = new Set();
@@ -20173,11 +20183,26 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               if (words.every((word) => `${node.name} ${keys}`.toLowerCase().includes(word))) found.add(node.name);
             } else if (node && typeof node === "object") for (const key of Object.keys(node).reverse()) stack.push([aside(node, key), `${keys} ${humanizeKey(key)}`]);
           }
-          const folder = humanizeKey(palette.path.at(-1));
-          palette.items = [...[...found].map((name) => ({ kind: "series", key: name, name, group: `In ${folder}` })), { kind: "widen", key: "widen", group: found.size ? "Everywhere" : `Nothing in ${folder} matches` }];
+          const here = [...found].map((name) => ({ kind: "series", key: name, name, group: "In this folder" }));
+          const widen = palette.adding || palette.replacing ? [] : [{ kind: "widen", key: "widen", group: "Everything" }];
+          palette.items = [...here, ...widen];
           palette.active = 0;
           palette.moved = false;
-          renderPalette();
+          // (Searching, said by the glow, as the whole search says it, till every series is in; failing, said too.)
+          $("palette-glow").hidden = false;
+          renderPalette(true);
+          const controller = (palette.controller = new AbortController());
+          /** @param {string[] | null} seriesFound @param {string} [note] */
+          const landFolder = (seriesFound, note) => {
+            if (controller.signal.aborted) return;
+            const active = palette.items[palette.active];
+            palette.items = [...here, ...(seriesFound ?? []).filter((name) => isSeriesName(name) && !found.has(name)).map((name) => ({ kind: "series", key: name, name, group: "Every series" })), ...widen];
+            // (The first row still leads, unless the person already moved to another.)
+            palette.active = palette.moved ? Math.max(0, palette.items.indexOf(active)) : 0;
+            $("palette-glow").hidden = true;
+            renderPalette(false, note);
+          };
+          findSeries(query, 80, controller.signal, 140).then((seriesFound) => landFolder(seriesFound), () => landFolder(null, "Series search is unavailable right now."));
           return;
         }
         if (!query) {
@@ -20229,12 +20254,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // actions, by what they're of and what they are ("price color", "mvrv base").
         // (The chart's settings, made once a search: its rows and the changes typed whole read the same ones.)
         const settings = everything && !home ? settingRows() : [];
-        const own = !everything ? [] : home ? rank(browseRows(), rowText, words) : [
-          ...rank(browseRows(), rowText, words),
+        const own = !everything ? [] : home ? rank(browseRows(), wayText, words) : [
+          ...rank(browseRows(), wayText, words),
           ...rank(chart.layers.map((layer) => ({ ...layerRow(layer), group: "Layers" })), rowText, words),
           ...rank(chart.panes.map((pane, i) => ({ ...paneRow(pane.id, i), group: "Panes" })), rowText, words),
           // (A setting by a word of its own, not its owner's alone: "mvrv" is the layer's row, "mvrv color" its color.)
-          ...rank(settings.filter((row) => words.some((typed) => typed.length > 1 && !FILLER.has(typed) && fitScore(row.itself, [typed]))), rowText, words).slice(0, 4),
+          ...rank(settings.filter((row) => words.some((typed) => typed.length > 1 && !FILLER.has(typed) && fitScore(row.itself, [typed]))), wayText, words).slice(0, 4),
         ];
         // A setting with its value after it ("price color orange"), and a date ("go to 2021", or just "nov 2021"): the
         // change itself, on top.
@@ -20269,7 +20294,12 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (controller.signal.aborted) return;
           clearTimeout(palette.timer);
           const active = palette.items[palette.active];
-          palette.items = names ? [...leading, ...asFormula, ...named, ...dated, ...strong, ...unnamed, ...own, ...charts, ...website, ...names.filter(isSeriesName).map((name) => ({ kind: "series", key: name, name, group: "Series" })), ...trailing, ...more] : [...local, ...more];
+          // (Series named as typed, by the starts of their names' words: this chart's own rows, its three best, before them,
+          // not a screen of them, a value alone's change after them; unless the person's moved to a row already.)
+          const typedParts = words.flatMap((typed) => typed.split("_")).filter(Boolean);
+          const seriesByName = !palette.moved && names?.some((name) => typedParts.every((typed) => name.split("_").some((part) => part.startsWith(typed))));
+          const valueAlone = seriesByName ? unnamed.filter((row) => row.alone) : [], directRest = unnamed.filter((row) => !valueAlone.includes(row));
+          palette.items = names ? [...leading, ...asFormula, ...named, ...dated, ...strong, ...directRest, ...(seriesByName ? own.slice(0, 3) : own), ...charts, ...website, ...names.filter(isSeriesName).map((name) => ({ kind: "series", key: name, name, group: "Series" })), ...valueAlone, ...trailing, ...more] : [...local, ...more];
           // The top result leads (or the row come back to), unless the person already moved to another row.
           palette.active = palette.moved ? Math.max(0, palette.items.indexOf(active)) : landing(palette.items);
           $("palette-glow").hidden = true;
@@ -20570,7 +20600,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             return `${header}<li role="option" id="option-${i}" aria-posinset="${i + 1}" aria-setsize="${palette.items.length}" data-kind="series" data-option="${i}" aria-selected="${i === palette.active}" ${blocked ? 'class="dim" aria-disabled="true"' : ""}>${item.group === "Recent series" ? ICONS.recent : ICONS.series}<span class="item-name">${searching ? highlightMatch(human, palette.query) : escape(human)}</span>${end}</li>`;
           }
           const icon = item.kind === "widen" ? ICONS.browse : item.kind === "folder" ? ICONS.folder : item.kind === "command" ? ICONS[item.command.icon] ?? ICONS.series : doc ? chartMark(doc) : ICONS.series;
-          const name = item.kind === "widen" ? `Search all series for “${escape(palette.query.trim())}”` : item.kind === "folder" ? escape(humanizeKey(item.key)) : item.kind === "command" ? (searching ? highlightMatch(item.command.title, palette.query) : escape(item.command.title)) : doc ? (searching ? highlightMatch(titleOf(doc), palette.query) : escape(titleOf(doc))) : "";
+          const name = item.kind === "widen" ? `Search everything for “${escape(palette.query.trim())}”` : item.kind === "folder" ? escape(humanizeKey(item.key)) : item.kind === "command" ? (searching ? highlightMatch(item.command.title, palette.query) : escape(item.command.title)) : doc ? (searching ? highlightMatch(titleOf(doc), palette.query) : escape(titleOf(doc))) : "";
           const meta = item.kind === "folder" ? `<span class="item-mark"><span class="item-next" aria-hidden="true">${ICONS.next}</span></span>` : item.kind === "command" ? (item.command.current ? `<span class="item-mark" role="img" aria-label="In effect">${ICONS.check}</span>` : item.command.kbd && item.command.run && answers(item.command.kbd) ? `<kbd>${escape(keyText(item.command.kbd))}</kbd>` : "") : doc ? `<span class="item-meta">${plural(doc.layers.length, "layer")}</span>` : "";
           const idle = item.kind === "command" && !item.command.run && !item.command.current;
           return `${header}<li role="option" id="option-${i}" aria-posinset="${i + 1}" aria-setsize="${palette.items.length}" data-kind="${item.kind}" data-option="${i}" aria-selected="${i === palette.active}" ${idle ? 'class="dim" aria-disabled="true"' : ""}>${icon}<span class="item-name">${name}</span>${meta}</li>`;
@@ -20639,7 +20669,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (item.kind === "formula") return previewFormula(panel);
         if (item.kind === "row") return previewRow(panel, item);
         if (item.kind === "insert" && !item.series) return void (panel.innerHTML = previewPiece(item));
-        if (item.kind === "widen") return void (panel.innerHTML = `<h4 class="plain">Every series</h4><p class="description">The same words, across all ${seriesCount ? grouped.format(seriesCount) : ""} series rather than this folder.</p>`);
+        if (item.kind === "widen") return void (panel.innerHTML = `<h4 class="plain">Everything</h4><p class="description">The same words, out of this folder: commands, charts and presets too, with every series.</p>`);
         if (item.kind === "folder") {
           const node = nodeAt(item.path);
           const keys = Object.keys(node ?? {}).filter((key) => node[key] && typeof node[key] === "object");
@@ -20893,6 +20923,8 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       const rank = (list, textOf, words) => list.map((item, i) => /** @type {[any, number, number]} */ ([item, fitScore(textOf(item), words, nameOf(item)), i])).filter(([item, score]) => score > 0 && (!dangerous(item) || askedFor(words))).sort((a, b) => b[1] - a[1] || useScore(b[0].key) - useScore(a[0].key) || a[2] - b[2]).map(([item]) => item);
       /** What a row is found by: its label, its aside, its words, what else it's called; a chart, by its title. */
       const rowText = (item) => (item.kind === "chart" ? titleOf(chartById(item.key) ?? { title: "" }) : `${item.label ?? ""} ${item.aside ?? ""} ${item.words ?? ""} ${SYNONYMS[item.key] ?? ""}`);
+      /** A way in, by what it is, not what it shows at its end (the chart's title: the chart's own row has it). */
+      const wayText = (item) => `${item.label ?? ""} ${item.words ?? ""} ${SYNONYMS[item.key] ?? ""}`;
       /** Into a page: what was typed, and the row that led there, come back with ⌫. @param {Page} page */
       function pushPage(page) {
         const from = palette.pages.at(-1) ?? palette.root;
@@ -21074,14 +21106,15 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         // (The chart's page adds only its settings, as the chart's: its actions are commands already; its title found
         // too. A layer's adds its own: its pane's are the pane's, once.)
         const shared = new Set(chart.layers.map(labelOf).filter((name, i, names) => names.indexOf(name) !== i));
+        /** @type {{ name: string, kind: string, id: string, page: () => Page, only: string[] | null, not: string[] }[]} */
         const owners = [
-          { name: "Chart", kind: `chart ${titleOf(chart)}`, page: chartPage, only: ["title", "interval", "range"], not: [] },
-          ...chart.layers.map((layer) => ({ name: shared.has(labelOf(layer)) ? `${labelOf(layer)} (${layer.letter})` : labelOf(layer), kind: "layer", page: () => layerPage(layer.id), only: null, not: ["scale", "stack", "order"] })),
-          ...chart.panes.map((pane, i) => ({ name: `Pane ${i + 1}`, kind: `pane ${chart.layers.filter((layer) => layer.pane === pane.id).map(labelOf).join(" ")}`, page: () => panePage(pane.id), only: null, not: [] })),
-          ...((names) => (chart.drawings ?? []).map((drawing) => ({ name: /** @type {string} */ (names.get(drawing.id)), kind: "drawing", page: () => drawingPage(drawing.id), only: null, not: [] })))(drawingNames()),
+          { name: "Chart", kind: `chart ${titleOf(chart)}`, id: "", page: chartPage, only: ["title", "interval", "range"], not: [] },
+          ...chart.layers.map((layer) => ({ name: shared.has(labelOf(layer)) ? `${labelOf(layer)} (${layer.letter})` : labelOf(layer), kind: "layer", id: layer.id, page: () => layerPage(layer.id), only: null, not: ["scale", "stack", "order"] })),
+          ...chart.panes.map((pane, i) => ({ name: `Pane ${i + 1}`, kind: `pane ${chart.layers.filter((layer) => layer.pane === pane.id).map(labelOf).join(" ")}`, id: "", page: () => panePage(pane.id), only: null, not: [] })),
+          ...((names) => (chart.drawings ?? []).map((drawing) => ({ name: /** @type {string} */ (names.get(drawing.id)), kind: "drawing", id: "", page: () => drawingPage(drawing.id), only: null, not: [] })))(drawingNames()),
         ];
-        return owners.flatMap(({ name, kind, page, only, not }) => page().rows().filter((row) => !row.key.startsWith("layer:") && !row.key.startsWith("add-") && (!only || only.includes(row.key)) && !not.includes(row.key)).map((row) => ({
-          ...row, key: `setting:${name}:${row.key}`, owner: { name, kind: kind.split(" ")[0] }, group: "In this chart", label: `${name} · ${row.label}`, words: `${name} ${kind} ${row.words ?? ""} ${SYNONYMS[row.key] ?? ""}`, itself: `${row.label} ${row.aside ?? ""} ${row.words ?? ""} ${SYNONYMS[row.key] ?? ""}`, of: row.page ?? (row.choices && (() => choicePage(row.label, row.choices))),
+        return owners.flatMap(({ name, kind, id, page, only, not }) => page().rows().filter((row) => !row.key.startsWith("layer:") && !row.key.startsWith("add-") && (!only || only.includes(row.key)) && !not.includes(row.key)).map((row) => ({
+          ...row, key: `setting:${name}:${row.key}`, owner: { name, kind: kind.split(" ")[0], id }, group: "In this chart", label: `${name} · ${row.label}`, words: `${name} ${kind} ${row.words ?? ""} ${SYNONYMS[row.key] ?? ""}`, itself: `${row.label} ${row.words ?? ""} ${SYNONYMS[row.key] ?? ""}`, of: row.page ?? (row.choices && (() => choicePage(row.label, row.choices))),
           page: row.page && (() => {
             const owner = page();
             pushPage(owner);
@@ -21092,21 +21125,13 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
       }
       /**
        * A setting with its value typed after it (or before, or between: "left axis", "price right axis"), as one change to
-       * run: "price color orange", "mvrv base 1", "pane 1 scale log", "interval weekly", "rename BTC cycles". The other
-       * words find the setting (as the search does); the value picks a choice by its name (one in effect, said so:
-       * nothing to change), or is read as the setting's own page reads it. `named`: what it's of named too ("price"), not
+       * run: "price color orange", "mvrv base 1", "pane 1 scale log", "interval weekly", "rename BTC cycles"; a value alone
+       * too ("candles"). The other words find the setting (as the search does); the value picks a choice by its name (the
+       * one in effect: none, nothing to change), or is read as the setting's own page reads it. `named`: what it's of named too ("price"), not
        * only the setting (then a layer's, a pane's, a drawing's leads only after the commands that do).
        */
       function directRows(/** @type {string} */ query, /** @type {any[]} */ settings) {
         const words = query.trim().split(/\s+/);
-        // (What it's of, the setting and its value: a few words; a name's value, any.)
-        if (words.length < 2) return [];
-        const many = words.length > 6;
-        // (The value after the setting's words, the most of them first; then before them; then between.)
-        const runs = words.flatMap((_, from) => words.map((__, to) => /** @type {[number, number]} */ ([from, to + 1]))).filter(([from, to]) => from < to && to - from < words.length);
-        const where = ([from, to]) => (to === words.length ? 0 : from === 0 ? 1 : 2);
-        // (A value not at the end is one a choice is called by, as typed or its start: "left axis", never "pane 2 log".)
-        const splits = runs.sort((a, b) => where(a) - where(b) || (where(a) === 1 ? a[1] - b[1] : b[0] - a[0])).map((run) => /** @type {[string[], string[], boolean]} */ ([[...words.slice(0, run[0]), ...words.slice(run[1])], words.slice(run[0], run[1]), where(run) > 0]));
         /** How a choice answers to a value: its name exactly, its start, any of its words (a slip allowed). */
         // (A key that's a number is a place in a list, a scale's "2", never what it's called.)
         const answer = (option, value) => {
@@ -21115,6 +21140,27 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           if (option.label.toLowerCase().startsWith(lower)) return 3;
           return Math.min(2, fitScore(`${option.label} ${option.aside ?? ""} ${key}`, lower.split(/\s+/)));
         };
+        // A value alone ("candles", "dashed", "left"): the change to it where a setting has it as a choice (by its name or
+        // its start, three letters or more; never the one in effect), the selected layer's first.
+        if (words.length === 1) {
+          const value = words[0], mine = layerById(selected), alone = [];
+          if (value.length < 3) return [];
+          for (const row of settings) {
+            const own = row.of?.();
+            if (!own || own.input) continue;
+            // (The one in effect fitting best: nothing to change here; of two fitting as well, the other.)
+            const best = own.rows().filter((option) => option.apply && answer(option, value) >= 3).sort((a, b) => answer(b, value) - answer(a, value) || Number(Boolean(a.current)) - Number(Boolean(b.current)))[0];
+            const first = Boolean(mine) && row.owner.id === mine?.id;
+            if (best && !best.current) alone.push({ first, score: answer(best, value), row: { kind: "row", key: `do:${row.key}:${best.key}`, icon: best.icon ?? row.icon, label: `${row.label} → ${best.label}`, group: "Set", verb: "Set", run: best.apply, look: best.look, preview: best.preview ?? row.preview, named: false, alone: true } });
+          }
+          return alone.sort((a, b) => Number(b.first) - Number(a.first) || b.score - a.score).slice(0, 3).map(({ row }) => row);
+        }
+        const many = words.length > 6;
+        // (The value after the setting's words, the most of them first; then before them; then between.)
+        const runs = words.flatMap((_, from) => words.map((__, to) => /** @type {[number, number]} */ ([from, to + 1]))).filter(([from, to]) => from < to && to - from < words.length);
+        const where = ([from, to]) => (to === words.length ? 0 : from === 0 ? 1 : 2);
+        // (A value not at the end is one a choice is called by, as typed or its start: "left axis", never "pane 2 log".)
+        const splits = runs.sort((a, b) => where(a) - where(b) || (where(a) === 1 ? a[1] - b[1] : b[0] - a[0])).map((run) => /** @type {[string[], string[], boolean]} */ ([[...words.slice(0, run[0]), ...words.slice(run[1])], words.slice(run[0], run[1]), where(run) > 0]));
         const found = [];
         for (const row of settings) {
           if (!row.of) continue;
@@ -21140,10 +21186,11 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
               const options = own.rows().filter((option) => option.apply);
               const best = options.map((option) => /** @type {[any, number]} */ ([option, answer(option, value)])).filter(([, fits]) => fits > (within ? 2 : 0)).sort((a, b) => b[1] - a[1] || Number(Boolean(a[0].current)) - Number(Boolean(b[0].current)))[0]?.[0];
               if (!best) continue;
+              // (The one in effect fitting best: nothing to change, nothing offered, no other reading of the words tried;
+              // its page shows where it is.)
+              if (best.current) break;
               const named = row.owner.kind === "chart" || head.some((word) => fitScore(row.owner.name, [word]));
-              found.push({ score, row: best.current
-                ? { kind: "row", key: `do:${row.key}:${best.key}`, icon: best.icon ?? row.icon, label: `${row.label} → ${best.label}`, group: "Set", verb: "Close", current: true, preview: best.preview ?? row.preview, named }
-                : { kind: "row", key: `do:${row.key}:${best.key}`, icon: best.icon ?? row.icon, label: `${row.label} → ${best.label}`, group: "Set", verb: "Set", run: best.apply, look: best.look, preview: best.preview ?? row.preview, named } });
+              found.push({ score, row: { kind: "row", key: `do:${row.key}:${best.key}`, icon: best.icon ?? row.icon, label: `${row.label} → ${best.label}`, group: "Set", verb: "Set", run: best.apply, look: best.look, preview: best.preview ?? row.preview, named } });
             }
             break;
           }
