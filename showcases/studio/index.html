@@ -16123,9 +16123,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         for (let i = Math.floor((k * ys.length) / n); i < Math.floor(((k + 1) * ys.length) / n); i++) if (ys[i] !== null && (far < 0 || Math.abs(ys[i] - base) > Math.abs(ys[far] - base))) far = i;
         return far < 0 ? "" : place(k, ys[far], base, far);
       }).join("");
+      /** Marks as drawn, by the mini chart they're drawn from and the theme: the list written again, its marks aren't. */
+      const marksDrawn = new WeakMap();
       /** A chart's mark: its mini chart once drawn, a faint line until then. @param {Chart} doc */
       const chartMark = (doc) => {
-        const lines = thumbs.get(doc.id)?.lines ?? [];
+        const thumb = thumbs.get(doc.id), kept = thumb && marksDrawn.get(thumb);
+        if (kept?.light === light) return kept.svg;
+        const svg = markOf(thumb?.lines ?? []);
+        if (thumb) marksDrawn.set(thumb, { light, svg });
+        return svg;
+      };
+      /** A mark drawn from a mini chart's lines. @param {any[]} lines */
+      const markOf = (lines) => {
         const y = (value) => 36 - value * 32, stroke = 'fill="none" stroke-width="1.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"';
         const polyline = (part, color) => `<polyline points="${part.join(" ")}" stroke="${color}" ${stroke}/>`;
         // Each line as its type: an area over a light fill, a baseline in its two colors about its base, bars, dots.
@@ -16203,16 +16212,16 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
        */
       function renderCharts() {
         const current = home ? null : chart, keys = numbered();
-        const row = (/** @type {Chart} */ doc) => ((i) => `<div class="chart-row ${doc === current ? "active" : ""} ${doc.folder ? "in-folder" : ""}" data-chart-row="${doc.id}">
-            <button type="button" class="nav-item chart-item" data-open-chart="${doc.id}" data-tip="${escape(titleOf(doc))}" ${i >= 0 ? `data-kbd="⌘ ${i + 1}"` : ""} ${doc === current ? 'aria-current="page"' : ""}>${chartMark(doc)}<span class="label ${doc.title ? "" : "derived"}">${escape(titleOf(doc))}</span>${i >= 0 ? `<kbd class="mod">${keyText(`⌘${i + 1}`)}</kbd>` : ""}</button>
+        const row = (/** @type {Chart} */ doc) => ((i) => `<div class="chart-row ${doc.folder ? "in-folder" : ""}" data-chart-row="${doc.id}">
+            <button type="button" class="nav-item chart-item" data-open-chart="${doc.id}" data-tip="${escape(titleOf(doc))}" ${i >= 0 ? `data-kbd="⌘ ${i + 1}"` : ""}>${chartMark(doc)}<span class="label ${doc.title ? "" : "derived"}">${escape(titleOf(doc))}</span>${i >= 0 ? `<kbd class="mod">${keyText(`⌘${i + 1}`)}</kbd>` : ""}</button>
             <button type="button" class="cap small chart-more" data-chart-menu="${doc.id}" aria-haspopup="menu" aria-label="More for ${escape(titleOf(doc))}">${ICONS.more}</button>
           </div>`)(keys.indexOf(doc));
         /** @type {[string, string][]} */
         const parts = [
-          ...(previewing && !previewing.layers.length ? [`<div class="preview-slot" data-preview-row><div class="chart-row preview ${previewing === current ? "active" : ""}">
-            <button type="button" class="nav-item chart-item" data-open-chart="${previewing.id}" data-tip="A new chart: in your charts once something's in it" ${previewing === current ? 'aria-current="page"' : ""}>${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
-          </div></div>`] : previewing ? [`<div class="preview-slot" data-preview-row><span class="preview-caption">Preview</span><div class="chart-row preview ${previewing === current ? "active" : ""}">
-            <button type="button" class="nav-item chart-item${touched.has(previewing) ? " edited" : ""}" data-open-chart="${previewing.id}" data-tip="${escape(titleOf(previewing))}: a preview, not in your charts (Keep or ⌘S adds it${touched.has(previewing) ? ", your edits with it" : ""})" ${previewing === current ? 'aria-current="page"' : ""}>${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
+          ...(previewing && !previewing.layers.length ? [`<div class="preview-slot" data-preview-row><div class="chart-row preview">
+            <button type="button" class="nav-item chart-item" data-open-chart="${previewing.id}" data-tip="A new chart: in your charts once something's in it">${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
+          </div></div>`] : previewing ? [`<div class="preview-slot" data-preview-row><span class="preview-caption">Preview</span><div class="chart-row preview">
+            <button type="button" class="nav-item chart-item${touched.has(previewing) ? " edited" : ""}" data-open-chart="${previewing.id}" data-tip="${escape(titleOf(previewing))}: a preview, not in your charts (Keep or ⌘S adds it${touched.has(previewing) ? ", your edits with it" : ""})">${chartMark(previewing)}<span class="label">${escape(titleOf(previewing))}</span></button>
             ${previewing !== chart || previousChart() ? `<button type="button" class="cap small chart-more" data-action="close-preview" aria-label="Close the preview" data-tip="Close the preview">${ICONS.close}</button>` : ""}
           </div></div>`] : []).map((html) => /** @type {[string, string]} */ (["preview", html])),
           ...sideItems().flatMap((item) => {
@@ -16228,6 +16237,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         if (writeList($("chart-list"), parts)) {
           fitSoon($("chart-list"), true);
           drawKeys($("chart-list"));
+        }
+        // The open one marked in place: a switch writes no row again (the focus on one stays where it is).
+        for (const button of all$("[data-open-chart]", $("chart-list"))) {
+          const on = button.dataset.openChart === current?.id;
+          if (on === button.hasAttribute("aria-current")) continue;
+          button.closest(".chart-row")?.classList.toggle("active", on);
+          if (on) button.setAttribute("aria-current", "page");
+          else button.removeAttribute("aria-current");
         }
         if (home) $("all-charts").setAttribute("aria-current", "page");
         else $("all-charts").removeAttribute("aria-current");
@@ -17227,7 +17244,7 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
           /** @type {Preset[]} */
           let list;
           if (packed) {
-            const bytes = Uint8Array.from(atob(packed), (char) => char.charCodeAt(0));
+            const bytes = fromBase64(packed);
             list = JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text());
           } else {
             const worker = new Worker(new URL("./presets-worker.js", import.meta.url), { type: "module" });
@@ -18004,19 +18021,22 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
             ${ordered ? `<div class="field"><span>Order</span><div class="tabs" role="group" aria-label="Order">${ordersOf(layerPane).map(([reverse, name]) => `<button type="button" data-pane-reverse="${layer.pane}" data-reverse="${reverse ? 1 : ""}" aria-pressed="${Boolean(layerPane.reverse) === reverse}">${name}</button>`).join("")}</div></div>` : ""}
           </section>
           ${(actionsShown = actionsOf(layer))}`;
-        // The sliders' handles and fills as they are on screen (maybe mid-glide), for the redrawn ones to go on from.
-        const was = new Map(all$("#inspector .stepper").map((element) => [element.id, { handle: getComputedStyle(element, "::after").left, fill: getComputedStyle(element, "::before").width }]));
+        // The sliders' handles and fills as they are on screen (maybe mid-glide), for the redrawn ones to go on from: those
+        // of this layer whose stop changes alone (reading one lays the page's style out first: an edit elsewhere, none read).
+        const moves = (/** @type {HTMLElement} */ element) => element.id in SLIDERS && (Number(element.style.getPropertyValue("--at")) !== sliderAt(/** @type {keyof typeof SLIDERS} */ (element.id), layer) || (glidesUntil.get(element.id) ?? 0) > performance.now());
+        const was = new Map(another || reduced.matches ? [] : all$("#inspector .stepper").filter(moves).map((element) => [element.id, { handle: getComputedStyle(element, "::after").left, fill: getComputedStyle(element, "::before").width }]));
         panel.innerHTML = html;
         drawKeys(panel);
         if (isFormula) updateFormula(layer);
         restoreFocus(panel, focus);
         drawPlanes();
         // Redrawn, each slider glides on from where it was to its stop, however many times it's redrawn on the way.
-        for (const element of another || reduced.matches ? [] : all$("#inspector .stepper")) {
+        for (const element of all$("#inspector .stepper")) {
           const from = was.get(element.id);
           if (!from) continue;
           const handle = getComputedStyle(element, "::after").left, fill = getComputedStyle(element, "::before").width;
           const timing = { duration: MOTION.micro, easing: MOTION.ease };
+          glidesUntil.set(element.id, performance.now() + MOTION.micro);
           if (handle !== from.handle) element.animate({ left: [from.handle, handle] }, { ...timing, pseudoElement: "::after" });
           if (fill !== from.fill) element.animate({ width: [from.fill, fill] }, { ...timing, pseudoElement: "::before" });
         }
@@ -18040,10 +18060,14 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         "draw-opacity": { label: "Opacity", stops: OPACITIES, of: (look) => look.opacity ?? 1, text: (v) => `${Math.round(v * 100)}%`, say: (v) => `${Math.round(v * 100)} percent` },
         opacity: { label: "Opacity", stops: OPACITIES, of: opacityOf, text: (v) => `${Math.round(v * 100)}%`, say: (v) => `${Math.round(v * 100)} percent`, set: (layer, v) => (layer.opacity = v === defaultOpacity(layer) ? undefined : v) },
       };
+      /** The inspector's sliders gliding, by id: until when. */
+      const glidesUntil = new Map();
+      /** Where a slider's handle sits for a layer, from 0 to 1 (its stop's place among its stops). */
+      const sliderAt = (/** @type {keyof typeof SLIDERS} */ id, /** @type {Layer} */ layer) => Math.max(0, SLIDERS[id].stops.indexOf(SLIDERS[id].of(layer))) / (SLIDERS[id].stops.length - 1);
       /** A slider: its stops, a handle at the value, and the value written out at the end away from the handle. */
       function slider(id, layer, tip = "") {
         const spec = SLIDERS[id], value = spec.of(layer), index = spec.stops.indexOf(value), n = spec.stops.length - 1;
-        const at = Math.max(0, index) / n;
+        const at = sliderAt(id, layer);
         return `<div id="${id}" class="stepper" role="slider" tabindex="0" aria-label="${spec.label}" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${Math.max(0, index)}" aria-valuetext="${escape(spec.say(value))}" data-value-side="${at > 0.5 ? "start" : "end"}" style="--at: ${at}" ${tip ? `data-tip="${escape(tip)}"` : ""}>
           ${spec.stops.map((_, i) => `<i ${(at > 0.5 ? i / n <= 0.25 : i / n >= 0.75) ? 'class="under"' : ""} style="--k: ${i / n}"></i>`).join("")}<span class="value">${escape(spec.text(value))}</span></div>`;
       }
@@ -22935,9 +22959,18 @@ const picture = await studio.png({ width: 1200, height: 760, scale: 2 });
         const short = qrLink(doc).catch(() => written);
         return { copy, short };
       }
+      /**
+       * Base64 as bytes (`url`: its URL-safe alphabet), by the platform's own decoder where there's one (a byte at a time
+       * otherwise: the presets' half a megabyte, 17 ms against 0.1).
+       */
+      function fromBase64(/** @type {string} */ text, url = false) {
+        // (A link's read in either alphabet, as it always was: one with "+" or "/" opens too.)
+        const plain = url ? text.replace(/-/g, "+").replace(/_/g, "/") : text;
+        return /** @type {Uint8Array<ArrayBuffer>} */ (/** @type {any} */ (Uint8Array).fromBase64?.(plain) ?? Uint8Array.from(atob(plain), (char) => char.charCodeAt(0)));
+      }
       /** A compressed link's chart: base64url (`#chart=`), or base32 (`#c=`, a QR code's). @param {string} encoded */
       async function fromLink(encoded, base32 = false) {
-        const bytes = base32 ? fromBase32(encoded) : Uint8Array.from(atob(encoded.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
+        const bytes = base32 ? fromBase32(encoded) : fromBase64(encoded, true);
         // A chart is a few kilobytes (its drawings at most, about a megabyte): inflating stops at two, whatever the link claims.
         const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
         const chunks = [];
